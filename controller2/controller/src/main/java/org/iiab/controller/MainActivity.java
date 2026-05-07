@@ -234,14 +234,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     setupTerminalSession();
 
                     // 1. Force the view to be VISIBLE before expanding
-                    View bottomSheet = findViewById(R.id.terminal_bottom_sheet);
-                    if (bottomSheet.getVisibility() != View.VISIBLE) {
-                        bottomSheet.setVisibility(View.VISIBLE);
+                    View targetSheet = findViewById(R.id.terminal_bottom_sheet);
+                    if (targetSheet.getVisibility() != View.VISIBLE) {
+                        targetSheet.setVisibility(View.VISIBLE);
                     }
 
                     // 2. Bring view to front
-                    bottomSheet.bringToFront();
-                    bottomSheet.requestLayout();
+                    targetSheet.bringToFront();
+                    targetSheet.requestLayout();
 
                     // 3. Change to EXPANDED (100% screen)
                     bottomSheetBehavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
@@ -695,7 +695,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 fos.close();
             }
 
-            // Fake Stat (Para que Kolibri no crashee leyendo CPU)
+            // Fake Stat (So that Kolibri does not crash reading CPU)
             File statFile = new File(procDir, ".stat");
             if (!statFile.exists()) {
                 java.io.FileOutputStream fos = new java.io.FileOutputStream(statFile);

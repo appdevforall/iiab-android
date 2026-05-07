@@ -31,7 +31,7 @@ public class Aria2Manager {
 
         new Thread(() -> {
             try {
-                // 1. Obtener la ruta de nuestro binario nativo
+                // 1. Get the path of our native binary
                 String nativeLibDir = context.getApplicationInfo().nativeLibraryDir;
                 File aria2Bin = new File(nativeLibDir, "libaria2c.so");
 
@@ -39,17 +39,17 @@ public class Aria2Manager {
                     throw new Exception("Native aria2c binary not found at: " + aria2Bin.getAbsolutePath());
                 }
 
-// 2. Preparar el directorio de descarga y archivos auxiliares
+                // 2. Prepare the download directory and auxiliary files
                 File downloadDir = new File(context.getFilesDir(), "rootfs/downloads");
                 if (!downloadDir.exists()) downloadDir.mkdirs();
 
-                // Archivo DHT seguro dentro de nuestra app (evita el crash de com.termux)
+                // Secure DHT file within our app (avoids the com.termux crash)
                 File dhtFile = new File(context.getFilesDir(), "dht.dat");
 
                 Log.d(TAG, "Executing Native Aria2c...");
                 Log.d(TAG, "Target URL: " + url);
 
-                // 3. Construir el comando con la magia de Bash traducida a Java
+                // 3. Build the command with the magic of Bash translated to Java
                 ProcessBuilder pb = new ProcessBuilder(
                         aria2Bin.getAbsolutePath(),
                         "--dir=" + downloadDir.getAbsolutePath(),
@@ -63,23 +63,23 @@ public class Aria2Manager {
                         "--dht-file-path=" + dhtFile.getAbsolutePath(),
                         "--bt-enable-lpd=true",
                         "--seed-time=0",
-                        "--check-certificate=false",   // <--- Ignora la falta de certificados SSL en Android nativo
+                        "--check-certificate=false",   // <--- Ignore missing SSL certificates in native Android
                         "--console-log-level=warn",
                         "--summary-interval=1",
                         "--download-result=hide",
                         url
                 );
 
-                // Redirigir los errores al mismo flujo de lectura
+                // Redirect errors to the same input stream
                 pb.redirectErrorStream(true);
                 aria2Process = pb.start();
 
-                // 4. Leer la salida en tiempo real (stdout)
+                // 4. Read the output in real-time (stdout)
                 BufferedReader reader = new BufferedReader(new InputStreamReader(aria2Process.getInputStream()));
                 String line;
 
-                // Regex para capturar el output típico de Aria2c
-                // Ejemplo: [#2089b0 400MiB/1.0GiB(39%) CN:4 DL:4.5MiB ETA:2m20s]
+                // Regex to capture typical Aria2c output
+                // Example: [#2089b0 400MiB/1.0GiB(39%) CN:4 DL:4.5MiB ETA:2m20s]
                 Pattern pattern = Pattern.compile("\\((\\d+)%\\).*?DL:([^\\s]+).*?ETA:([^\\s\\]]+)");
 
                 while ((line = reader.readLine()) != null) {
