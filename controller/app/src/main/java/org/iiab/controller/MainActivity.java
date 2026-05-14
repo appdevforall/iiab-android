@@ -849,30 +849,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     public void startTermuxEnvironmentVisible(String actionFlag) {
         android.util.Log.d(TAG, "Legacy Headless command ignored: " + actionFlag);
-//        Intent intent = new Intent();
-//        intent.setClassName("com.termux", "com.termux.app.RunCommandService");
-//        intent.setAction("com.termux.RUN_COMMAND");
-//
-//        intent.putExtra("com.termux.RUN_COMMAND_WORKDIR", "/data/data/com.termux/files/home");
-//        intent.putExtra("com.termux.RUN_COMMAND_PATH", "/data/data/com.termux/files/usr/bin/env");
-//        intent.putExtra("com.termux.RUN_COMMAND_ARGUMENTS", new String[]{
-//                "INTENT_MODE=headless",
-//                "/data/data/com.termux/files/usr/bin/bash",
-//                "/data/data/com.termux/files/usr/bin/iiab-termux",
-//                actionFlag
-//        });
-//
-//        intent.putExtra("com.termux.RUN_COMMAND_BACKGROUND", false);
-//        try {
-//            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-//                startForegroundService(intent);
-//            } else {
-//                startService(intent);
-//            }
-//            addToLog(getString(R.string.sent_to_termux, actionFlag));
-//        } catch (Exception e) {
-//            addToLog(getString(R.string.failed_termux_intent, e.getMessage()));
-//        }
     }
 
     // --- TERMUX HEADLESS BRIDGE ---
@@ -1403,11 +1379,23 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 @Override
                 public boolean readControlKey() {
+                    com.termux.shared.termux.extrakeys.ExtraKeysView extraKeysView = findViewById(R.id.extra_keys_view);
+                    if (extraKeysView != null) {
+                        // Polling the CTRL state natively from the view!
+                        Boolean state = extraKeysView.readSpecialButton(com.termux.shared.termux.extrakeys.SpecialButton.CTRL, true);
+                        return state != null && state;
+                    }
                     return false;
                 }
 
                 @Override
                 public boolean readAltKey() {
+                    com.termux.shared.termux.extrakeys.ExtraKeysView extraKeysView = findViewById(R.id.extra_keys_view);
+                    if (extraKeysView != null) {
+                        // Polling the ALT state natively from the view!
+                        Boolean state = extraKeysView.readSpecialButton(com.termux.shared.termux.extrakeys.SpecialButton.ALT, true);
+                        return state != null && state;
+                    }
                     return false;
                 }
 
@@ -1462,10 +1450,53 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             terminalView.post(() -> {
                 if (terminalSession != null) {
                     terminalView.attachSession(terminalSession);
-                }
-            });
 
-        } catch (Exception e) {
+                    // =========================================================
+                    // IIAB NATIVE KEYBOARD INTEGRATION
+                    // =========================================================
+                    try {
+                        com.termux.shared.termux.extrakeys.ExtraKeysView extraKeysView =
+                                findViewById(R.id.extra_keys_view);
+
+                        if (extraKeysView != null) {
+                            extraKeysView.loadIIABDefaultKeys();
+
+                            // Listen for normal keys (ESC, TAB, UP, etc)
+                            extraKeysView.setExtraKeysViewClient(new com.termux.shared.termux.extrakeys.ExtraKeysView.IExtraKeysView() {
+                                @Override
+                                public void onExtraKeyButtonClick(View view, com.termux.shared.termux.extrakeys.ExtraKeyButton buttonInfo, com.google.android.material.button.MaterialButton button) {
+                                    if (terminalSession != null) {
+                                        String key = buttonInfo.getKey();
+                                        switch (key) {
+                                            case "ESC": terminalSession.write("\033"); break;
+                                            case "TAB": terminalSession.write("\t"); break;
+                                            case "UP": terminalSession.write("\033[A"); break;
+                                            case "DOWN": terminalSession.write("\033[B"); break;
+                                            case "RIGHT": terminalSession.write("\033[C"); break;
+                                            case "LEFT": terminalSession.write("\033[D"); break;
+                                            // --- NEW ORIGINAL TERMUX KEYS ---
+                                            case "HOME": terminalSession.write("\033[1~"); break;
+                                            case "END": terminalSession.write("\033[4~"); break;
+                                            case "PGUP": terminalSession.write("\033[5~"); break;
+                                            case "PGDN": terminalSession.write("\033[6~"); break;
+                                            default: terminalSession.write(key); break;
+                                        }
+                                    }
+                                }
+
+                                @Override
+                                public boolean performExtraKeyButtonHapticFeedback(View view, com.termux.shared.termux.extrakeys.ExtraKeyButton buttonInfo, com.google.android.material.button.MaterialButton button) {
+                                    return false; // Let Termux handle the vibration natively
+                                }
+                            });
+                        }
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to initialize Native ExtraKeys", e);
+                    }
+                }
+            }); // <-- Faltaba cerrar el post() y el lambda
+
+        } catch (Exception e) { // <-- Faltaba el catch del try principal de la línea 1232
             Log.e(TAG, "Failed to start Terminal Session", e);
         }
     }
