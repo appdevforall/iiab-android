@@ -511,6 +511,6 @@ install_iiaboa_dashboard
 if [ -d "/sdcard/.iiab_state" ]; then
   touch /sdcard/.iiab_state/flag_iiab_ready 2>/dev/null || true
   touch /usr/local/pdsm/flag_install_ready 2>/dev/null || true
-  log "Notified Android Controller: IIAB is ready."
+  ok "Notified Android Controller: IIAB is ready."
 fi
-
+warn "Don't forget to stop running services (pdsm stop) before login out."
