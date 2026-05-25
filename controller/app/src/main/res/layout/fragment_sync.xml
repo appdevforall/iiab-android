@@ -77,7 +77,7 @@
                         android:id="@+id/img_qr_code"
                         android:layout_width="match_parent"
                         android:layout_height="match_parent"
-                        android:contentDescription="QR Code" />
+                        android:contentDescription="@string/qr_content_description" />
                 </FrameLayout>
 
                 <RadioGroup
@@ -99,7 +99,7 @@
                         android:background="@drawable/radio_selector_bg"
                         android:button="@null"
                         android:gravity="center"
-                        android:text="Wi-Fi"
+                        android:text="@string/wifi"
                         android:textColor="@color/dash_text_primary"
                         android:textStyle="bold"
                         android:checked="true" />
@@ -112,7 +112,7 @@
                         android:background="@drawable/radio_selector_bg"
                         android:button="@null"
                         android:gravity="center"
-                        android:text="Hotspot"
+                        android:text="@string/hotspot"
                         android:textColor="@color/dash_text_secondary"
                         android:textStyle="bold" />
                 </RadioGroup>
@@ -121,7 +121,7 @@
                     android:id="@+id/txt_share_status"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="Iniciando servidor..."
+                    android:text="@string/sync_share_status_init"
                     android:textColor="#FF9800"
                     android:textSize="14sp"
                     android:textAlignment="center"

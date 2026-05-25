@@ -312,7 +312,7 @@
     <string name="sync_error_daemon_failed">Failed to start Share Daemon.</string>
 
     <string name="install_btn_export_backup">📤 Export Internal Backup to SD Card</string>
-    <string name="install_btn_import_backup">📥 Import Backup from SD Card</string>
+    <string name="install_btn_import_backup">Import Backup from SD Card</string>
     <string name="install_msg_backup_in_progress_title">Backup in Progress</string>
     <string name="install_msg_backup_in_progress_body">A 40GB+ backup process is already running in the background. Interrupting it now might corrupt the file.\n\nDo you want to force stop it?</string>
     <string name="install_btn_force_stop_process">Force Stop</string>
@@ -472,4 +472,13 @@
     <string name="setup_back_blocked_msg">Please complete the setup to continue.</string>
     <string name="sync_scanner_prompt">Scan the IIAB Host QR Code</string>
 
+    <string name="kiwix_dialog_lang_label">Kiwix Language</string>
+    <string name="kiwix_dialog_variants_label">Available ZIM Variants</string>
+    <string name="kiwix_dialog_wipe_cache">Wipe Cache</string>
+    <string name="kiwix_dialog_wipe_zim_cache">Wipe ZIM Cache</string>
+    <string name="kiwix_dialog_select">Select</string>
+
+    <string name="qr_btn_close">Close</string>
+    <string name="qr_content_description">QR Code</string>
+    <string name="sync_share_status_init">Starting server...</string>
 </resources>

@@ -104,7 +104,7 @@
                         android:textSize="11.5sp"
                         android:layout_alignParentEnd="true"
                         android:layout_centerVertical="true"
-                        tools:text="192.168.1.158" />
+                        tools:text="192.168.1.X" />
                 </RelativeLayout>
 
                 <RelativeLayout

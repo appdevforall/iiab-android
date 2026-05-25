@@ -304,7 +304,7 @@
     <string name="install_success_restore">Restauração Concluída!</string>
 
     <string name="install_btn_export_backup">📤 Exportar Backup para o Cartão SD</string>
-    <string name="install_btn_import_backup">📥 Importar Backup do Cartão SD</string>
+    <string name="install_btn_import_backup">Importar Backup do Cartão SD</string>
     <string name="install_msg_backup_in_progress_title">Backup em Andamento</string>
     <string name="install_msg_backup_in_progress_body">Um processo de backup de mais de 40 GB já está em execução em segundo plano. Interrompê-lo agora pode corromper o arquivo.\n\nDeseja forçar a parada?</string>
     <string name="install_btn_force_stop_process">Forçar Parada</string>
@@ -458,4 +458,14 @@
 
     <string name="setup_back_blocked_msg">Por favor, conclua a configuração para continuar.</string>
     <string name="sync_scanner_prompt">Escaneie o Código QR do Host IIAB</string>
+
+    <string name="kiwix_dialog_lang_label">Idioma do Kiwix</string>
+    <string name="kiwix_dialog_variants_label">Variantes ZIM disponíveis</string>
+    <string name="kiwix_dialog_wipe_cache">Limpar Cache</string>
+    <string name="kiwix_dialog_wipe_zim_cache">Limpar Cache ZIM</string>
+    <string name="kiwix_dialog_select">Selecionar</string>
+
+    <string name="qr_btn_close">Fechar</string>
+    <string name="qr_content_description">Código QR</string>
+    <string name="sync_share_status_init">Iniciando servidor...</string>
 </resources>

@@ -18,7 +18,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Kiwix Language"
+            android:text="@string/kiwix_dialog_lang_label"
             android:textColor="@color/dash_text_secondary"
             android:textSize="12sp"
             android:layout_marginBottom="4dp"/>
@@ -41,7 +41,7 @@
             android:id="@+id/btn_wipe_cache"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Wipe ZIM Cache"
+            android:text="@string/kiwix_dialog_wipe_zim_cache"
             android:textColor="#FFFFFF"
             android:textAllCaps="false"
             android:background="@drawable/rounded_button"
@@ -51,7 +51,7 @@
             android:id="@+id/btn_select_variant"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Select"
+            android:text="@string/kiwix_dialog_select"
             android:textColor="#FFFFFF"
             android:layout_marginTop="8dp"
             android:textAllCaps="false"
@@ -71,7 +71,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Available ZIM Variants"
+            android:text="@string/kiwix_dialog_variants_label"
             android:textColor="@color/dash_text_primary"
             android:textStyle="bold"
             android:textSize="12sp"

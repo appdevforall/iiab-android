@@ -224,7 +224,7 @@
     <string name="install_tier_basic">Básico</string>
     <string name="install_tier_standard">Estándar</string>
     <string name="install_tier_full">Completo</string>
-    <string name="install_chk_companion">Descargar datos acompañantes para esta edición</string>
+    <string name="install_chk_companion">Descargar contenido adicional para esta edición</string>
     <string name="install_legend_iiab">IIAB</string>
     <string name="install_legend_maps">Mapas IIAB</string>
     <string name="install_legend_kiwix">Wikipedia</string>
@@ -304,7 +304,7 @@
     <string name="install_success_restore">¡Restauración Completa!</string>
 
     <string name="install_btn_export_backup">📤 Exportar Respaldo a Tarjeta SD</string>
-    <string name="install_btn_import_backup">📥 Importar Respaldo desde Tarjeta SD</string>
+    <string name="install_btn_import_backup">Importar Respaldo desde Tarjeta SD</string>
     <string name="install_msg_backup_in_progress_title">Respaldo en Progreso</string>
     <string name="install_msg_backup_in_progress_body">Ya se está ejecutando un proceso de respaldo de más de 40GB en segundo plano. Interrumpirlo ahora podría corromper el archivo.\n\n¿Desea forzar su detención?</string>
     <string name="install_btn_force_stop_process">Forzar Detención</string>
@@ -459,4 +459,13 @@
     <string name="setup_back_blocked_msg">Por favor complete la configuración para continuar.</string>
     <string name="sync_scanner_prompt">Escanee el código QR del Anfitrión IIAB</string>
 
+    <string name="kiwix_dialog_lang_label">Idioma de Kiwix</string>
+    <string name="kiwix_dialog_variants_label">Variantes ZIM disponibles</string>
+    <string name="kiwix_dialog_wipe_cache">Borrar Caché</string>
+    <string name="kiwix_dialog_wipe_zim_cache">Borrar Caché ZIM</string>
+    <string name="kiwix_dialog_select">Seleccionar</string>
+
+    <string name="qr_btn_close">Cerrar</string>
+    <string name="qr_content_description">Código QR</string>
+    <string name="sync_share_status_init">Iniciando servidor...</string>
 </resources>

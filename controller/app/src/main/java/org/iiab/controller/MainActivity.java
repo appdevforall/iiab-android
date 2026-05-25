@@ -1155,25 +1155,39 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     }
                     reader.close();
 
-                    Log.d(TAG, "OTA: Downloaded JSON: " + response.toString());
-
                     org.json.JSONObject json = new org.json.JSONObject(response.toString());
-                    int serverVersionCode = json.getInt("versionCode");
+
+                    // We read the versionCodeBase (Ex: 50)
+                    int serverVersionCodeBase = json.getInt("versionCodeBase");
                     String serverVersionName = json.getString("versionName");
-                    String apkName = json.getString("apkName");
                     String changelog = json.getString("changelog");
 
-                    // Get current version
+                    // We get our local version and convert it to the base by dividing by 10
                     int currentVersionCode = 0;
                     try {
                         currentVersionCode = getPackageManager().getPackageInfo(getPackageName(), 0).versionCode;
                     } catch (PackageManager.NameNotFoundException e) {
                         Log.e(TAG, "OTA: Could not get local version code", e);
                     }
-                    Log.d(TAG, "OTA: Server Version=" + serverVersionCode + " | Local Version=" + currentVersionCode);
+                    int localVersionCodeBase = currentVersionCode / 10;
 
-                    // Check against current version
-                    if (serverVersionCode > currentVersionCode) {
+                    Log.d(TAG, "OTA: Server Base=" + serverVersionCodeBase + " | Local Base=" + localVersionCodeBase + " (Raw Local: " + currentVersionCode + ")");
+
+                    // We compare the base versions
+                    if (serverVersionCodeBase > localVersionCodeBase) {
+                        // DETECT ARCHITECTURE TO DOWNLOAD THE CORRECT APK
+                        String deviceArch = Build.SUPPORTED_ABIS.length > 0 ? Build.SUPPORTED_ABIS[0] : "unknown";
+                        String apkKey = "apk_universal"; // Fallback por defecto
+
+                        if (deviceArch.contains("arm64") || deviceArch.contains("aarch64")) {
+                            apkKey = "apk_arm64_v8a";
+                        } else if (deviceArch.contains("armeabi") || deviceArch.contains("armv7")) {
+                            apkKey = "apk_armeabi_v7a";
+                        }
+
+                        // If for some reason the JSON does not have that architecture, we use the universal
+                        String apkName = json.optString(apkKey, json.optString("apk_universal"));
+
                         String downloadUrl = "https://iiab.switnet.org/android/apk/" + apkName;
                         runOnUiThread(() -> showUpdateDialog(serverVersionName, changelog, downloadUrl));
                     } else if (isManual) {
@@ -1643,7 +1657,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 cliStr.append("      -b /dev -b /proc -b /sys -b /storage/emulated/0:/sdcard \\\n");
                 cliStr.append("      -b \"$PROOT_TMP_DIR\":/tmp \\\n");
                 cliStr.append("      -b \"$PROOT_TMP_DIR\":/dev/shm \\\n");
-                cliStr.append("      -w /root /bin/bash -c 'export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y curl ca-certificates sudo && curl -fsSL https://raw.githubusercontent.com/iiab/iiab-android/main/iiab-android -o /usr/local/sbin/iiab-android && chmod +x /usr/local/sbin/iiab-android && apt-get clean && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache'\n\n");
+                cliStr.append("      -w /root /bin/bash -c '" +
+                        "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && " +
+                        "export DEBIAN_FRONTEND=noninteractive && " +
+                        "apt-get update && apt-get install -y curl ca-certificates nano sudo && " +
+                        "curl -fsSL https://raw.githubusercontent.com/iiab/iiab-android/main/iiab-android -o /usr/local/sbin/iiab-android && " +
+                        "chmod +x /usr/local/sbin/iiab-android && " +
+                        "apt-get clean && apt-get autoremove -y && " +
+                        "rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache'\n\n");
                 cliStr.append("    echo -e '\\n\\033[32m[SUCCESS] System is clean and ready!\\033[0m'\n");
 
                 cliStr.append("elif [ \"$ACTION\" = \"backup\" ]; then\n");
@@ -1760,7 +1781,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     workingDirectory.getAbsolutePath(),
                     new String[]{"-l"}, // Login shell flag
                     env,
-                    2000,
+                    5000, // <--- Careful to increase, all lines (per session) are stored in RAM
                     client
             );
             terminalView.setTextSize((int) currentTerminalFontSize);

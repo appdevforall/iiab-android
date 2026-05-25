@@ -1194,7 +1194,7 @@ public class DeployFragment extends Fragment {
                                                     prootEngine = new PRootEngine();
                                                 String bootstrapCmd = "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && " +
                                                         "export DEBIAN_FRONTEND=noninteractive && " +
-                                                        "apt-get update && apt-get install -y curl ca-certificates sudo && " +
+                                                        "apt-get update && apt-get install -y curl ca-certificates nano sudo && " +
                                                         "curl -fsSL https://raw.githubusercontent.com/iiab/iiab-android/main/iiab-android -o /usr/local/sbin/iiab-android && " +
                                                         "chmod +x /usr/local/sbin/iiab-android && " +
                                                         "apt-get clean && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache";
@@ -1717,13 +1717,33 @@ public class DeployFragment extends Fragment {
             new Thread(() -> {
                 enableSystemProtection();
                 try {
-                    // Format: iiab-oa_rootfs_$year.$day_of_year_3_digits_$arch.tar.gz
+                    // Format: iiab-oa_rootfs_$year.$day_of_year_3_digits_$id_$arch.tar.gz
                     java.util.Calendar calendar = java.util.Calendar.getInstance();
                     int year = calendar.get(java.util.Calendar.YEAR);
                     int dayOfYear = calendar.get(java.util.Calendar.DAY_OF_YEAR);
                     String arch = getTermuxArch();
 
-                    String fileName = String.format(java.util.Locale.US, "iiab-oa_%04d.%03d_%s.tar.gz", year, dayOfYear, arch);
+                    // --- AUTO-INCREMENTAL ID LOGIC ---
+                    android.content.SharedPreferences prefs = requireContext().getSharedPreferences(getString(R.string.pref_file_internal), Context.MODE_PRIVATE);
+
+                    // We check if we continue on the same day. If it is a new day, we reset the ID to 1
+                    int lastSavedDay = prefs.getInt("backup_last_day", -1);
+                    int currentId;
+
+                    if (lastSavedDay == dayOfYear) {
+                        // Same day, we increase the ID
+                        currentId = prefs.getInt("backup_daily_id", 0) + 1;
+                    } else {
+                        // New day, we start from 1
+                        currentId = 1;
+                        prefs.edit().putInt("backup_last_day", dayOfYear).apply();
+                    }
+
+                    // We save the new ID in preferences for next time
+                    prefs.edit().putInt("backup_daily_id", currentId).apply();
+
+                    // We construct the final name with the ID
+                    String fileName = String.format(java.util.Locale.US, "iiab-oa_%04d.%03d_%d_%s.tar.gz", year, dayOfYear, currentId, arch);
                     File backupFile = new File(backupsDir, fileName);
 
                     File staticTar = new File(requireContext().getApplicationInfo().nativeLibraryDir, "libtar.so");
@@ -1743,9 +1763,13 @@ public class DeployFragment extends Fragment {
                             } else {
                                 Snackbar.make(getView(), getString(R.string.install_msg_backup_failed, exitCode), Snackbar.LENGTH_LONG).show();
                                 if (backupFile.exists()) backupFile.delete();
+
+                                // If it fails, we revert the ID so as not to waste numbers
+                                prefs.edit().putInt("backup_daily_id", currentId - 1).apply();
                             }
                         } else {
                             if (backupFile.exists()) backupFile.delete();
+                            prefs.edit().putInt("backup_daily_id", currentId - 1).apply();
                         }
                         isBackupInProgress = false;
                         btnAdvancedBackup.setText(getString(R.string.install_btn_backup));
@@ -1765,6 +1789,26 @@ public class DeployFragment extends Fragment {
         });
 
         if (btnImportBackup != null) {
+            // 1. We load the native icon
+            android.graphics.drawable.Drawable importIcon = ContextCompat.getDrawable(requireContext(), android.R.drawable.stat_sys_download);
+            if (importIcon != null) {
+                importIcon.setTint(Color.parseColor("#4CAF50"));
+                btnImportBackup.setCompoundDrawablesWithIntrinsicBounds(importIcon, null, null, null);
+                btnImportBackup.setCompoundDrawablePadding(24);
+
+                // 2. We center the content internally
+                btnImportBackup.setGravity(android.view.Gravity.CENTER);
+                btnImportBackup.setPadding(0, 0, 0, 0);
+
+                // 3. We change the width to wrap_content and center the button in its container
+                if (btnImportBackup.getLayoutParams() instanceof LinearLayout.LayoutParams) {
+                    LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) btnImportBackup.getLayoutParams();
+                    params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
+                    params.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+                    btnImportBackup.setLayoutParams(params);
+                }
+            }
+
             btnImportBackup.setOnClickListener(v -> {
                 importBackupLauncher.launch(new String[]{"application/gzip", "application/x-gzip", "*/*"});
             });
@@ -1790,68 +1834,83 @@ public class DeployFragment extends Fragment {
                 } else {
                     java.util.Arrays.sort(backups, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
 
-                    // We use a general LinearLayout instead of a RadioGroup
                     LinearLayout listContainer = new LinearLayout(requireContext());
                     listContainer.setOrientation(LinearLayout.VERTICAL);
 
-                    // Ready to manage the exclusivity of RadioButtons manually
                     List<android.widget.RadioButton> radioButtons = new ArrayList<>();
                     int iconPadding = (int) (12 * getResources().getDisplayMetrics().density);
+
+                    // Variable to alternate colors (Zebra Effect)
+                    boolean isEvenRow = true;
 
                     for (File b : backups) {
                         String filename = b.getName();
                         String size = String.format(java.util.Locale.US, "%.2f MB", b.length() / (1024.0 * 1024.0));
                         String date = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(new java.util.Date(b.lastModified()));
 
-                        // Horizontal row that will contain the RadioButton + Export Button + Delete Button
+                        // MAIN ROW
                         LinearLayout row = new LinearLayout(requireContext());
                         row.setOrientation(LinearLayout.HORIZONTAL);
                         row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-                        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
+                        // Apply subtle alternating background color
+                        if (isEvenRow) {
+                            row.setBackgroundColor(Color.parseColor("#11ffffff")); // Slightly lighter
+                        } else {
+                            row.setBackgroundColor(Color.TRANSPARENT); // Normal dark
+                        }
+                        isEvenRow = !isEvenRow; // Alternar para la siguiente fila
+
+                        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+                        rowParams.setMargins(0, 0, 0, 8); // Separation between cards
+                        row.setLayoutParams(rowParams);
+                        row.setPadding(8, 8, 8, 8);
+
+                        // RADIO BUTTON AND TEXT
                         android.widget.RadioButton rb = new android.widget.RadioButton(requireContext());
                         rb.setText(getString(R.string.install_msg_backup_details, filename, size, date));
                         rb.setTextColor(ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
-                        rb.setPadding(0, 16, 0, 16);
+                        rb.setPadding(0, 8, 0, 8);
                         rb.setTag(filename);
 
-                        // We give a weight of 1f to the RadioButton so that it pushes the icons to the right
                         LinearLayout.LayoutParams rbParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
                         rb.setLayoutParams(rbParams);
                         radioButtons.add(rb);
 
-                        // Single selection logic
-                        rb.setOnClickListener(radioView -> {
+                        // Selection logic (Applied to the ENTIRE row, not just the radio button)
+                        View.OnClickListener selectRowListener = rowView -> {
                             for (android.widget.RadioButton other : radioButtons) {
-                                if (other != rb) other.setChecked(false);
+                                other.setChecked(other == rb);
                             }
                             selectedBackupFile = rb.isChecked() ? filename : null;
                             refreshRestoreButtonLogic();
-                        });
+                        };
 
-                        // Export Button (Orange)
+                        // We assign the click to both the RadioButton and the parent Layout
+                        rb.setOnClickListener(selectRowListener);
+                        row.setOnClickListener(selectRowListener);
+
+                        // EXPORT BUTTON
                         android.widget.ImageButton btnExport = new android.widget.ImageButton(requireContext());
-                        btnExport.setImageResource(android.R.drawable.ic_menu_upload_you_tube); // Native upload icon
+                        btnExport.setImageResource(android.R.drawable.ic_menu_upload_you_tube);
                         btnExport.setBackgroundColor(Color.TRANSPARENT);
-                        btnExport.setColorFilter(Color.parseColor("#FF9800")); // Orange
+                        btnExport.setColorFilter(Color.parseColor("#4CAF50"));
                         btnExport.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
 
                         btnExport.setOnClickListener(btn -> {
-                            // Autoselect this row
                             selectedBackupFile = filename;
                             for (android.widget.RadioButton other : radioButtons) {
                                 other.setChecked(other == rb);
                             }
                             refreshRestoreButtonLogic();
-                            // Trigger export
                             exportBackupLauncher.launch(selectedBackupFile);
                         });
 
-                        // Delete Button (Red)
+                        // DELETE BUTTON
                         android.widget.ImageButton btnDelete = new android.widget.ImageButton(requireContext());
-                        btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel); // Native X Icon
+                        btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
                         btnDelete.setBackgroundColor(Color.TRANSPARENT);
-                        btnDelete.setColorFilter(Color.parseColor("#F44336")); // Red
+                        btnDelete.setColorFilter(Color.parseColor("#F44336"));
                         btnDelete.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
 
                         btnDelete.setOnClickListener(btn -> {
@@ -1861,10 +1920,7 @@ public class DeployFragment extends Fragment {
                                     .setPositiveButton(R.string.install_btn_delete_confirm, (dialog, which) -> {
                                         File toDelete = new File(backupsDir, filename);
                                         if (toDelete.delete()) {
-                                            if (filename.equals(selectedBackupFile)) {
-                                                selectedBackupFile = null;
-                                            }
-                                            // Reload view by collapsing and opening
+                                            if (filename.equals(selectedBackupFile)) selectedBackupFile = null;
                                             txtSelectBackupTitle.performClick();
                                             txtSelectBackupTitle.performClick();
                                             Snackbar.make(getView(), R.string.install_msg_backup_deleted, Snackbar.LENGTH_SHORT).show();

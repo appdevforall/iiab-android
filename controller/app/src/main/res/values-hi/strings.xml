@@ -304,7 +304,7 @@
     <string name="install_success_restore">पुनर्स्थापना पूर्ण!</string>
 
     <string name="install_btn_export_backup">📤 SD कार्ड में बैकअप निर्यात करें</string>
-    <string name="install_btn_import_backup">📥 SD कार्ड से बैकअप आयात करें</string>
+    <string name="install_btn_import_backup">SD कार्ड से बैकअप आयात करें</string>
     <string name="install_msg_backup_in_progress_title">बैकअप प्रगति पर है</string>
     <string name="install_msg_backup_in_progress_body">40GB+ की बैकअप प्रक्रिया पहले से ही पृष्ठभूमि में चल रही है। इसे अभी बाधित करने से फ़ाइल दूषित हो सकती है।\n\nक्या आप इसे बलपूर्वक रोकना चाहते हैं?</string>
     <string name="install_btn_force_stop_process">बलपूर्वक रोकें</string>
@@ -458,4 +458,14 @@
 
     <string name="setup_back_blocked_msg">कृपया जारी रखने के लिए सेटअप पूरा करें।</string>
     <string name="sync_scanner_prompt">IIAB होस्ट QR कोड स्कैन करें</string>
+
+    <string name="kiwix_dialog_lang_label">Kiwix भाषा</string>
+    <string name="kiwix_dialog_variants_label">उपलब्ध ZIM संस्करण</string>
+    <string name="kiwix_dialog_wipe_cache">कैश मिटाएं</string>
+    <string name="kiwix_dialog_wipe_zim_cache">ZIM कैश मिटाएं</string>
+    <string name="kiwix_dialog_select">चुनें</string>
+
+    <string name="qr_btn_close">बंद करें</string>
+    <string name="qr_content_description">QR कोड</string>
+    <string name="sync_share_status_init">सर्वर शुरू हो रहा है...</string>
 </resources>

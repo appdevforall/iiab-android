@@ -2,8 +2,12 @@ plugins {
     id 'com.android.application'
 }
 
+// 1. AUTO-VERSIONING MAP (Must be defined outside the 'android' block)
+// Assigns a unique ID to each architecture so Version Codes do not collide.
+ext.abiCodes = ['armeabi-v7a': 1, 'arm64-v8a': 2]
+
 android {
-    // 1. Identity
+    // 2. Identity
     namespace 'org.iiab.controller'
     compileSdk 34
     ndkVersion "26.3.11579264"
@@ -14,12 +18,13 @@ android {
         // VITAL FOR PROOT AND W^X! Do not go up unless strictly necessary
         targetSdk 28
 
-        // 2. Version Control (OTA)
-        versionCode 50
-        versionName "v0.3.6beta"
+        // 3. Version Control (OTA)
+        // NOTE: With splits enabled, this number will be multiplied by 10 (e.g. 50 -> 500, 501, 502)
+        versionCode 51
+        versionName "v0.3.6.1beta"
         setProperty("archivesBaseName", "$applicationId-$versionName")
 
-        // 3. Supported architectures (NDK) // do we need x86*?
+        // 4. Supported architectures (NDK) - Dropping x86/x86_64
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
@@ -28,17 +33,27 @@ android {
         consumerProguardFiles "consumer-rules.pro"
     }
 
+    // 5. GENERATE MULTIPLE APKS (Splits)
+    splits {
+        abi {
+            enable true
+            reset()
+            include "armeabi-v7a", "arm64-v8a"
+            universalApk true // Also generates a fat APK with both architectures
+        }
+    }
+
     buildFeatures {
         buildConfig true
     }
 
-    // 4. Updated to Java 17 (Required by modern libraries)
+    // 6. Updated to Java 17 (Required by modern libraries)
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    // 5. Signature Engine (Automatic Signatures for OTA)
+    // 7. Signature Engine (Automatic Signatures for OTA)
     signingConfigs {
         release {
         }
@@ -55,7 +70,7 @@ android {
         }
     }
 
-    // 6. Dynamic Keystore Loading
+    // 8. Dynamic Keystore Loading
     def propsFile = rootProject.file('store.properties')
     def configName = 'release'
 
@@ -79,10 +94,28 @@ android {
         includeInApk = false
         includeInBundle = false
     }
+
+    // 9. DYNAMIC VERSIONING OVERRIDE
+    // Applies the math algorithm to ensure unique Version Codes per APK split
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            // Try to fetch the ABI code defined at the top of the file
+            def baseAbiVersionCode = project.ext.abiCodes.get(output.getFilter(com.android.build.OutputFile.ABI))
+
+            // If null, it's the Universal APK. We assign 0.
+            if (baseAbiVersionCode == null) {
+                baseAbiVersionCode = 0
+            }
+
+            // Multiply original version by 10 and add the architecture ID
+            // Ex: Version 50 -> Universal: 500, ARM32: 501, ARM64: 502
+            output.versionCodeOverride = (variant.versionCode * 10) + baseAbiVersionCode
+        }
+    }
 }
 
 dependencies {
-    // 7. Core dependencies
+    // 10. Core dependencies
     implementation 'androidx.appcompat:appcompat:1.7.1'
     implementation 'com.google.android.material:material:1.13.0'
     implementation 'androidx.biometric:biometric:1.1.0'

@@ -304,7 +304,7 @@
     <string name="install_success_restore">Восстановление завершено!</string>
 
     <string name="install_btn_export_backup">📤 Экспорт копии на SD-карту</string>
-    <string name="install_btn_import_backup">📥 Импорт копии с SD-карты</string>
+    <string name="install_btn_import_backup">Импорт копии с SD-карты</string>
     <string name="install_msg_backup_in_progress_title">Выполняется резервное копирование</string>
     <string name="install_msg_backup_in_progress_body">Процесс резервного копирования объемом более 40 ГБ уже работает в фоновом режиме. Прерывание может повредить файл.\n\nВы хотите принудительно остановить его?</string>
     <string name="install_btn_force_stop_process">Остановить принудительно</string>
@@ -458,4 +458,14 @@
 
     <string name="setup_back_blocked_msg">Пожалуйста, завершите настройку для продолжения.</string>
     <string name="sync_scanner_prompt">Отсканируйте QR-код Хоста IIAB</string>
+
+    <string name="kiwix_dialog_lang_label">Язык Kiwix</string>
+    <string name="kiwix_dialog_variants_label">Доступные варианты ZIM</string>
+    <string name="kiwix_dialog_wipe_cache">Очистить кэш</string>
+    <string name="kiwix_dialog_wipe_zim_cache">Очистить кэш ZIM</string>
+    <string name="kiwix_dialog_select">Выбрать</string>
+
+    <string name="qr_btn_close">Закрыть</string>
+    <string name="qr_content_description">QR-код</string>
+    <string name="sync_share_status_init">Запуск сервера...</string>
 </resources>
