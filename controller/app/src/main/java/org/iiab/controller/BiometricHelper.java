@@ -24,9 +24,11 @@ import java.util.concurrent.Executor;
 
 public class BiometricHelper {
 
-    // This is the "phone line" that tells MainActivity the user succeeded
+    // This is the "phone line" that tells the caller the result
     public interface AuthCallback {
         void onSuccess();
+
+        void onFailed(); // Added failure/cancellation callback
     }
 
     public static boolean isDeviceSecure(Context context) {
@@ -52,14 +54,36 @@ public class BiometricHelper {
                 .show();
     }
 
+    // LEGACY COMPATIBILITY: If the old code calls it without handling errors
+    public static void prompt(AppCompatActivity activity, String title, String subtitle, Runnable onSuccess) {
+        prompt(activity, title, subtitle, new AuthCallback() {
+            @Override
+            public void onSuccess() {
+                if (onSuccess != null) onSuccess.run();
+            }
+
+            @Override
+            public void onFailed() {
+                // Do nothing
+            }
+        });
+    }
+
+    // NEW IMPLEMENTATION: Handles both Success and Failure
     public static void prompt(AppCompatActivity activity, String title, String subtitle, AuthCallback callback) {
         Executor executor = ContextCompat.getMainExecutor(activity);
         BiometricPrompt biometricPrompt = new BiometricPrompt(activity, executor, new BiometricPrompt.AuthenticationCallback() {
             @Override
             public void onAuthenticationSucceeded(@NonNull BiometricPrompt.AuthenticationResult result) {
                 super.onAuthenticationSucceeded(result);
-                // Call back to MainActivity!
-                callback.onSuccess();
+                if (callback != null) callback.onSuccess();
+            }
+
+            @Override
+            public void onAuthenticationError(int errorCode, @NonNull CharSequence errString) {
+                super.onAuthenticationError(errorCode, errString);
+                // Triggered if the user cancels, clicks outside, or fails too many times
+                if (callback != null) callback.onFailed();
             }
         });
 

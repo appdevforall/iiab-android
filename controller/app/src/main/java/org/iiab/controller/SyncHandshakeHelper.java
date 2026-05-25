@@ -30,6 +30,7 @@ public class SyncHandshakeHelper {
         public String user;
         public String pass;
         public boolean hasRootfs;
+
         public SyncCredentials(String ip, int port, String user, String pass, boolean hasRootfs) {
             this.ip = ip;
             this.port = port;
@@ -48,6 +49,7 @@ public class SyncHandshakeHelper {
         }
         return sb.toString();
     }
+
     public static String createPayload(String ip, int port, String user, String pass, boolean hasRootfs) {
         try {
             JSONObject json = new JSONObject();

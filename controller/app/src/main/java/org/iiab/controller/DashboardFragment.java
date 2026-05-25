@@ -42,6 +42,7 @@ import java.util.Locale;
 public class DashboardFragment extends Fragment {
 
     private TextView txtDeviceName;
+    private TextView txtAndroidVersion;
     private TextView txtWifiIp, txtHotspotIp, txtUptime, txtBattery, badgeStatus, txtTermuxState;
 
     // --- GAUGE VARIABLES ---
@@ -104,6 +105,7 @@ public class DashboardFragment extends Fragment {
 
         // Bindings
         txtDeviceName = view.findViewById(R.id.dash_text_device_name);
+        txtAndroidVersion = view.findViewById(R.id.dash_text_android_version);
 
         // --- DIAGNOSTIC BYPASS (AGGRESSIVE ALERT DIALOG) ---
         txtDeviceName.setOnClickListener(v -> {
@@ -111,21 +113,21 @@ public class DashboardFragment extends Fragment {
             String message;
 
             if (!iiabDir.exists()) {
-                message = "DIRECTORY DOES NOT EXIST:\n" + iiabDir.getAbsolutePath();
+                message = getString(R.string.dash_diag_dir_missing, iiabDir.getAbsolutePath());
             } else {
                 String[] contents = iiabDir.list();
                 if (contents == null || contents.length == 0) {
-                    message = "DIRECTORY IS COMPLETELY EMPTY.";
+                    message = getString(R.string.dash_diag_dir_empty);
                 } else {
-                    message = "CONTAINS " + contents.length + " ITEMS:\n\n" + java.util.Arrays.toString(contents);
+                    message = getString(R.string.dash_diag_dir_contains, contents.length, java.util.Arrays.toString(contents));
                 }
             }
 
             // Force a blocking UI dialog to show the results
             new androidx.appcompat.app.AlertDialog.Builder(requireContext())
-                    .setTitle("System Diagnostics")
+                    .setTitle(R.string.dash_diag_title)
                     .setMessage(message)
-                    .setPositiveButton("OK", null)
+                    .setPositiveButton(R.string.dash_diag_btn_ok, null)
                     .show();
         });
         // -------------------------
@@ -212,6 +214,11 @@ public class DashboardFragment extends Fragment {
     private void updateSystemStats() {
         txtDeviceName.setText(getDeviceName());
 
+        // --- FETCH AND DISPLAY BASE ANDROID VERSION ---
+        String androidRelease = android.os.Build.VERSION.RELEASE;
+        int sdkVersion = android.os.Build.VERSION.SDK_INT;
+        txtAndroidVersion.setText(getString(R.string.dash_android_version_value, androidRelease, String.valueOf(sdkVersion)));
+
         // --- 0. CALCULATE SERVER UPTIME ---
         long uptimeMillis = android.os.SystemClock.elapsedRealtime();
         long minutes = (uptimeMillis / (1000 * 60)) % 60;
@@ -220,8 +227,8 @@ public class DashboardFragment extends Fragment {
 
         // Format: "Uptime: 2d 14h 05m" (Omit days if 0)
         String timeStr = (days > 0) ?
-                String.format(Locale.US, "%dd %02dh %02dm", days, hours, minutes) :
-                String.format(Locale.US, "%02dh %02dm", hours, minutes);
+                getString(R.string.dash_format_uptime_days, days, hours, minutes) :
+                getString(R.string.dash_format_uptime_hours, hours, minutes);
 
         txtUptime.setText(timeStr);
         txtWifiIp.setText(getWifiIp());
@@ -229,9 +236,9 @@ public class DashboardFragment extends Fragment {
 
         int batteryLevelText = getBatteryPercentage();
         if (batteryLevelText >= 0) {
-            txtBattery.setText(batteryLevelText + "%");
+            txtBattery.setText(getString(R.string.dash_format_pct, batteryLevelText));
         } else {
-            txtBattery.setText("--%");
+            txtBattery.setText(R.string.dash_format_pct_na);
         }
 
         // --- 1. GET REAL RAM AND SWAP FROM LINUX ---
@@ -265,7 +272,7 @@ public class DashboardFragment extends Fragment {
         long freeSpace = path.getFreeSpace() / (1024 * 1024 * 1024);
         long usedSpace = totalSpace - freeSpace;
 
-// --- UPDATE GAUGE VIEWS (ANIMATED AND COLORED) ---
+        // --- UPDATE GAUGE VIEWS (ANIMATED AND COLORED) ---
         int baseColorRam = ContextCompat.getColor(requireContext(), R.color.dash_bar_ram);
         int baseColorSwap = ContextCompat.getColor(requireContext(), R.color.dash_bar_swap);
         int baseColorStorage = ContextCompat.getColor(requireContext(), R.color.dash_bar_storage);
@@ -275,7 +282,7 @@ public class DashboardFragment extends Fragment {
 
         // RAM Gauge (Warning at 90%, Danger at 95%)
         int finalColorRam = memProgress >= 95 ? dangerColor : (memProgress >= 90 ? warnColor : baseColorRam);
-        String strRam = String.format(Locale.US, "%.2f GB / %.2f GB", memUsedGb, memTotalGb);
+        String strRam = getString(R.string.dash_format_gb, memUsedGb, memTotalGb);
         if (gaugeRam != null)
             gaugeRam.updateData(memProgress, strRam, getString(R.string.dash_ram_memory), finalColorRam);
 
@@ -283,10 +290,10 @@ public class DashboardFragment extends Fragment {
         if (gaugeSwap != null) {
             if (swapTotal > 0) {
                 int finalColorSwap = swapProgress >= 95 ? dangerColor : (swapProgress >= 90 ? warnColor : baseColorSwap);
-                String strSwap = String.format(Locale.US, "%.2f GB / %.2f GB", swapUsedGb, swapTotalGb);
+                String strSwap = getString(R.string.dash_format_gb, swapUsedGb, swapTotalGb);
                 gaugeSwap.updateData(swapProgress, strSwap, getString(R.string.dash_swap_virtual), finalColorSwap);
             } else {
-                gaugeSwap.updateData(0, "-- / --", getString(R.string.dash_swap_virtual), baseColorSwap);
+                gaugeSwap.updateData(0, getString(R.string.dash_format_na), getString(R.string.dash_swap_virtual), baseColorSwap);
             }
         }
 
@@ -294,7 +301,7 @@ public class DashboardFragment extends Fragment {
         if (gaugeStorage != null) {
             int storageProgress = totalSpace > 0 ? (int) ((usedSpace * 100f) / totalSpace) : 0;
             int finalColorStorage = storageProgress >= 95 ? dangerColor : (storageProgress >= 90 ? warnColor : baseColorStorage);
-            String strStorage = usedSpace + " GB / " + totalSpace + " GB";
+            String strStorage = getString(R.string.dash_format_gb_int, usedSpace, totalSpace);
             gaugeStorage.updateData(storageProgress, strStorage, getString(R.string.dash_main_storage), finalColorStorage);
         }
 
@@ -339,18 +346,18 @@ public class DashboardFragment extends Fragment {
             // Update the gauge with the newly assigned 4-parameter method
             if (batLevel >= 0) {
                 // Only add the lightning bolt if isCharging is true
-                String batStr = batLevel + "%" + (isCharging ? " ⚡" : "");
-                gaugeBattery.updateData(batLevel, batStr, "Battery", colorBattery);
+                String batStr = isCharging ? getString(R.string.dash_format_pct_charging, batLevel) : getString(R.string.dash_format_pct, batLevel);
+                gaugeBattery.updateData(batLevel, batStr, getString(R.string.dash_battery_title), colorBattery);
 
                 // Update the small text above as well ("Battery: 95%")
                 if (txtBattery != null) {
-                    txtBattery.setText(batLevel + "%");
+                    txtBattery.setText(getString(R.string.dash_format_pct, batLevel));
                 }
             } else {
                 // Default fallback if we can't read the battery
                 colorBattery = ContextCompat.getColor(requireContext(), R.color.dash_text_secondary);
-                gaugeBattery.updateData(0, "--%", "Battery", colorBattery);
-                if (txtBattery != null) txtBattery.setText("--%");
+                gaugeBattery.updateData(0, getString(R.string.dash_format_pct_na), getString(R.string.dash_battery_title), colorBattery);
+                if (txtBattery != null) txtBattery.setText(R.string.dash_format_pct_na);
             }
         }
     }
@@ -749,6 +756,7 @@ public class DashboardFragment extends Fragment {
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
     }
+
     @Override
     public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
         super.onConfigurationChanged(newConfig);

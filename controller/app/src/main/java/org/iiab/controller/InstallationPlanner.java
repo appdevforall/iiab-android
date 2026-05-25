@@ -34,7 +34,7 @@ public class InstallationPlanner {
     private static final double KIWIX_LIMIT_STANDARD = 35.0;
     private static final double KIWIX_LIMIT_FULL = 53.0;
 
-    public enum Tier { BASIC, STANDARD, FULL }
+    public enum Tier {BASIC, STANDARD, FULL}
 
     public static class StorageProjection {
         public double osSize;
@@ -56,11 +56,13 @@ public class InstallationPlanner {
 
     public interface PlanResultListener {
         void onCalculated(StorageProjection projection);
+
         void onError(String error);
     }
 
     public interface CacheListener {
         void onReady(JSONObject catalog);
+
         void onError(String error);
     }
 
@@ -148,9 +150,15 @@ public class InstallationPlanner {
         new Thread(() -> {
             double os = 0.0, maps = 0.0;
             switch (tier) {
-                case BASIC: os = OS_BASIC_GB; break;
-                case STANDARD: os = OS_STANDARD_GB; break;
-                case FULL: os = OS_FULL_GB; break;
+                case BASIC:
+                    os = OS_BASIC_GB;
+                    break;
+                case STANDARD:
+                    os = OS_STANDARD_GB;
+                    break;
+                case FULL:
+                    os = OS_FULL_GB;
+                    break;
             }
 
             if (!pullCompanionData) {
@@ -160,16 +168,28 @@ public class InstallationPlanner {
             }
 
             switch (tier) {
-                case BASIC: maps = MAPS_BASIC_GB; break;
-                case STANDARD: maps = MAPS_STANDARD_GB; break;
-                case FULL: maps = MAPS_FULL_GB; break;
+                case BASIC:
+                    maps = MAPS_BASIC_GB;
+                    break;
+                case STANDARD:
+                    maps = MAPS_STANDARD_GB;
+                    break;
+                case FULL:
+                    maps = MAPS_FULL_GB;
+                    break;
             }
 
             double kiwixLimit = 0.0;
             switch (tier) {
-                case BASIC: kiwixLimit = KIWIX_LIMIT_BASIC; break;
-                case STANDARD: kiwixLimit = KIWIX_LIMIT_STANDARD; break;
-                case FULL: kiwixLimit = KIWIX_LIMIT_FULL; break;
+                case BASIC:
+                    kiwixLimit = KIWIX_LIMIT_BASIC;
+                    break;
+                case STANDARD:
+                    kiwixLimit = KIWIX_LIMIT_STANDARD;
+                    break;
+                case FULL:
+                    kiwixLimit = KIWIX_LIMIT_FULL;
+                    break;
             }
 
             final double finalOs = os;

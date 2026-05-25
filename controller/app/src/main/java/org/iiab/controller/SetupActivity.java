@@ -287,7 +287,7 @@ public class SetupActivity extends AppCompatActivity {
     public void onBackPressed() {
         Snackbar.make(
                 findViewById(android.R.id.content),
-                "Please complete the setup to continue.",
+                getString(R.string.setup_back_blocked_msg),
                 Snackbar.LENGTH_SHORT
         ).show();
     }

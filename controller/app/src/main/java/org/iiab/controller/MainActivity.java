@@ -102,7 +102,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private Runnable serverCheckRunnable;
     private static final int CHECK_INTERVAL_MS = 3000;
     public PRootEngine serverEngine;
-    private float currentTerminalFontSize = 24f;
+    private float currentTerminalFontSize = 32f;
 
     // Load native C++ engine
     static {
@@ -122,6 +122,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private com.termux.view.TerminalView terminalView;
     private com.termux.terminal.TerminalSession terminalSession;
     private com.google.android.material.bottomsheet.BottomSheetBehavior<View> bottomSheetBehavior;
+    private boolean isTerminalLocked = true;
+    // Multi-session architecture
+    private List<com.termux.terminal.TerminalSession> terminalSessionsList = new ArrayList<>();
+    private android.widget.ArrayAdapter<com.termux.terminal.TerminalSession> sessionsAdapter;
 
     public void invalidateModuleStateTrust() {
         getSharedPreferences("iiab_queue_prefs", Context.MODE_PRIVATE)
@@ -152,6 +156,64 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 new Handler(android.os.Looper.getMainLooper()).postDelayed(() -> {
                     if (usageFragment != null) usageFragment.finalizeExitPulse();
                 }, 1500);
+            }
+        }
+    };
+    // Listens for commands originating from the 'iiab' bash script in the host terminal
+    private final BroadcastReceiver cliReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (action == null) return;
+
+            switch (action) {
+                case "org.iiab.ACTION_BAKE_IMAGE":
+                    // Delegated to bash, we do nothing here
+                    break;
+                case "org.iiab.ACTION_BACKUP_ROOTFS":
+                    addToLog(getString(R.string.log_cli_backup_triggered));
+                    // triggerBackupProcess();
+                    break;
+                case "org.iiab.ACTION_RESTORE_ROOTFS":
+                    addToLog(getString(R.string.log_cli_restore_triggered));
+                    // triggerRestoreProcess();
+                    break;
+                case "org.iiab.ACTION_PREPARE_ROOTFS":
+                    // The terminal requested a clean boot environment
+                    File rootfsDir = new File(getFilesDir(), "rootfs/installed-rootfs/iiab");
+                    createFakeSysData(rootfsDir);
+                    break;
+                case "org.iiab.ACTION_UNLOCK_SDCARD":
+                    File prootTmp = new File(getFilesDir(), "proot_tmp");
+
+                    // We must prompt on the main UI thread
+                    runOnUiThread(() -> {
+                        BiometricHelper.prompt(MainActivity.this,
+                                getString(R.string.terminal_auth_title),
+                                getString(R.string.terminal_auth_subtitle),
+                                new BiometricHelper.AuthCallback() {
+                                    @Override
+                                    public void onSuccess() {
+                                        // SUCCESS: Write the success flag
+                                        try {
+                                            new File(prootTmp, ".auth_success").createNewFile();
+                                            addToLog(getString(R.string.log_cli_sdcard_granted));
+                                        } catch (Exception ignored) {
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onFailed() {
+                                        // FAILURE/CANCEL: Write the failure flag
+                                        try {
+                                            new File(prootTmp, ".auth_failed").createNewFile();
+                                            addToLog(getString(R.string.log_cli_sdcard_denied));
+                                        } catch (Exception ignored) {
+                                        }
+                                    }
+                                });
+                    });
+                    break;
             }
         }
     };
@@ -210,6 +272,89 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         bottomSheetBehavior = com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet);
         bottomSheetBehavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HIDDEN);
 
+        // MULTI-SESSION DRAWER SETUP
+        // =========================================================
+        androidx.drawerlayout.widget.DrawerLayout drawerLayout = findViewById(R.id.drawer_layout);
+        android.widget.ListView drawerList = findViewById(R.id.left_drawer_list);
+        android.widget.Button newSessionBtn = findViewById(R.id.new_session_button);
+
+        // Custom Adapter to display session names (e.g. "Session 1", "Session 2")
+        sessionsAdapter = new android.widget.ArrayAdapter<com.termux.terminal.TerminalSession>(
+                this,
+                android.R.layout.simple_list_item_1,
+                terminalSessionsList
+        ) {
+            @Override
+            public View getView(int position, View convertView, android.view.ViewGroup parent) {
+                View view = super.getView(position, convertView, parent);
+                TextView text = view.findViewById(android.R.id.text1);
+                text.setTextColor(android.graphics.Color.WHITE);
+                text.setText("[" + (position + 1) + "]");
+                return view;
+            }
+        };
+
+        if (drawerList != null) {
+            drawerList.setAdapter(sessionsAdapter);
+
+            // Switch session when clicked
+            drawerList.setOnItemClickListener((parent, view, position, id) -> {
+                terminalSession = terminalSessionsList.get(position);
+                if (terminalView != null) {
+                    terminalView.attachSession(terminalSession);
+
+                    // Termux style indicator
+                    Toast toast = Toast.makeText(MainActivity.this, "[" + (position + 1) + "]", Toast.LENGTH_SHORT);
+                    toast.setGravity(android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL, 0, 150);
+                    toast.show();
+                }
+                if (drawerLayout != null) {
+                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                }
+            });
+        }
+
+        if (newSessionBtn != null) {
+            newSessionBtn.setOnClickListener(btn -> {
+                addNewTerminalSession(); // Spawn new shell
+                if (terminalView != null) {
+                    terminalView.attachSession(terminalSession); // Switch to the new one immediately
+
+                    // Termux style indicator for the newly created session
+                    int newSessionNumber = terminalSessionsList.size();
+                    Toast toast = Toast.makeText(MainActivity.this, "[" + newSessionNumber + "]", Toast.LENGTH_SHORT);
+                    toast.setGravity(android.view.Gravity.TOP | android.view.Gravity.CENTER_HORIZONTAL, 0, 150);
+                    toast.show();
+                }
+                if (drawerLayout != null) {
+                    drawerLayout.closeDrawer(androidx.core.view.GravityCompat.START);
+                }
+            });
+        }
+
+        // =========================================================
+        // TERMINAL LOCK/UNLOCK LOGIC
+        // =========================================================
+        View terminalDragHandle = findViewById(R.id.terminal_drag_handle_area);
+        if (terminalDragHandle != null) {
+            terminalDragHandle.setOnLongClickListener(v -> {
+                // Vibrate to provide tactile feedback
+                vibrateDevice();
+
+                // Toggle the lock state
+                isTerminalLocked = !isTerminalLocked;
+
+                // Lock means it CANNOT be dragged (scroll is safe). Unlock means it CAN be dragged.
+                bottomSheetBehavior.setDraggable(!isTerminalLocked);
+
+                // Notify the user
+                int msgResId = isTerminalLocked ? R.string.terminal_locked : R.string.terminal_unlocked;
+                Toast.makeText(MainActivity.this, msgResId, Toast.LENGTH_SHORT).show();
+
+                return true; // Event consumed, prevents normal click processing
+            });
+        }
+
         // 3-second Ninja trigger & OTA Updater
         versionFooter.setOnTouchListener(new View.OnTouchListener() {
             private final Handler handler = new Handler(android.os.Looper.getMainLooper());
@@ -219,8 +364,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     vibrateDevice();
 
                     // --- TERMINAL RESET NUKE ---
+                    if (terminalSessionsList != null) {
+                        for (com.termux.terminal.TerminalSession s : terminalSessionsList) {
+                            s.finishIfRunning();
+                        }
+                        terminalSessionsList.clear();
+                    }
                     terminalSession = null;
-                    setupTerminalSession();
+
+                    // Spawn the first session
+                    addNewTerminalSession();
 
                     // 1. Force the view to be VISIBLE before expanding
                     View targetSheet = findViewById(R.id.terminal_bottom_sheet);
@@ -234,12 +387,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                     // 3. Change to EXPANDED (100% screen)
                     bottomSheetBehavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_EXPANDED);
+                    // --- APPLY LOCK BY DEFAULT ---
+                    isTerminalLocked = true;
+                    bottomSheetBehavior.setDraggable(false);
+
                     terminalView.requestFocus();
 
                 } catch (Throwable t) {
                     // CATCH ABSOLUTELY EVERYTHING (Even native JNI crashes)
                     new androidx.appcompat.app.AlertDialog.Builder(MainActivity.this)
-                            .setTitle("Terminal Spawn Crash")
+                            .setTitle(R.string.terminal_crash_title)
                             .setMessage(android.util.Log.getStackTraceString(t))
                             .setPositiveButton("OK", null)
                             .show();
@@ -480,13 +637,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     private void prepareVpn() {
-//        Intent intent = VpnService.prepare(MainActivity.this);
-//        if (intent != null) {
-//            vpnPermissionLauncher.launch(intent);
-//        } else {
-//            if (prefs.getEnable()) connectVpn();
-//            BatteryUtils.checkAndPromptOptimizations(MainActivity.this, batteryOptLauncher);
-//        }
         BatteryUtils.checkAndPromptOptimizations(MainActivity.this, batteryOptLauncher);
     }
 
@@ -587,6 +737,15 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         filter.addAction(WatchdogService.ACTION_STATE_STARTED);
         filter.addAction(WatchdogService.ACTION_STATE_STOPPED);
 
+        IntentFilter cliFilter = new IntentFilter();
+        cliFilter.addAction("org.iiab.ACTION_BAKE_IMAGE");
+        cliFilter.addAction("org.iiab.ACTION_BACKUP_ROOTFS");
+        cliFilter.addAction("org.iiab.ACTION_RESTORE_ROOTFS");
+        cliFilter.addAction("org.iiab.ACTION_PREPARE_ROOTFS");
+        cliFilter.addAction("org.iiab.ACTION_UNLOCK_SDCARD");
+
+        // cliReceiver MUST be exported to receive commands from the system's 'am' binary
+        ContextCompat.registerReceiver(this, cliReceiver, cliFilter, ContextCompat.RECEIVER_EXPORTED);
         ContextCompat.registerReceiver(this, logReceiver, filter, ContextCompat.RECEIVER_NOT_EXPORTED);
     }
 
@@ -595,6 +754,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onStop();
         try {
             unregisterReceiver(logReceiver);
+        } catch (Exception e) {
+        }
+        try {
+            unregisterReceiver(cliReceiver);
         } catch (Exception e) {
         }
         stopLogSizeUpdates();
@@ -645,40 +808,45 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             File procDir = new File(rootfsDir, "proc");
             if (!procDir.exists()) procDir.mkdirs();
 
-            // Fake Uptime (Static 2 mins as you requested)
-            File uptimeFile = new File(procDir, ".uptime");
-            if (!uptimeFile.exists()) {
-                java.io.FileOutputStream fos = new java.io.FileOutputStream(uptimeFile);
-                fos.write("124.08 932.80\n".getBytes());
-                fos.close();
-            }
+            // Calculate REAL device boot time and uptime using Android's native clocks
+            long uptimeMillis = android.os.SystemClock.elapsedRealtime();
+            long bootTimeSeconds = (System.currentTimeMillis() - uptimeMillis) / 1000;
+            double uptimeSeconds = uptimeMillis / 1000.0;
 
-            // Fake Version (Fake Kernel IIAB)
+            // 1. Fake Uptime (Real Android uptime frozen at the moment of launch)
+            File uptimeFile = new File(procDir, ".uptime");
+            if (uptimeFile.exists()) uptimeFile.delete(); // Always refresh
+            java.io.FileOutputStream fosUp = new java.io.FileOutputStream(uptimeFile);
+            fosUp.write(String.format(java.util.Locale.US, "%.2f %.2f\n", uptimeSeconds, uptimeSeconds).getBytes());
+            fosUp.close();
+
+            // 2. Fake Version (Kernel Info)
             File versionFile = new File(procDir, ".version");
             if (!versionFile.exists()) {
-                java.io.FileOutputStream fos = new java.io.FileOutputStream(versionFile);
-                fos.write("Linux version 6.17.0-PRoot-IIAB (builder@iiab) (Android NDK) #1 SMP PREEMPT Thu Apr 30 20:00:00 UTC 2026\n".getBytes());
-                fos.close();
+                java.io.FileOutputStream fosVer = new java.io.FileOutputStream(versionFile);
+                fosVer.write("Linux version 6.17.0-PRoot-IIAB (builder@iiab) (Android NDK) #1 SMP PREEMPT Thu Apr 30 20:00:00 UTC 2026\n".getBytes());
+                fosVer.close();
             }
 
-            // Fake Stat (So that Kolibri does not crash reading CPU)
+            // 3. Fake Stat (Real btime injected dynamically)
             File statFile = new File(procDir, ".stat");
-            if (!statFile.exists()) {
-                java.io.FileOutputStream fos = new java.io.FileOutputStream(statFile);
-                fos.write("cpu  1000 0 1000 10000 0 0 0 0 0 0\n".getBytes());
-                fos.close();
-            }
+            if (statFile.exists()) statFile.delete(); // Always refresh
+            java.io.FileOutputStream fosStat = new java.io.FileOutputStream(statFile);
+            String statContent = "cpu  1000 0 1000 10000 0 0 0 0 0 0\n" +
+                    "btime " + bootTimeSeconds + "\n";
+            fosStat.write(statContent.getBytes());
+            fosStat.close();
 
-            // Fake LoadAvg
+            // 4. Fake LoadAvg
             File loadavgFile = new File(procDir, ".loadavg");
             if (!loadavgFile.exists()) {
-                java.io.FileOutputStream fos = new java.io.FileOutputStream(loadavgFile);
-                fos.write("0.00 0.00 0.00 1/1 1\n".getBytes());
-                fos.close();
+                java.io.FileOutputStream fosLoad = new java.io.FileOutputStream(loadavgFile);
+                fosLoad.write("0.00 0.00 0.00 1/1 1\n".getBytes());
+                fosLoad.close();
             }
 
         } catch (Exception e) {
-            android.util.Log.e(TAG, "Failed to create fake sysdata", e);
+            android.util.Log.e(TAG, "Failed to create dynamic fake sysdata", e);
         }
     }
 
@@ -697,7 +865,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         File rootfsDir = new File(getFilesDir(), "rootfs/installed-rootfs/iiab");
 
         if (!isServerAlive) {
-            addToLog("Booting IIAB environment natively...");
+            addToLog(getString(R.string.log_server_booting_native));
             // kernel & uptime
             createFakeSysData(rootfsDir);
 
@@ -708,7 +876,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             // THE DOCKER TRICK: We start bash as login (-lc), start pdsm, and block the process with tail
             // so that PROoot never closes until we kill it.
-            String startCmd = "bash -lc '/usr/local/bin/pdsm start && tail -f /dev/null'";
+            String startCmd = "/usr/bin/env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin bash -lc '/usr/local/bin/pdsm start && tail -f /dev/null'";
 
             serverEngine.executeInContainer(this, rootfsDir.getAbsolutePath(), startCmd, new PRootEngine.OutputListener() {
                 @Override
@@ -718,12 +886,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 @Override
                 public void onProcessExit(int exitCode) {
-                    runOnUiThread(() -> addToLog("[Server] Engine shutdown (Code: " + exitCode + ")"));
+                    runOnUiThread(() -> addToLog(getString(R.string.log_server_engine_shutdown, exitCode)));
                 }
 
                 @Override
                 public void onError(String error) {
-                    runOnUiThread(() -> addToLog("[Server Error] " + error));
+                    runOnUiThread(() -> addToLog(getString(R.string.log_server_error, error)));
                 }
             });
             // --- Watchdog injection / foreground service --- //
@@ -740,11 +908,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }, getResources().getInteger(R.integer.server_snackbar_delay_ms));
 
         } else {
-            addToLog("Stopping IIAB environment gracefully...");
+            addToLog(getString(R.string.log_server_stopping_gracefully));
 
             PRootEngine stopEngine = new PRootEngine();
 
-            stopEngine.executeInContainer(this, rootfsDir.getAbsolutePath(), "bash -lc '/usr/local/bin/pdsm stop'", new PRootEngine.OutputListener() {
+            stopEngine.executeInContainer(this, rootfsDir.getAbsolutePath(), "/usr/bin/env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin bash -lc '/usr/local/bin/pdsm stop'", new PRootEngine.OutputListener() {
                 @Override
                 public void onOutputLine(String line) {
                     runOnUiThread(() -> addToLog("[PDSM Stop] " + line));
@@ -780,7 +948,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 @Override
                 public void onError(String error) {
-                    runOnUiThread(() -> addToLog("[Stop Error] " + error));
+                    runOnUiThread(() -> addToLog(getString(R.string.log_server_stop_error, error)));
                 }
             });
         }
@@ -1114,14 +1282,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 startActivity(intent);
             } catch (Exception e) {
                 Log.e(TAG, "OTA: Error launching installer", e);
-                Toast.makeText(this, "Error launching installer. You may need to install the downloaded APK manually from your Downloads folder.", Toast.LENGTH_LONG).show();
+                Toast.makeText(this, R.string.ota_error_launching_installer, Toast.LENGTH_LONG).show();
             }
         } else {
             Log.e(TAG, "OTA: Downloaded APK file not found at " + apkFile.getAbsolutePath());
         }
     }
 
-    private void setupTerminalSession() {
+    private void addNewTerminalSession() {
         com.termux.terminal.TerminalSessionClient client = new com.termux.terminal.TerminalSessionClient() {
             @Override
             public void onTextChanged(com.termux.terminal.TerminalSession session) {
@@ -1135,18 +1303,31 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             // --- THE CLEAN SHUTDOWN (When Bash dies and tells us) ---
             @Override
             public void onSessionFinished(com.termux.terminal.TerminalSession session) {
-//                runOnUiThread(() -> {
-//                    // 1. Hide the BottomSheet
-//                    View bottomSheet = findViewById(R.id.terminal_bottom_sheet);
-//                    if (bottomSheet != null) {
-//                        com.google.android.material.bottomsheet.BottomSheetBehavior<?> behavior =
-//                                com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet);
-//                        behavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HIDDEN);
-//                    }
-//
-//                    // 2. Destroy the instance so a new one spawns next time
-//                    terminalSession = null;
-//                });
+                runOnUiThread(() -> {
+                    // 1. Remove the dead session from our list and update the UI Drawer
+                    if (terminalSessionsList != null) {
+                        terminalSessionsList.remove(session);
+                        if (sessionsAdapter != null) sessionsAdapter.notifyDataSetChanged();
+                    }
+
+                    // 2. Are we looking at the session that just died?
+                    if (terminalSession == session) {
+                        if (terminalSessionsList != null && !terminalSessionsList.isEmpty()) {
+                            // Fallback: Jump to the last available active session
+                            terminalSession = terminalSessionsList.get(terminalSessionsList.size() - 1);
+                            if (terminalView != null) terminalView.attachSession(terminalSession);
+                        } else {
+                            // No sessions left! Close the terminal panel entirely.
+                            terminalSession = null;
+                            View bottomSheet = findViewById(R.id.terminal_bottom_sheet);
+                            if (bottomSheet != null) {
+                                com.google.android.material.bottomsheet.BottomSheetBehavior<?> behavior =
+                                        com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet);
+                                behavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HIDDEN);
+                            }
+                        }
+                    }
+                });
             }
 
             @Override
@@ -1155,7 +1336,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 android.content.ClipData clip = android.content.ClipData.newPlainText("terminal", text);
                 if (clipboard != null) {
                     clipboard.setPrimaryClip(clip);
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "Copied text", Toast.LENGTH_SHORT).show());
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, R.string.terminal_copied_toast, Toast.LENGTH_SHORT).show());
                 }
             }
 
@@ -1240,7 +1421,57 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 File hostBinDir = new File(getFilesDir(), "usr/bin");
                 if (!hostBinDir.exists()) hostBinDir.mkdirs();
 
-                File loginScript = new File(hostBinDir, "iiab-login");
+                // =========================================================
+                // 0.5 EXTRACT BUNDLED CA-CERTIFICATES (The Browser Model)
+                // =========================================================
+                File caCertFile = new File(getFilesDir(), "cacert.pem");
+                if (!caCertFile.exists()) {
+                    try {
+                        java.io.InputStream in = getAssets().open("cacert.pem");
+                        java.io.FileOutputStream out = new java.io.FileOutputStream(caCertFile);
+                        byte[] buffer = new byte[4096];
+                        int bytesRead;
+                        while ((bytesRead = in.read(buffer)) != -1) {
+                            out.write(buffer, 0, bytesRead);
+                        }
+                        out.close();
+                        in.close();
+                        Log.i(TAG, "cacert.pem extracted successfully.");
+                    } catch (Exception e) {
+                        Log.e(TAG, "Failed to extract bundled cacert.pem", e);
+                    }
+                }
+
+                // =========================================================
+                // LINK NINJA BINARIES (Expose .so files as normal commands)
+                // =========================================================
+                String nativeDir = getApplicationInfo().nativeLibraryDir;
+                String[] ninjaBinaries = {"aria2c", "tar", "xz", "gzip", "rsync", "proot", "nano", "less"};
+
+                for (String bin : ninjaBinaries) {
+                    File soFile = new File(nativeDir, "lib" + bin + ".so");
+                    File binFile = new File(hostBinDir, bin);
+
+                    if (soFile.exists()) {
+                        // We always delete the old link to avoid "Dangling Symlinks"
+                        // caused by APK updates that change the path hash.
+                        binFile.delete();
+
+                        try {
+                            android.system.Os.symlink(soFile.getAbsolutePath(), binFile.getAbsolutePath());
+                        } catch (Exception e) {
+                            Log.e(TAG, "Failed to symlink " + bin, e);
+                        }
+                    } else {
+                        // Shout out if the binary is not on disk!
+                        Log.e(TAG, "CRITICAL: Native library missing! " + soFile.getAbsolutePath());
+                        runOnUiThread(() -> addToLog(getString(R.string.log_critical_binary_missing, bin)));
+                    }
+                }
+
+                // -------------------------------------------------------------
+                // GENERATE ORCHESTRATOR CLI 'iiab' (Monolithic Tool)
+                // -------------------------------------------------------------
                 File rootfsDir = new File(getFilesDir(), "rootfs/installed-rootfs/iiab");
                 File libproot = new File(getApplicationInfo().nativeLibraryDir, "libproot.so");
                 File prootLoader = new File(getApplicationInfo().nativeLibraryDir, "libproot-loader.so");
@@ -1248,34 +1479,276 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 File tmpDir = new File(getFilesDir(), "proot_tmp");
                 if (!tmpDir.exists()) tmpDir.mkdirs();
 
-                // We built the complete PRoot command and saved it in a script
-                StringBuilder script = new StringBuilder();
-                script.append("#!/system/bin/sh\n");
-                script.append("echo 'Entering IIAB Debian Environment...'\n");
-                script.append("export PROOT_TMP_DIR=").append(tmpDir.getAbsolutePath()).append("\n");
-                script.append("export PROOT_LOADER=").append(prootLoader.getAbsolutePath()).append("\n");
-                script.append("export PROOT_LOADER_32=").append(prootLoader32.getAbsolutePath()).append("\n");
+                File iiabCliScript = new File(hostBinDir, "iiab");
+                StringBuilder cliStr = new StringBuilder();
+                cliStr.append("#!/system/bin/sh\n\n");
 
-                script.append(libproot.getAbsolutePath())
-                        // DPKG fix: Added --link2symlink
-                        .append(" --sysvipc -0 --link2symlink -k 6.1.0 -r ").append(rootfsDir.getAbsolutePath())
-                        .append(" -b /dev -b /proc -b /sys -b /storage/emulated/0:/sdcard ")
-                        .append(" -b ").append(tmpDir.getAbsolutePath()).append(":/tmp ")
-                        .append(" -w /root /bin/bash -l -i\n");
+                // Global script variables
+                File backupsDir = new File(getFilesDir(), "rootfs/backups");
+                cliStr.append("ROOTFS_DIR=\"").append(rootfsDir.getAbsolutePath()).append("\"\n");
+                cliStr.append("BACKUPS_DIR=\"").append(backupsDir.getAbsolutePath()).append("\"\n");
+                cliStr.append("export PROOT_TMP_DIR=\"").append(tmpDir.getAbsolutePath()).append("\"\n");
+                cliStr.append("export PROOT_LOADER=\"").append(prootLoader.getAbsolutePath()).append("\"\n");
+                cliStr.append("export PROOT_LOADER_32=\"").append(prootLoader32.getAbsolutePath()).append("\"\n\n");
 
-                java.io.FileOutputStream fos = new java.io.FileOutputStream(loginScript);
-                fos.write(script.toString().getBytes());
-                fos.close();
+                // Initialize Mount Flags
+                cliStr.append("MOUNT_SDCARD=false\n");
+                cliStr.append("MOUNT_BACKUPS=false\n\n");
 
-                //
-                loginScript.setExecutable(true);
+                // Reusable login function (Purified with env PATH, explicit fake sysdata, and dynamic mounts)
+                cliStr.append("do_login() {\n");
+                cliStr.append("    echo -e '\\033[32mPreparing IIAB Debian Environment...\\033[0m'\n");
+
+                // --- SECURITY CHECK FOR SDCARD ---
+                cliStr.append("    if [ \"$MOUNT_SDCARD\" = true ]; then\n");
+                cliStr.append("        echo -e '\\033[33m[Security] Requesting biometric unlock for SD Card access...\\033[0m'\n");
+                cliStr.append("        # Clean previous flags\n");
+                cliStr.append("        rm -f \"$PROOT_TMP_DIR/.auth_success\" \"$PROOT_TMP_DIR/.auth_failed\"\n");
+                cliStr.append("        # Trigger UI Authentication\n");
+                cliStr.append("        am broadcast -a org.iiab.ACTION_UNLOCK_SDCARD -p org.iiab.controller >/dev/null 2>&1\n");
+                cliStr.append("        \n");
+                cliStr.append("        # Wait for Java to write the result flag (Timeout after 30s)\n");
+                cliStr.append("        WAIT_TIME=0\n");
+                cliStr.append("        while [ ! -f \"$PROOT_TMP_DIR/.auth_success\" ] && [ ! -f \"$PROOT_TMP_DIR/.auth_failed\" ]; do\n");
+                cliStr.append("            sleep 1\n");
+                cliStr.append("            WAIT_TIME=$((WAIT_TIME + 1))\n");
+                cliStr.append("            if [ $WAIT_TIME -ge 30 ]; then\n");
+                cliStr.append("                echo -e '\\033[31m[Error] Authentication timed out.\\033[0m'\n");
+                cliStr.append("                exit 1\n");
+                cliStr.append("            fi\n");
+                cliStr.append("        done\n");
+                cliStr.append("        \n");
+                cliStr.append("        if [ -f \"$PROOT_TMP_DIR/.auth_failed\" ]; then\n");
+                cliStr.append("            echo -e '\\033[31m[Error] Authentication failed or cancelled. Access denied.\\033[0m'\n");
+                cliStr.append("            exit 1\n");
+                cliStr.append("        fi\n");
+                cliStr.append("        echo -e '\\033[32m[Success] SD Card access granted.\\033[0m'\n");
+                cliStr.append("    fi\n\n");
+
+                // 1. Calculate native Android btime & uptime directly in Bash
+                cliStr.append("    up_sec=$(awk '{print $1}' /proc/uptime 2>/dev/null || echo 1000)\n");
+                cliStr.append("    now_sec=$(date +%s 2>/dev/null || echo 1716000000)\n");
+                cliStr.append("    btime=$(awk -v up=\"$up_sec\" -v now=\"$now_sec\" 'BEGIN {printf \"%d\", now - up}')\n");
+
+                // 2. Inject fresh data in-sync to bypass Android proc restrictions cleanly
+                cliStr.append("    mkdir -p \"$ROOTFS_DIR/proc\" 2>/dev/null\n");
+                cliStr.append("    echo \"$up_sec $up_sec\" > \"$ROOTFS_DIR/proc/.uptime\"\n");
+                cliStr.append("    echo \"cpu  1000 0 1000 10000 0 0 0 0 0 0\" > \"$ROOTFS_DIR/proc/.stat\"\n");
+                cliStr.append("    echo \"btime $btime\" >> \"$ROOTFS_DIR/proc/.stat\"\n");
+                cliStr.append("    echo \"Linux version 6.17.0-PRoot-IIAB (builder@iiab) (Android NDK) #1 SMP PREEMPT Thu Apr 30 20:00:00 UTC 2026\" > \"$ROOTFS_DIR/proc/.version\"\n");
+                cliStr.append("    echo \"0.00 0.00 0.00 1/1 1\" > \"$ROOTFS_DIR/proc/.loadavg\"\n");
+
+                // 3. Build the PRoot Command dynamically based on flags
+                cliStr.append("    PROOT_CMD=\"").append(libproot.getAbsolutePath()).append(" --sysvipc -0 --link2symlink -k 6.1.0 -r \\\"$ROOTFS_DIR\\\"\"\n");
+                cliStr.append("    PROOT_CMD=\"$PROOT_CMD -b /dev -b /proc -b /sys\"\n");
+                cliStr.append("    PROOT_CMD=\"$PROOT_CMD -b \\\"$ROOTFS_DIR/proc/.stat:/proc/stat\\\"\"\n");
+                cliStr.append("    PROOT_CMD=\"$PROOT_CMD -b \\\"$ROOTFS_DIR/proc/.uptime:/proc/uptime\\\"\"\n");
+                cliStr.append("    PROOT_CMD=\"$PROOT_CMD -b \\\"$ROOTFS_DIR/proc/.version:/proc/version\\\"\"\n");
+                cliStr.append("    PROOT_CMD=\"$PROOT_CMD -b \\\"$ROOTFS_DIR/proc/.loadavg:/proc/loadavg\\\"\"\n");
+                cliStr.append("    PROOT_CMD=\"$PROOT_CMD -b \\\"$PROOT_TMP_DIR\\\":/tmp\"\n");
+                cliStr.append("    PROOT_CMD=\"$PROOT_CMD -b \\\"$PROOT_TMP_DIR\\\":/dev/shm\"\n");
+
+                // Conditionally append risky mounts
+                cliStr.append("    if [ \"$MOUNT_SDCARD\" = true ]; then\n");
+                cliStr.append("        PROOT_CMD=\"$PROOT_CMD -b /storage/emulated/0:/sdcard\"\n");
+                cliStr.append("    fi\n");
+                cliStr.append("    if [ \"$MOUNT_BACKUPS\" = true ]; then\n");
+                cliStr.append("        PROOT_CMD=\"$PROOT_CMD -b \\\"$BACKUPS_DIR:/backups\\\"\"\n");
+                cliStr.append("    fi\n");
+
+                cliStr.append("    PROOT_CMD=\"$PROOT_CMD -w /root /usr/bin/env PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin TERM=xterm-256color /bin/bash -l -i\"\n");
+
+                // Execute!
+                cliStr.append("    echo -e '\\033[32mEntering Jail...\\033[0m'\n");
+                cliStr.append("    eval \"$PROOT_CMD\"\n");
+                cliStr.append("}\n\n");
+
+                // CLI arguments handling (Now loops to parse multiple flags)
+                cliStr.append("ACTION=\"login\"\n");
+                cliStr.append("while [ $# -gt 0 ]; do\n");
+                cliStr.append("  case \"$1\" in\n");
+                cliStr.append("    --reset)\n");
+                cliStr.append("      ACTION=\"reset\"\n");
+                cliStr.append("      shift\n");
+                cliStr.append("      ;;\n");
+                cliStr.append("    --backup-rootfs)\n");
+                cliStr.append("      ACTION=\"backup\"\n");
+                cliStr.append("      shift\n");
+                cliStr.append("      ;;\n");
+                cliStr.append("    --restore-rootfs)\n");
+                cliStr.append("      ACTION=\"restore\"\n");
+                cliStr.append("      shift\n");
+                cliStr.append("      ;;\n");
+                cliStr.append("    -l|--login)\n");
+                cliStr.append("      ACTION=\"login\"\n");
+                cliStr.append("      shift\n");
+                cliStr.append("      ;;\n");
+                cliStr.append("    --mount-sdcard)\n");
+                cliStr.append("      MOUNT_SDCARD=true\n");
+                cliStr.append("      shift\n");
+                cliStr.append("      ;;\n");
+                cliStr.append("    --mount-backups)\n");
+                cliStr.append("      MOUNT_BACKUPS=true\n");
+                cliStr.append("      shift\n");
+                cliStr.append("      ;;\n");
+                cliStr.append("    -h|--help)\n");
+                cliStr.append("      echo 'IIAB Controller CLI'\n");
+                cliStr.append("      echo 'Usage: iiab [COMMAND] [OPTIONS]'\n");
+                cliStr.append("      echo 'Commands:'\n");
+                cliStr.append("      echo '  -l, --login        Enter the IIAB Debian Environment (Default)'\n");
+                cliStr.append("      echo '  --reset            Wipe system and reinstall Debian base'\n");
+                cliStr.append("      echo '  --backup-rootfs    Trigger a system backup'\n");
+                cliStr.append("      echo '  --restore-rootfs   Trigger a system restore'\n");
+                cliStr.append("      echo 'Options for login:'\n");
+                cliStr.append("      echo '  --mount-backups    Mount the app backups directory at /backups'\n");
+                cliStr.append("      echo '  --mount-sdcard     Mount the Android SD Card at /sdcard (Requires Biometrics)'\n");
+                cliStr.append("      exit 0\n");
+                cliStr.append("      ;;\n");
+                cliStr.append("    *)\n");
+                cliStr.append("      # Unknown flag\n");
+                cliStr.append("      shift\n");
+                cliStr.append("      ;;\n");
+                cliStr.append("  esac\n");
+                cliStr.append("done\n\n");
+
+                // Execute based on ACTION
+                cliStr.append("if [ \"$ACTION\" = \"reset\" ]; then\n");
+                cliStr.append("    echo -e '\\033[31m[WARNING] This will DESTROY the current IIAB Debian installation!\\033[0m'\n");
+                cliStr.append("    echo -n 'Are you sure you want to reset the system? [y/N]: '\n");
+                cliStr.append("    read ans\n");
+                cliStr.append("    if [ \"$ans\" != \"y\" ] && [ \"$ans\" != \"Y\" ]; then echo 'Aborted.'; exit 0; fi\n\n");
+                cliStr.append("    DL_DIR=\"/storage/emulated/0/Download\"\n");
+                cliStr.append("    ARCH=$(uname -m)\n");
+                cliStr.append("    if [ \"$ARCH\" = \"aarch64\" ]; then TERMUX_ARCH=\"aarch64\"; else TERMUX_ARCH=\"arm\"; fi\n");
+                cliStr.append("    TARBALL=\"debian-trixie-${TERMUX_ARCH}-pd-v4.29.0.tar.xz\"\n");
+                cliStr.append("    URL=\"https://iiab.switnet.org/android/rootfs/proot-distro-v4.29.0/${TARBALL}\"\n");
+                cliStr.append("    CA_CERT=\"").append(caCertFile.getAbsolutePath()).append("\"\n\n");
+                cliStr.append("    echo -e '\\n\\033[36m[1/4] Wiping current environment...\\033[0m'\n");
+                cliStr.append("    rm -rf \"$ROOTFS_DIR\" 2>/dev/null || true\n");
+                cliStr.append("    mkdir -p \"$ROOTFS_DIR\"\n\n");
+                cliStr.append("    echo -e '\\033[36m[2/4] Downloading clean Debian base...\\033[0m'\n");
+                cliStr.append("    if [ ! -f \"$DL_DIR/$TARBALL\" ]; then\n");
+                cliStr.append("        aria2c --ca-certificate=\"$CA_CERT\" --dir=\"$DL_DIR\" --out=\"$TARBALL\" \"$URL\" || { echo -e '\\033[31mDownload failed!\\033[0m'; exit 1; }\n");
+                cliStr.append("    else\n");
+                cliStr.append("        echo 'Base tarball found in Downloads. Skipping download.'\n");
+                cliStr.append("    fi\n\n");
+                cliStr.append("    echo -e '\\033[36m[3/4] Extracting Debian (This may take a minute)...\\033[0m'\n");
+                cliStr.append("    tar --exclude='*/dev/*' --strip-components=1 -xJf \"$DL_DIR/$TARBALL\" -C \"$ROOTFS_DIR\" || true\n\n");
+                cliStr.append("    echo -e '\\033[36m[4/4] Bootstrapping IIAB environment via PRoot...\\033[0m'\n");
+                cliStr.append("    rm -f \"$ROOTFS_DIR/etc/resolv.conf\" 2>/dev/null || true\n");
+                cliStr.append("    echo 'nameserver 1.1.1.1' > \"$ROOTFS_DIR/etc/resolv.conf\"\n");
+                cliStr.append("    echo 'nameserver 8.8.8.8' >> \"$ROOTFS_DIR/etc/resolv.conf\"\n");
+                cliStr.append("    echo '127.0.0.1 localhost' > \"$ROOTFS_DIR/etc/hosts\"\n");
+                cliStr.append("    ").append(libproot.getAbsolutePath()).append(" --sysvipc -0 --link2symlink -k 6.1.0 -r \"$ROOTFS_DIR\" \\\n");
+                cliStr.append("      -b /dev -b /proc -b /sys -b /storage/emulated/0:/sdcard \\\n");
+                cliStr.append("      -b \"$PROOT_TMP_DIR\":/tmp \\\n");
+                cliStr.append("      -b \"$PROOT_TMP_DIR\":/dev/shm \\\n");
+                cliStr.append("      -w /root /bin/bash -c 'export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && export DEBIAN_FRONTEND=noninteractive && apt-get update && apt-get install -y curl ca-certificates sudo && curl -fsSL https://raw.githubusercontent.com/iiab/iiab-android/main/iiab-android -o /usr/local/sbin/iiab-android && chmod +x /usr/local/sbin/iiab-android && apt-get clean && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache'\n\n");
+                cliStr.append("    echo -e '\\n\\033[32m[SUCCESS] System is clean and ready!\\033[0m'\n");
+
+                cliStr.append("elif [ \"$ACTION\" = \"backup\" ]; then\n");
+                cliStr.append("    echo -e '\\033[33m[iiab]\\033[0m Triggering backup in UI...'\n");
+                cliStr.append("    am broadcast -a org.iiab.ACTION_BACKUP_ROOTFS -p org.iiab.controller >/dev/null 2>&1\n");
+                cliStr.append("elif [ \"$ACTION\" = \"restore\" ]; then\n");
+                cliStr.append("    echo -e '\\033[33m[iiab]\\033[0m Triggering restore in UI...'\n");
+                cliStr.append("    am broadcast -a org.iiab.ACTION_RESTORE_ROOTFS -p org.iiab.controller >/dev/null 2>&1\n");
+                cliStr.append("else\n");
+                cliStr.append("    if [ ! -f \"$ROOTFS_DIR/usr/bin/env\" ]; then\n");
+                cliStr.append("        echo -e \"\\033[1;31m[ERROR]\\033[0m IIAB-Debian is not installed or rootfs is missing!\"\n");
+                cliStr.append("        exit 1\n");
+                cliStr.append("    fi\n");
+                cliStr.append("    do_login\n");
+                cliStr.append("fi\n");
+
+                java.io.FileOutputStream fosCli = new java.io.FileOutputStream(iiabCliScript);
+                fosCli.write(cliStr.toString().getBytes());
+                fosCli.close();
+                iiabCliScript.setExecutable(true);
+
             } catch (Exception e) {
-                Log.e(TAG, "Failed to create iiab-login script", e);
+                Log.e(TAG, "Failed to create host scripts", e);
             }
+            // =========================================================
+            // GENERATE MOTD (.profile)
+            // =========================================================
+            File profileFile = new File(workingDirectory, ".profile");
+            try {
+                java.io.FileOutputStream fosProfile = new java.io.FileOutputStream(profileFile);
+                StringBuilder profile = new StringBuilder();
+
+                // 1. Header (ASCII Art)
+                profile.append("clear\n");
+                profile.append("echo -e \"\\033[1;36m\"\n");
+                profile.append("echo \"  ___ ___   _   ___             _    \"\n");
+                profile.append("echo \" |_ _|_ _| /_\\ | _ )  ___ ___  /_\\   \"\n");
+                profile.append("echo \"  | | | | / _ \\| _ \\ |___/ _ \\/ _ \\  \"\n");
+                profile.append("echo \" |___|___/_/ \\_\\___/     \\___/_/ \\_\\ \"\n");
+                profile.append("echo -e \"\\033[0m\"\n");
+                profile.append("echo -e \"\\033[1;32m  C O N T R O L L E R   T E R M I N A L\\033[0m\\n\"\n");
+
+                // 2. The Mission / Welcome
+                profile.append("echo -e \"Welcome to the native \\033[1;36mIIAB on Android Host Shell\\033[0m.\"\n");
+                profile.append("echo \"\"\n");
+                profile.append("echo -e \"\\033[1mInternet-in-a-Box (IIAB) on Android\\033[0m will allow\"\n");
+                profile.append("echo \"millions of people worldwide to build their own\"\n");
+                profile.append("echo \"family libraries, inside their own phones!\"\n");
+                profile.append("echo \"\"\n");
+                profile.append("echo \"This terminal helps you build and transform\"\n");
+                profile.append("echo \"your Android device as an Offline Learning\"\n");
+                profile.append("echo \"Environment (Internet-in-a-Box).\"\n");
+                profile.append("echo \"\"\n");
+
+                // 3. Context & Warnings
+                profile.append("echo -e \"\\033[1;33mNOTE:\\033[0m You are currently OUTSIDE the IIAB-Debian\"\n");
+                profile.append("echo \"environment.\"\n");
+                profile.append("echo \"Package managers (apt/pkg) are NOT available here.\"\n");
+                profile.append("echo \"To install packages and manage the server, login\"\n");
+                profile.append("echo \"to IIAB-Debian using the command below:\"\n");
+                profile.append("echo \"\"\n");
+
+                // 4. Helpful Commands
+                profile.append("echo -e \"  \\033[1;32miiab --login\\033[0m  Login to IIAB-Debian PRoot (Default)\"\n");
+                profile.append("echo -e \"  \\033[1;32miiab --help\\033[0m   Show orchestrator commands\"\n");
+                profile.append("echo \"\"\n");
+
+                // 5. Links and Resources
+                profile.append("echo \"Online resources:\"\n");
+                profile.append("echo -e \"\\033[1;33m*\\033[0m 🔗: \\033[1mhttps://internet-in-a-box.org\\033[0m\"\n");
+                profile.append("echo -e \"\\033[1;33m*\\033[0m 📖: \\033[1mhttps://github.com/iiab/iiab-android\\033[0m\"\n");
+                profile.append("echo -e \"\\033[1;33m*\\033[0m 🐛: \\033[1mhttps://github.com/iiab/iiab-android/issues\\033[0m\"\n");
+                profile.append("echo \"\"\n");
+
+                // 6. Custom Prompt (PS1)
+                profile.append("export PS1=\"\\033[1;36m[Host]\\033[0m:~\\$ \"\n");
+
+                fosProfile.write(profile.toString().getBytes());
+                fosProfile.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to create .profile MOTD", e);
+            }
+
+            // =========================================================
+            // GENERATE MKSHRC (To defeat Android's default prompt override)
+            // =========================================================
+            File mkshrcFile = new File(workingDirectory, ".mkshrc");
+            try {
+                java.io.FileOutputStream fosMkshrc = new java.io.FileOutputStream(mkshrcFile);
+                StringBuilder mkshrc = new StringBuilder();
+                // 1. Load system defaults first (crucial to keep backspace and history working)
+                mkshrc.append("[ -f /system/etc/mkshrc ] && . /system/etc/mkshrc\n");
+                // 2. Crush the system prompt with our custom one
+                mkshrc.append("export PS1=\"~$ \"\n");
+                fosMkshrc.write(mkshrc.toString().getBytes());
+                fosMkshrc.close();
+            } catch (Exception e) {
+                Log.e(TAG, "Failed to create .mkshrc", e);
+            }
+
             // Minimal, bulletproof environment variables
             String[] env = new String[]{
                     "TERM=xterm-256color",
                     "HOME=" + workingDirectory.getAbsolutePath(),
+                    "ENV=" + mkshrcFile.getAbsolutePath(),
                     // Include the system bins and our W^X fake prefix bins
                     "PATH=/sbin:/system/sbin:/system/bin:/system/xbin:" + workingDirectory.getAbsolutePath() + "/usr/bin"
             };
@@ -1291,6 +1764,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     client
             );
             terminalView.setTextSize((int) currentTerminalFontSize);
+            // Add to our multi-session list
+            terminalSessionsList.add(terminalSession);
+            if (sessionsAdapter != null) {
+                runOnUiThread(() -> sessionsAdapter.notifyDataSetChanged());
+            }
 
             // --- VIEW CLIENT (Touches, Zoom & Keyboard) ---
             terminalView.setTerminalViewClient(new com.termux.view.TerminalViewClient() {
@@ -1310,6 +1788,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 public void onSingleTapUp(android.view.MotionEvent e) {
                     // If the terminal process is dead (e.g., has crashed or shown "[Process completed]"),
                     // a single tap on the black screen hides the panel and nullifies the session.
+                    // If the CURRENT terminal process is dead, close the panel and kill ALL sessions.
                     if (terminalSession != null && !terminalSession.isRunning()) {
                         runOnUiThread(() -> {
                             View bottomSheet = findViewById(R.id.terminal_bottom_sheet);
@@ -1318,8 +1797,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                         com.google.android.material.bottomsheet.BottomSheetBehavior.from(bottomSheet);
                                 behavior.setState(com.google.android.material.bottomsheet.BottomSheetBehavior.STATE_HIDDEN);
                             }
-                            // Nullify the session to ensure a clean spawn next time.
+
+                            // The Guillotine: Kill all active sessions securely
+                            if (terminalSessionsList != null) {
+                                for (com.termux.terminal.TerminalSession s : terminalSessionsList) {
+                                    s.finishIfRunning();
+                                }
+                                terminalSessionsList.clear();
+                            }
                             terminalSession = null;
+                            if (sessionsAdapter != null) sessionsAdapter.notifyDataSetChanged();
                         });
                         return; // Event consumed.
                     }
@@ -1468,18 +1955,40 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                                     if (terminalSession != null) {
                                         String key = buttonInfo.getKey();
                                         switch (key) {
-                                            case "ESC": terminalSession.write("\033"); break;
-                                            case "TAB": terminalSession.write("\t"); break;
-                                            case "UP": terminalSession.write("\033[A"); break;
-                                            case "DOWN": terminalSession.write("\033[B"); break;
-                                            case "RIGHT": terminalSession.write("\033[C"); break;
-                                            case "LEFT": terminalSession.write("\033[D"); break;
+                                            case "ESC":
+                                                terminalSession.write("\033");
+                                                break;
+                                            case "TAB":
+                                                terminalSession.write("\t");
+                                                break;
+                                            case "UP":
+                                                terminalSession.write("\033[A");
+                                                break;
+                                            case "DOWN":
+                                                terminalSession.write("\033[B");
+                                                break;
+                                            case "RIGHT":
+                                                terminalSession.write("\033[C");
+                                                break;
+                                            case "LEFT":
+                                                terminalSession.write("\033[D");
+                                                break;
                                             // --- NEW ORIGINAL TERMUX KEYS ---
-                                            case "HOME": terminalSession.write("\033[1~"); break;
-                                            case "END": terminalSession.write("\033[4~"); break;
-                                            case "PGUP": terminalSession.write("\033[5~"); break;
-                                            case "PGDN": terminalSession.write("\033[6~"); break;
-                                            default: terminalSession.write(key); break;
+                                            case "HOME":
+                                                terminalSession.write("\033[1~");
+                                                break;
+                                            case "END":
+                                                terminalSession.write("\033[4~");
+                                                break;
+                                            case "PGUP":
+                                                terminalSession.write("\033[5~");
+                                                break;
+                                            case "PGDN":
+                                                terminalSession.write("\033[6~");
+                                                break;
+                                            default:
+                                                terminalSession.write(key);
+                                                break;
                                         }
                                     }
                                 }
@@ -1494,9 +2003,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                         Log.e(TAG, "Failed to initialize Native ExtraKeys", e);
                     }
                 }
-            }); // <-- Faltaba cerrar el post() y el lambda
+            });
 
-        } catch (Exception e) { // <-- Faltaba el catch del try principal de la línea 1232
+        } catch (Exception e) {
             Log.e(TAG, "Failed to start Terminal Session", e);
         }
     }
@@ -1511,6 +2020,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             }
         }
     }
+
     // WATCHDOG PROTECTION UTILS
     public void enableSystemProtection() {
         Intent intent = new Intent(this, WatchdogService.class);

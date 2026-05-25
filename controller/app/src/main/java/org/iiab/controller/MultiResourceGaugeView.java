@@ -87,7 +87,8 @@ public class MultiResourceGaugeView extends View {
             Typeface orbitron = androidx.core.content.res.ResourcesCompat.getFont(context, R.font.orbitron);
             percentPaint.setTypeface(orbitron);
             valuePaint.setTypeface(orbitron);
-        } catch (Exception e) {}
+        } catch (Exception e) {
+        }
     }
 
     @Override
@@ -158,7 +159,7 @@ public class MultiResourceGaugeView extends View {
         this.titleText = title;
         this.centerText = centerTxt;
         this.bottomText = bottomTxt;
-        
+
         // Apply color and glow to the central text
         this.percentPaint.setColor(centerTxtColor);
 

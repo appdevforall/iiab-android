@@ -6,11 +6,8 @@
 
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
-    <color name="lightGray66">#AAAAAA</color>
     <color name="background_dark">#121212</color>
 
-    <color name="btn_watchdog_on">#D32F2F</color>
-    <color name="btn_watchdog_off">#1976D2</color>
     <color name="btn_vpn_on">#C62828</color>
     <color name="btn_vpn_off">#2E7D32</color>
     <color name="btn_explore_ready">#F57C00</color>
@@ -22,20 +19,14 @@
     <color name="section_body_bg_light">#F5F5F5</color>
     <color name="section_body_bg_dark">#1A1A1A</color>
     <color name="text_warning">#FF9800</color>
-    <color name="text_muted">#888888</color>
 
     <color name="divider_color">#E0E0E0</color>
     <color name="btn_danger">#D32F2F</color>
     <color name="btn_success">#388E3C</color>
 
-    <color name="bar_storage">#4DB6AC</color>
-    <color name="bar_ram">#FFB300</color>
-    <color name="bar_swap">#7986CB</color>
-    <color name="bar_background">#333333</color>
     <color name="dash_bar_storage">#4DB6AC</color>
     <color name="dash_bar_ram">#FFB300</color>
     <color name="dash_bar_swap">#7986CB</color>
-    <color name="dash_badge_online">#2E7D32</color>
     <color name="dash_bar_bg">#333333</color>
     <color name="dash_bg_main">#F4F5F7</color>
     <color name="dash_bg_card">#FFFFFF</color>

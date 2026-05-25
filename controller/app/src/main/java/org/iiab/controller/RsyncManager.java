@@ -32,7 +32,9 @@ public class RsyncManager {
 
     public interface SyncListener {
         void onProgress(int percentage, String speed, String eta, String currentFile);
+
         void onComplete(String message);
+
         void onError(String error);
     }
 
@@ -165,13 +167,13 @@ public class RsyncManager {
                             String eta = matcher.group(3);
                             String finalFile = lastFile;
                             mainHandler.post(() -> listener.onProgress(percent, speed, eta, finalFile));
-                        } catch (Exception ignored) {}
+                        } catch (Exception ignored) {
+                        }
                     }
                     // PHASE 1 FIX: Strict match for actual rsync errors, ignoring files named "error"
                     else if (line.contains("@ERROR:") || line.contains("rsync error:")) {
                         Log.e(TAG, "[Rsync Output Error] " + line);
-                    }
-                    else if (!line.trim().isEmpty() && !line.startsWith("sending incremental file list") && !line.contains("bytes/sec")) {
+                    } else if (!line.trim().isEmpty() && !line.startsWith("sending incremental file list") && !line.contains("bytes/sec")) {
                         lastFile = line.trim();
                     }
                 }
@@ -201,6 +203,7 @@ public class RsyncManager {
 
     public interface DryRunListener {
         void onCalculated(long bytesToTransfer);
+
         void onError(String error);
     }
 
@@ -214,7 +217,8 @@ public class RsyncManager {
                 File nativeLibDir = new File(context.getApplicationInfo().nativeLibraryDir);
                 File rsyncBin = new File(nativeLibDir, "librsync.so");
 
-                if (!rsyncBin.exists()) throw new Exception(context.getString(R.string.rsync_error_binary_missing));
+                if (!rsyncBin.exists())
+                    throw new Exception(context.getString(R.string.rsync_error_binary_missing));
 
                 File passFile = new File(context.getCacheDir(), "rsync_client.pass");
                 writeTextToFile(passFile, pass);
@@ -283,7 +287,8 @@ public class RsyncManager {
         if (rsyncProcess != null) {
             try {
                 rsyncProcess.destroy();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 

@@ -15,8 +15,8 @@ android {
         targetSdk 28
 
         // 2. Version Control (OTA)
-        versionCode 49
-        versionName "v0.3.5beta"
+        versionCode 50
+        versionName "v0.3.6beta"
         setProperty("archivesBaseName", "$applicationId-$versionName")
 
         // 3. Supported architectures (NDK) // do we need x86*?
@@ -104,3 +104,42 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
 }
+
+// =========================================================
+// IIAB SUPPLY CHAIN HOOK (SYNC ARTIFACTS)
+// =========================================================
+task syncNativeArtifacts {
+    description = 'Syncs native binaries to jniLibs and configuration to assets from the external factory'
+
+    def factoryDistDir = file("../../tools/proot-builder/dist")
+    def jniLibsDir = file("src/main/jniLibs")
+    def assetsDir = file("src/main/assets")
+
+    doLast {
+        if (!factoryDistDir.exists()) {
+            println ">> [IIAB Hook] External dist folder not found. Relying on existing files in src/main."
+            return
+        }
+
+        // 1. Route the certificate and SBOM manifest to assets
+        copy {
+            from factoryDistDir
+            into assetsDir
+            include '*.pem'
+            include '*.json'
+        }
+
+        // 2. Route the native binaries (.so) to jniLibs
+        def factoryJni = new File(factoryDistDir, "jniLibs")
+        if (factoryJni.exists()) {
+            copy {
+                from factoryJni
+                into jniLibsDir
+            }
+        }
+
+        println ">> [IIAB Hook] Successfully synced all native artifacts from the factory to src/main!"
+    }
+}
+
+preBuild.dependsOn syncNativeArtifacts

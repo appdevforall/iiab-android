@@ -13,13 +13,6 @@
         <item name="sectionHeaderBackground">@color/section_header_bg</item>
     </style>
 
-    <style name="Theme.TransparentQR" parent="Theme.AppCompat.NoActionBar">
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-        <item name="android:windowNoTitle">true</item>
-        <item name="android:backgroundDimEnabled">false</item>
-    </style>
-
     <style name="PurpleSwitchTheme" parent="">
         <item name="colorControlActivated">#8A2BE2</item>
     </style>

@@ -1,7 +1,7 @@
 #!/bin/bash
 # -----------------------------------------------------------------------------
 # Static Builder for Android (Multi-Architecture)
-# Compiles self-contained static binaries for PRoot, Aria2c, Tar, and Gzip
+# Compiles self-contained static binaries for PRoot, Aria2c, Tar, Gzip, XZ, Rsync, Nano, and Less
 # -----------------------------------------------------------------------------
 set -e
 
@@ -13,6 +13,9 @@ REBUILD_ARIA2=0
 REBUILD_TAR=0
 REBUILD_GZIP=0
 REBUILD_RSYNC=0
+REBUILD_XZ=0
+REBUILD_NANO=0
+REBUILD_LESS=0
 
 for arg in "$@"; do
     case $arg in
@@ -22,31 +25,22 @@ for arg in "$@"; do
             REBUILD_TAR=1
             REBUILD_GZIP=1
             REBUILD_RSYNC=1
+            REBUILD_XZ=1
+            REBUILD_NANO=1
+            REBUILD_LESS=1
             shift
             ;;
-        --rebuild-proot)
-            REBUILD_PROOT=1
-            shift
-            ;;
-        --rebuild-aria2)
-            REBUILD_ARIA2=1
-            shift
-            ;;
-        --rebuild-tar)
-            REBUILD_TAR=1
-            shift
-            ;;
-        --rebuild-gzip)
-            REBUILD_GZIP=1
-            shift
-            ;;
-        --rebuild-rsync)
-            REBUILD_RSYNC=1
-            shift
-            ;;
+        --rebuild-proot) REBUILD_PROOT=1; shift ;;
+        --rebuild-aria2) REBUILD_ARIA2=1; shift ;;
+        --rebuild-tar)   REBUILD_TAR=1; shift ;;
+        --rebuild-gzip)  REBUILD_GZIP=1; shift ;;
+        --rebuild-rsync) REBUILD_RSYNC=1; shift ;;
+        --rebuild-xz)    REBUILD_XZ=1; shift ;;
+        --rebuild-nano)  REBUILD_NANO=1; shift ;;
+        --rebuild-less)  REBUILD_LESS=1; shift ;;
         *)
             echo "Unknown argument: $arg"
-            echo "Usage: $0 [--rebuild-all | --rebuild-proot | --rebuild-aria2 | --rebuild-tar | --rebuild-gzip | --rebuild-all]"
+            echo "Usage: $0 [--rebuild-all | --rebuild-nano | --rebuild-less ...]"
             exit 1
             ;;
     esac
@@ -79,6 +73,10 @@ fi
 echo "[3/4] Patching build scripts for static compilation..."
 cd "$TERMUX_REPO"
 
+# --- NCURSES PATCH ---
+# Forces ncurses to inject the database of these terminals directly into the binary
+echo 'TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --with-fallbacks=xterm-256color,xterm,linux,vt100"' >> packages/ncurses/build.sh
+
 # --- PROOT PATCH ---
 sed -i 's/"libtalloc"/"libtalloc-static, libtalloc"/' packages/proot/build.sh
 sed -i '/termux_step_pre_configure()/a \tLDFLAGS+=" -static"\n\tLDFLAGS+=" -ffunction-sections -fdata-sections -Wl,--gc-sections"' packages/proot/build.sh
@@ -103,7 +101,11 @@ termux_step_pre_configure() {
 
     cd $CURRENT_DIR
 
-    echo ">> [IIAB] Lobotomizing OpenSSL Legacy Provider crash..."
+    echo ">> [IIAB] Injecting Static Default Provider and Lobotomizing Legacy crash..."
+    # 1. We inject the static OpenSSL function into C++ so that it doesn't try to load default.so
+    sed -i 's|defProv_ = OSSL_PROVIDER_load(NULL, "default");|extern "C" OSSL_provider_init_fn ossl_default_provider_init;\n    OSSL_PROVIDER_add_builtin(NULL, "default", ossl_default_provider_init);\n    defProv_ = OSSL_PROVIDER_load(NULL, "default");|g' $TERMUX_PKG_SRCDIR/src/Platform.cc
+    
+    # 2. We ignore the failures of the legacy provider (not needed for modern certificates)
     sed -i 's/throw DL_ABORT_EX("OSSL_PROVIDER_load.*//g' $TERMUX_PKG_SRCDIR/src/Platform.cc
 
     echo ">> [IIAB] Scorched Earth Tactic (Preserving Expat)..."
@@ -125,39 +127,46 @@ termux_step_pre_configure() {
 EOF
 
 # --- TAR PATCH ---
-# Inject dependencies tricking the Python script with sed
 sed -i -E 's/libandroid-glob/libandroid-glob-static, libandroid-glob/g' packages/tar/build.sh
 sed -i -E 's/libiconv/libiconv-static, libiconv/g' packages/tar/build.sh
-
-# Force static linking for for GNU Tar
 cat << 'EOF' >> packages/tar/build.sh
 termux_step_pre_configure() {
     echo ">> Applying Static flags for GNU Tar..."
-
-    # Destroy dynamic libs to force .a usage
     rm -f $TERMUX_PREFIX/lib/libandroid-glob.so*
     rm -f $TERMUX_PREFIX/lib/libiconv.so*
 
-    # IIAB Static Build, Clang 16 bypass and Duplicate Tolerance
     LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections -Wl,--allow-multiple-definition"
     CFLAGS+=" -Wno-error=implicit-function-declaration -Dlchmod=chmod"
     export gl_cv_func_lchown_works=yes
-
-    # Y2038 Bug bypass for 32-bit processors
     TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --disable-year2038"
 }
 EOF
 
 # --- GZIP PATCH ---
-# Force static linking for GNU Gzip
 cat << 'EOF' >> packages/gzip/build.sh
 termux_step_pre_configure() {
     echo ">> Applying Static flags for GNU Gzip..."
     LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
-
-    # Force Gnulib to compile its own qsort_r by denying the system's one
     export ac_cv_func_qsort_r=no
     export gl_cv_func_qsort_r=no
+}
+EOF
+
+# --- XZ-UTILS PATCH ---
+XZ_DIR=$(grep -lr "https://tukaani.org/xz/" packages/ | grep build.sh | head -n 1 | xargs dirname)
+if [ -z "$XZ_DIR" ]; then echo ">> ERROR: Could not locate xz-utils in packages directory!"; exit 1; fi
+XZ_PKG_NAME=$(basename "$XZ_DIR")
+
+sed -i 's/--disable-static//g' "$XZ_DIR/build.sh" || true
+cat << 'EOF' >> "$XZ_DIR/build.sh"
+termux_step_pre_configure() {
+    echo ">> Applying Static flags for XZ Utils..."
+    LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
+    TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --enable-static --disable-shared"
+}
+termux_step_post_massage() {
+    echo ">> Bypassing SOVERSION guard..."
+    TERMUX_PKG_SOVERSION=""
 }
 EOF
 
@@ -165,24 +174,49 @@ EOF
 cat << 'EOF' >> packages/rsync/build.sh
 termux_step_pre_configure() {
     echo ">> Applying Static flags for Rsync..."
-    
-    # temporal: Escondemos los .so en lugar de borrarlos
     mkdir -p $TERMUX_PREFIX/lib/hidden_so
     mv $TERMUX_PREFIX/lib/libpopt.so* $TERMUX_PREFIX/lib/hidden_so/ 2>/dev/null || true
     mv $TERMUX_PREFIX/lib/libiconv.so* $TERMUX_PREFIX/lib/hidden_so/ 2>/dev/null || true
 
     LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
-    
-    # temporal: Desactivamos compresiones modernas
     TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --disable-lz4 --disable-zstd --disable-xxhash --disable-openssl"
 
-    # temporal: Mentimos al compilador para evitar los errores de cabeceras de Android (Bionic libc)
     export ac_cv_func_lchmod=no
     export ac_cv_func_lutimes=no
 }
-
 termux_step_post_make() {
-    # temporal: Restauramos las librerías dinámicas a su lugar original
+    mv $TERMUX_PREFIX/lib/hidden_so/* $TERMUX_PREFIX/lib/ 2>/dev/null || true
+    rmdir $TERMUX_PREFIX/lib/hidden_so 2>/dev/null || true
+}
+EOF
+
+# --- NANO PATCH ---
+cat << 'EOF' >> packages/nano/build.sh
+termux_step_pre_configure() {
+    echo ">> Applying Static flags for Nano..."
+    mkdir -p $TERMUX_PREFIX/lib/hidden_so
+    mv $TERMUX_PREFIX/lib/libncurses*.so* $TERMUX_PREFIX/lib/hidden_so/ 2>/dev/null || true
+    mv $TERMUX_PREFIX/lib/libtinfo*.so* $TERMUX_PREFIX/lib/hidden_so/ 2>/dev/null || true
+
+    LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
+}
+termux_step_post_make() {
+    mv $TERMUX_PREFIX/lib/hidden_so/* $TERMUX_PREFIX/lib/ 2>/dev/null || true
+    rmdir $TERMUX_PREFIX/lib/hidden_so 2>/dev/null || true
+}
+EOF
+
+# --- LESS PATCH ---
+cat << 'EOF' >> packages/less/build.sh
+termux_step_pre_configure() {
+    echo ">> Applying Static flags for Less..."
+    mkdir -p $TERMUX_PREFIX/lib/hidden_so
+    mv $TERMUX_PREFIX/lib/libncurses*.so* $TERMUX_PREFIX/lib/hidden_so/ 2>/dev/null || true
+    mv $TERMUX_PREFIX/lib/libtinfo*.so* $TERMUX_PREFIX/lib/hidden_so/ 2>/dev/null || true
+
+    LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
+}
+termux_step_post_make() {
     mv $TERMUX_PREFIX/lib/hidden_so/* $TERMUX_PREFIX/lib/ 2>/dev/null || true
     rmdir $TERMUX_PREFIX/lib/hidden_so 2>/dev/null || true
 }
@@ -201,11 +235,9 @@ for mapping in "${ARCHS[@]}"; do
     echo "BUILDING STATIC BINARIES FOR: $ANDROID_ARCH ($TERMUX_ARCH)"
     echo "==================================================================="
 
-    # -------------------------------------------------------------------------
     # 1. COMPILE PROOT
-    # -------------------------------------------------------------------------
     if [ -f "$OUT_DIR/libproot.so" ] && [ "$REBUILD_PROOT" -eq 0 ]; then
-        echo ">> libproot.so already exists. Skipping. Use --rebuild-proot to force."
+        echo ">> libproot.so already exists. Skipping."
     else
         echo ">> Building PRoot..."
         FORCE_FLAG=$([ "$REBUILD_PROOT" -eq 1 ] && echo "-f" || echo "")
@@ -216,27 +248,19 @@ for mapping in "${ARCHS[@]}"; do
         DEB_DIR="$TERMUX_REPO/output"
         if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
-		# Extract PRoot and its Loaders!
-		rm -rf data control
-		ar x "$DEB_DIR/proot_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
-		OUT_DIR="$WORK_DIR/dist/jniLibs/$ANDROID_ARCH"
-		mkdir -p "$OUT_DIR"
-
-		cp data/data/com.termux/files/usr/bin/proot "$OUT_DIR/libproot.so"
-		cp data/data/com.termux/files/usr/libexec/proot/loader "$OUT_DIR/libproot-loader.so"
-
-		# 32-bit loader (required for some architectures)
-		if [ -f data/data/com.termux/files/usr/libexec/proot/loader32 ]; then
-			cp data/data/com.termux/files/usr/libexec/proot/loader32 "$OUT_DIR/libproot-loader32.so"
-		fi
-		cd "$TERMUX_REPO"
+        rm -rf data control
+        ar x "$DEB_DIR/proot_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
+        cp data/data/com.termux/files/usr/bin/proot "$OUT_DIR/libproot.so"
+        cp data/data/com.termux/files/usr/libexec/proot/loader "$OUT_DIR/libproot-loader.so"
+        if [ -f data/data/com.termux/files/usr/libexec/proot/loader32 ]; then
+            cp data/data/com.termux/files/usr/libexec/proot/loader32 "$OUT_DIR/libproot-loader32.so"
+        fi
+        cd "$TERMUX_REPO"
     fi
 
-    # -------------------------------------------------------------------------
     # 2. COMPILE ARIA2
-    # -------------------------------------------------------------------------
     if [ -f "$OUT_DIR/libaria2c.so" ] && [ "$REBUILD_ARIA2" -eq 0 ]; then
-        echo ">> libaria2c.so already exists. Skipping. Use --rebuild-aria2 to force."
+        echo ">> libaria2c.so already exists. Skipping."
     else
         echo ">> Building Aria2c..."
         FORCE_FLAG=$([ "$REBUILD_ARIA2" -eq 1 ] && echo "-f" || echo "")
@@ -244,8 +268,7 @@ for mapping in "${ARCHS[@]}"; do
 
         EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_aria2"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
-        DEB_DIR="$TERMUX_REPO/output"
-        if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
+        DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
         rm -rf data control
         ar x "$DEB_DIR/aria2_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
@@ -253,11 +276,9 @@ for mapping in "${ARCHS[@]}"; do
         cd "$TERMUX_REPO"
     fi
 
-    # -------------------------------------------------------------------------
     # 3. COMPILE TAR
-    # -------------------------------------------------------------------------
     if [ -f "$OUT_DIR/libtar.so" ] && [ "$REBUILD_TAR" -eq 0 ]; then
-        echo ">> libtar.so already exists. Skipping. Use --rebuild-tar to force."
+        echo ">> libtar.so already exists. Skipping."
     else
         echo ">> Building GNU Tar..."
         FORCE_FLAG=$([ "$REBUILD_TAR" -eq 1 ] && echo "-f" || echo "")
@@ -265,8 +286,7 @@ for mapping in "${ARCHS[@]}"; do
 
         EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_tar"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
-        DEB_DIR="$TERMUX_REPO/output"
-        if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
+        DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
         rm -rf data control
         ar x "$DEB_DIR/tar_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
@@ -274,11 +294,9 @@ for mapping in "${ARCHS[@]}"; do
         cd "$TERMUX_REPO"
     fi
 
-    # -------------------------------------------------------------------------
     # 4. COMPILE GZIP
-    # -------------------------------------------------------------------------
     if [ -f "$OUT_DIR/libgzip.so" ] && [ "$REBUILD_GZIP" -eq 0 ]; then
-        echo ">> libgzip.so already exists. Skipping. Use --rebuild-gzip to force."
+        echo ">> libgzip.so already exists. Skipping."
     else
         echo ">> Building GNU Gzip..."
         FORCE_FLAG=$([ "$REBUILD_GZIP" -eq 1 ] && echo "-f" || echo "")
@@ -286,48 +304,155 @@ for mapping in "${ARCHS[@]}"; do
 
         EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_gzip"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
-        DEB_DIR="$TERMUX_REPO/output"
-        if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
+        DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
         rm -rf data control
         ar x "$DEB_DIR/gzip_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
-        # Ensure we package it as .so so Android allows its execution
         cp data/data/com.termux/files/usr/bin/gzip "$OUT_DIR/libgzip.so"
         cd "$TERMUX_REPO"
     fi
 
-    # -------------------------------------------------------------------------
-    # 5. COMPILE RSYNC
-    # -------------------------------------------------------------------------
+    # 5. COMPILE XZ UTILS
+    if [ -f "$OUT_DIR/libxz.so" ] && [ "$REBUILD_XZ" -eq 0 ]; then
+        echo ">> libxz.so already exists. Skipping."
+    else
+        echo ">> Building XZ Utils ($XZ_PKG_NAME)..."
+        FORCE_FLAG=$([ "$REBUILD_XZ" -eq 1 ] && echo "-f" || echo "")
+        ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" "$XZ_PKG_NAME"
+
+        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_xz"
+        mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
+        DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
+
+        rm -rf data control
+        ar x "$DEB_DIR/xz-utils_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
+        cp data/data/com.termux/files/usr/bin/xz "$OUT_DIR/libxz.so"
+        cd "$TERMUX_REPO"
+    fi
+
+    # 6. COMPILE RSYNC
     if [ -f "$OUT_DIR/librsync.so" ] && [ "$REBUILD_RSYNC" -eq 0 ]; then
-        echo ">> librsync.so already exists. Skipping. Use --rebuild-rsync to force."
+        echo ">> librsync.so already exists. Skipping."
     else
         echo ">> Healing sysroot and Building Rsync..."
         FORCE_FLAG=$([ "$REBUILD_RSYNC" -eq 1 ] && echo "-f" || echo "")
-
-        # temporal: Forzamos la recompilación de las librerías que rompimos antes para sanar el entorno
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" libiconv libpopt
-
-        # Ahora sí, compilamos rsync
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" rsync
 
         EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_rsync"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
-        DEB_DIR="$TERMUX_REPO/output"
-        if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
+        DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
         rm -rf data control
         ar x "$DEB_DIR/rsync_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
-
-        # temporal: Copiamos el binario y lo renombramos a .so
         cp data/data/com.termux/files/usr/bin/rsync "$OUT_DIR/librsync.so"
+        cd "$TERMUX_REPO"
+    fi
+
+    # -------------------------------------------------------------------------
+    # 7. COMPILE NANO
+    # -------------------------------------------------------------------------
+    if [ -f "$OUT_DIR/libnano.so" ] && [ "$REBUILD_NANO" -eq 0 ]; then
+        echo ">> libnano.so already exists. Skipping. Use --rebuild-nano to force."
+    else
+        echo ">> Healing sysroot and Building Nano..."
+        FORCE_FLAG=$([ "$REBUILD_NANO" -eq 1 ] && echo "-f" || echo "")
+        # Ncurses must be explicitly built first so we get the .a files
+        ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" ncurses
+        ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" nano
+
+        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_nano"
+        mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
+        DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
+
+        rm -rf data control
+        ar x "$DEB_DIR/nano_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
+        cp data/data/com.termux/files/usr/bin/nano "$OUT_DIR/libnano.so"
+        cd "$TERMUX_REPO"
+    fi
+
+    # -------------------------------------------------------------------------
+    # 8. COMPILE LESS
+    # -------------------------------------------------------------------------
+    if [ -f "$OUT_DIR/libless.so" ] && [ "$REBUILD_LESS" -eq 0 ]; then
+        echo ">> libless.so already exists. Skipping. Use --rebuild-less to force."
+    else
+        echo ">> Healing sysroot and Building Less..."
+        FORCE_FLAG=$([ "$REBUILD_LESS" -eq 1 ] && echo "-f" || echo "")
+        # Dependencia a ncurses resuelta arriba, compilamos directo
+        ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" less
+
+        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_less"
+        mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
+        DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
+
+        rm -rf data control
+        ar x "$DEB_DIR/less_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
+        cp data/data/com.termux/files/usr/bin/less "$OUT_DIR/libless.so"
         cd "$TERMUX_REPO"
     fi
 
     echo ">> Done: $ANDROID_ARCH completed."
 done
 
+# ===================================================================
+# SUPPLY CHAIN SECURITY & AUTOMATION (SBOM)
+# ===================================================================
+echo ">> [IIAB] Generating Supply Chain Manifest and Certificates..."
+
+ARTIFACTS_DIR="$WORK_DIR/dist"
+echo "   -> Fetching latest cacert.pem..."
+curl -sS -o "$ARTIFACTS_DIR/cacert.pem" https://curl.se/ca/cacert.pem
+
+MANIFEST_FILE="$ARTIFACTS_DIR/ninja_manifest.json"
+echo "   -> Generating $MANIFEST_FILE..."
+
+cat <<EOF > "$MANIFEST_FILE"
+{
+  "build_date": "$(date -u +'%Y-%m-%dT%H:%M:%SZ')",
+  "builder_info": "IIAB build_static.sh",
+  "binaries": {
+EOF
+
+FIRST_ARCH=1
+for arch_dir in "$WORK_DIR/dist/jniLibs"/*; do
+    if [ ! -d "$arch_dir" ]; then continue; fi
+    arch_name=$(basename "$arch_dir")
+
+    if [ $FIRST_ARCH -eq 0 ]; then echo "    ," >> "$MANIFEST_FILE"; fi
+    FIRST_ARCH=0
+
+    echo "    \"$arch_name\": {" >> "$MANIFEST_FILE"
+
+    FIRST_BIN=1
+    for bin_file in "$arch_dir"/*.so; do
+        if [ ! -f "$bin_file" ]; then continue; fi
+        bin_name=$(basename "$bin_file")
+
+        sha256=$(sha256sum "$bin_file" | awk '{print $1}')
+        size=$(stat -c%s "$bin_file" 2>/dev/null || stat -f%z "$bin_file")
+
+        if [ $FIRST_BIN -eq 0 ]; then echo "      ," >> "$MANIFEST_FILE"; fi
+        FIRST_BIN=0
+
+        cat <<EOF >> "$MANIFEST_FILE"
+      "$bin_name": {
+        "sha256": "$sha256",
+        "size_bytes": $size
+      }
+EOF
+    done
+    echo "    }" >> "$MANIFEST_FILE"
+done
+
+cat <<EOF >> "$MANIFEST_FILE"
+  }
+}
+EOF
+
+echo ">> [IIAB] Assets prepared successfully!"
 echo "==================================================================="
 echo "STATIC BUILD SUCCESSFUL!"
 echo "Your ninja binaries are ready at: $WORK_DIR/dist/jniLibs/"
+echo "Your SBOM and Certs are ready at: $ARTIFACTS_DIR/"
 echo "==================================================================="

@@ -146,26 +146,90 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical"
-        android:background="#121212"
-        android:elevation="16dp"
+        android:background="#000000"
         app:behavior_hideable="true"
-        app:behavior_peekHeight="0dp"
         app:layout_behavior="com.google.android.material.bottomsheet.BottomSheetBehavior">
 
-        <View
-            android:layout_width="50dp"
-            android:layout_height="4dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginTop="12dp"
-            android:layout_marginBottom="12dp"
-            android:background="#444444" />
+        <FrameLayout
+            android:id="@+id/terminal_drag_handle_area"
+            android:layout_width="match_parent"
+            android:layout_height="32dp"
+            android:background="#111111"
+            android:clickable="true"
+            android:focusable="true">
 
-        <com.termux.view.TerminalView
-            android:id="@+id/terminal_view"
+            <LinearLayout
+                android:layout_width="80dp"
+                android:layout_height="20dp"
+                android:layout_gravity="center"
+                android:background="#222222"
+                android:gravity="center"
+                android:orientation="vertical">
+
+                <View
+                    android:layout_width="32dp"
+                    android:layout_height="2dp"
+                    android:layout_marginBottom="4dp"
+                    android:background="#555555" />
+
+                <View
+                    android:layout_width="32dp"
+                    android:layout_height="2dp"
+                    android:background="#555555" />
+            </LinearLayout>
+        </FrameLayout>
+
+        <androidx.drawerlayout.widget.DrawerLayout
+            android:id="@+id/drawer_layout"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:background="#000000" />
+            android:layout_weight="1">
+
+            <com.termux.view.TerminalView
+                android:id="@+id/terminal_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <LinearLayout
+                android:id="@+id/left_drawer"
+                android:layout_width="280dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="start"
+                android:background="#1A1A1A"
+                android:orientation="vertical"
+                android:elevation="8dp">
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/sessions_title"
+                    android:textColor="#FFFFFF"
+                    android:textSize="14sp"
+                    android:textStyle="bold"
+                    android:padding="16dp"
+                    android:background="#111111" />
+
+                <ListView
+                    android:id="@+id/left_drawer_list"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:choiceMode="singleChoice"
+                    android:divider="#333333"
+                    android:dividerHeight="1dp" />
+
+                <Button
+                    android:id="@+id/new_session_button"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="16dp"
+                    android:backgroundTint="#333333"
+                    android:textColor="#FFFFFF"
+                    android:text="@string/new_session_btn"
+                    android:textStyle="bold" />
+            </LinearLayout>
+
+        </androidx.drawerlayout.widget.DrawerLayout>
 
         <com.termux.shared.termux.extrakeys.ExtraKeysView
             android:id="@+id/extra_keys_view"

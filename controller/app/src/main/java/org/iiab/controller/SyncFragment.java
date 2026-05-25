@@ -43,6 +43,7 @@ import java.net.NetworkInterface;
 import java.net.Socket;
 import java.util.Collections;
 import java.util.List;
+
 import android.widget.RadioButton;
 
 public class SyncFragment extends Fragment {
@@ -277,7 +278,8 @@ public class SyncFragment extends Fragment {
                     }
                 }
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     // --- RSYNC DAEMON METHODS ---
@@ -366,7 +368,7 @@ public class SyncFragment extends Fragment {
 
         } catch (Exception e) {
             Log.e("SyncFragment", "Error starting APK Server", e);
-            Toast.makeText(getContext(), "Failed to start App Server", Toast.LENGTH_SHORT).show();
+            Toast.makeText(getContext(), getString(R.string.sync_error_daemon_failed), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -427,7 +429,7 @@ public class SyncFragment extends Fragment {
 
             ScanOptions options = new ScanOptions();
             options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
-            options.setPrompt("Scan the IIAB Host QR Code");
+            options.setPrompt(getString(R.string.sync_scanner_prompt));
             options.setCameraId(0);
             options.setBeepEnabled(false);
             options.setBarcodeImageEnabled(false);
@@ -475,7 +477,8 @@ public class SyncFragment extends Fragment {
                 socket.connect(new InetSocketAddress(creds.ip, creds.port), 2000);
                 socket.close();
                 isReachable = true;
-            } catch (Exception ignored) { }
+            } catch (Exception ignored) {
+            }
 
             final boolean finalReachable = isReachable;
             if (getActivity() != null) {
@@ -649,10 +652,12 @@ public class SyncFragment extends Fragment {
         if (android.os.Build.VERSION.SDK_INT >= 34) {
             return "0".equals(cpValue) || "false".equals(cpValue);
         } else {
-            if ("256".equals(ppkValue) || "512".equals(ppkValue) || "1024".equals(ppkValue)) return true;
+            if ("256".equals(ppkValue) || "512".equals(ppkValue) || "1024".equals(ppkValue))
+                return true;
             try {
                 if (ppkValue != null && Integer.parseInt(ppkValue) >= 256) return true;
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
             return false;
         }
     }

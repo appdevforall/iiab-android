@@ -97,7 +97,7 @@ public class DeployFragment extends Fragment {
     private android.widget.ImageButton btnKiwixSettings;
 
     // SAF & Backup Controls
-    private Button btnImportBackup, btnExportBackup;
+    private Button btnImportBackup;
     private boolean isBackupInProgress = false;
     private ActivityResultLauncher<String[]> importBackupLauncher;
     private ActivityResultLauncher<String> exportBackupLauncher;
@@ -145,7 +145,7 @@ public class DeployFragment extends Fragment {
 
                 android.util.Log.i(TAG, "Broadcast received: Pairing successful! Re-scanning in 2.5s...");
                 if (isAdded()) {
-                    btnAdbAction.setText("Securing connection...");
+                    btnAdbAction.setText(getString(R.string.adb_status_securing));
                     new Handler(Looper.getMainLooper()).postDelayed(() -> {
                         startAdbPairingFlow();
                     }, 2500);
@@ -155,7 +155,7 @@ public class DeployFragment extends Fragment {
                 if (isAdded()) resetScanState();
 
             } else if ("org.iiab.controller.ADB_PAIRING_SENT".equals(action)) {
-                btnAdbAction.setText("Connected!");
+                btnAdbAction.setText(getString(R.string.adb_status_connected));
                 isConnectedToAdb = true;
                 new Handler(Looper.getMainLooper()).postDelayed(() -> {
                     if (isAdded()) updateUiState(true);
@@ -276,7 +276,6 @@ public class DeployFragment extends Fragment {
 
         // SAF Binding
         btnImportBackup = view.findViewById(R.id.btn_import_backup);
-        btnExportBackup = view.findViewById(R.id.btn_export_backup);
 
         nsdManager = (android.net.nsd.NsdManager) requireContext().getSystemService(Context.NSD_SERVICE);
         sharedStateDir = new File(Environment.getExternalStorageDirectory(), ".iiab_state");
@@ -341,7 +340,10 @@ public class DeployFragment extends Fragment {
     @Override
     public void onPause() {
         super.onPause();
-        try { requireContext().unregisterReceiver(adbUiUpdateReceiver); } catch (Exception ignored) {}
+        try {
+            requireContext().unregisterReceiver(adbUiUpdateReceiver);
+        } catch (Exception ignored) {
+        }
         liveStatusHandler.removeCallbacks(liveStatusRunnable);
     }
 
@@ -397,7 +399,8 @@ public class DeployFragment extends Fragment {
 
     private void focusAdvancedMonitoring() {
         if (containerAdvMonitoring != null && txtAdvMonitoringTitle != null) {
-            if (containerAdvMonitoring.getVisibility() == View.GONE) txtAdvMonitoringTitle.performClick();
+            if (containerAdvMonitoring.getVisibility() == View.GONE)
+                txtAdvMonitoringTitle.performClick();
             android.animation.ArgbEvaluator evaluator = new android.animation.ArgbEvaluator();
             android.animation.ObjectAnimator animator = android.animation.ObjectAnimator.ofObject(
                     txtAdvMonitoringTitle, "textColor", evaluator,
@@ -558,8 +561,10 @@ public class DeployFragment extends Fragment {
                 btnRefreshModules.setTextColor(Color.parseColor("#9E9E9E"));
                 btnRefreshModules.setAlpha(0.6f);
                 btnRefreshModules.setOnClickListener(v -> {
-                    if (!isProotInstalled) Snackbar.make(v, R.string.install_msg_termux_missing, Snackbar.LENGTH_LONG).show();
-                    else if (isServerRunning) Snackbar.make(v, R.string.install_msg_server_running_lock, Snackbar.LENGTH_LONG).show();
+                    if (!isProotInstalled)
+                        Snackbar.make(v, R.string.install_msg_termux_missing, Snackbar.LENGTH_LONG).show();
+                    else if (isServerRunning)
+                        Snackbar.make(v, R.string.install_msg_server_running_lock, Snackbar.LENGTH_LONG).show();
                 });
             } else {
                 btnRefreshModules.setTextColor(Color.parseColor("#2196F3"));
@@ -642,19 +647,25 @@ public class DeployFragment extends Fragment {
     // =========================================================================================
 
     private void setupPlannerListeners() {
-        btnTierBasic.setAlpha(0.5f); btnTierBasic.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#008000")));
-        btnTierStandard.setAlpha(0.5f); btnTierStandard.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
-        btnTierFull.setAlpha(0.5f); btnTierFull.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
+        btnTierBasic.setAlpha(0.5f);
+        btnTierBasic.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#008000")));
+        btnTierStandard.setAlpha(0.5f);
+        btnTierStandard.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
+        btnTierFull.setAlpha(0.5f);
+        btnTierFull.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
 
         View.OnClickListener tierClickListener = v -> {
-            btnTierBasic.setAlpha(1.0f); btnTierStandard.setAlpha(1.0f); btnTierFull.setAlpha(1.0f);
+            btnTierBasic.setAlpha(1.0f);
+            btnTierStandard.setAlpha(1.0f);
+            btnTierFull.setAlpha(1.0f);
             btnTierBasic.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
             btnTierStandard.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
             btnTierFull.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
             v.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#008000")));
 
             if (v.getId() == R.id.btn_tier_basic) selectedTier = InstallationPlanner.Tier.BASIC;
-            else if (v.getId() == R.id.btn_tier_standard) selectedTier = InstallationPlanner.Tier.STANDARD;
+            else if (v.getId() == R.id.btn_tier_standard)
+                selectedTier = InstallationPlanner.Tier.STANDARD;
             else if (v.getId() == R.id.btn_tier_full) selectedTier = InstallationPlanner.Tier.FULL;
 
             overrideKiwixVariant = null;
@@ -696,9 +707,12 @@ public class DeployFragment extends Fragment {
 
                 isStorageSafe = pTotal <= (freeSpaceGb - 5.0);
 
-                if (txtLegendIiab != null) txtLegendIiab.setText(String.format(java.util.Locale.US, "%.1fG", pOs));
-                if (txtLegendMaps != null) txtLegendMaps.setText(String.format(java.util.Locale.US, "%.1fG", pMaps));
-                if (txtLegendKiwix != null) txtLegendKiwix.setText(String.format(java.util.Locale.US, "%.1fG", pKiwix));
+                if (txtLegendIiab != null)
+                    txtLegendIiab.setText(String.format(java.util.Locale.US, "%.1fG", pOs));
+                if (txtLegendMaps != null)
+                    txtLegendMaps.setText(String.format(java.util.Locale.US, "%.1fG", pMaps));
+                if (txtLegendKiwix != null)
+                    txtLegendKiwix.setText(String.format(java.util.Locale.US, "%.1fG", pKiwix));
 
                 TextView lblWiki = getView().findViewById(R.id.txt_legend_kiwix).getRootView().findViewWithTag("label_kiwix");
                 if (lblWiki == null && txtLegendKiwix != null) {
@@ -757,7 +771,8 @@ public class DeployFragment extends Fragment {
                     storageGauge.updateData(segments, String.format(java.util.Locale.US, "%.1fG", pTotal), centerColor, "Projected", "Storage");
                 }
 
-                if (getActivity() != null) getActivity().runOnUiThread(() -> updateDynamicButtons());
+                if (getActivity() != null)
+                    getActivity().runOnUiThread(() -> updateDynamicButtons());
             }
 
             @Override
@@ -782,7 +797,7 @@ public class DeployFragment extends Fragment {
             rgVariants.removeAllViews();
             spinnerLang.setAdapter(null);
             overrideKiwixVariant = null;
-            Snackbar.make(getView(), "Kiwix Cache wiped successfully", Snackbar.LENGTH_SHORT).show();
+            Snackbar.make(getView(), R.string.kiwix_cache_wiped, Snackbar.LENGTH_SHORT).show();
         });
 
         InstallationPlanner.getOrFetchCatalog(requireContext(), new InstallationPlanner.CacheListener() {
@@ -838,7 +853,10 @@ public class DeployFragment extends Fragment {
                             }
                         }
                     }
-                    @Override public void onNothingSelected(android.widget.AdapterView<?> parent) {}
+
+                    @Override
+                    public void onNothingSelected(android.widget.AdapterView<?> parent) {
+                    }
                 });
 
                 btnSelect.setOnClickListener(v -> {
@@ -850,13 +868,15 @@ public class DeployFragment extends Fragment {
                         recalculateProjection();
                         dialog.dismiss();
                     } else {
-                        Snackbar.make(getView(), "Please select a ZIM variant from the list", Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(getView(), R.string.kiwix_select_variant_error, Snackbar.LENGTH_SHORT).show();
                     }
                 });
             }
+
             @Override
             public void onError(String error) {
-                if (isAdded()) Snackbar.make(getView(), "Error loading catalog: " + error, Snackbar.LENGTH_LONG).show();
+                if (isAdded())
+                    Snackbar.make(getView(), getString(R.string.kiwix_catalog_error, error), Snackbar.LENGTH_LONG).show();
             }
         });
         dialog.show();
@@ -870,11 +890,11 @@ public class DeployFragment extends Fragment {
     private void bindInstallButtonLogic(MainActivity mainAct, File debianRootfs, File iiabRootDir) {
         btnFastInstall.setOnClickListener(v -> {
             if (selectedTier == null) {
-                Snackbar.make(v, "Hey! Select an edition to install (Basic, Standard, or Full).", Snackbar.LENGTH_LONG).show();
+                Snackbar.make(v, R.string.install_error_no_tier, Snackbar.LENGTH_LONG).show();
                 return;
             }
             if (!isStorageSafe) {
-                Snackbar.make(v, "Not enough storage! Please free up space or choose a smaller edition. (5GB safety buffer required)", Snackbar.LENGTH_LONG).show();
+                Snackbar.make(v, R.string.install_error_no_storage, Snackbar.LENGTH_LONG).show();
                 return;
             }
             if (isDownloadingRootfs) {
@@ -913,19 +933,20 @@ public class DeployFragment extends Fragment {
                     @Override
                     public void onProgress(int percentage, String speed, String eta) {
                         if (isAdded() && getActivity() != null) {
-                            getActivity().runOnUiThread(() -> btnFastInstall.setText("OS: " + percentage + "% | " + speed + "/s"));
+                            getActivity().runOnUiThread(() -> btnFastInstall.setText(getString(R.string.install_status_os_download, percentage, speed)));
                         }
                     }
+
                     @Override
                     public void onComplete(String downloadPath) {
                         if (!isAdded() || getActivity() == null) return;
-                        mainAct.runOnUiThread(() -> btnFastInstall.setText("Extracting System... \n(This takes a while)"));
+                        mainAct.runOnUiThread(() -> btnFastInstall.setText(getString(R.string.install_status_extracting)));
 
                         File downloadDir = new File(downloadPath);
                         File[] archives = downloadDir.listFiles((dir, name) -> name.endsWith(".tar.xz") || name.endsWith(".tar.gz"));
 
                         if (archives == null || archives.length == 0) {
-                            abortInstallation("Error: Downloaded archive not found.");
+                            abortInstallation(getString(R.string.install_error_no_archive));
                             return;
                         }
 
@@ -940,7 +961,10 @@ public class DeployFragment extends Fragment {
                                 if (!prootTmp.exists()) prootTmp.mkdirs();
                                 File binDir = new File(requireContext().getFilesDir(), "usr/bin");
                                 if (binDir.exists()) {
-                                    try { Runtime.getRuntime().exec(new String[]{"chmod", "-R", "755", binDir.getAbsolutePath()}).waitFor(); } catch (Exception ignored) {}
+                                    try {
+                                        Runtime.getRuntime().exec(new String[]{"chmod", "-R", "755", binDir.getAbsolutePath()}).waitFor();
+                                    } catch (Exception ignored) {
+                                    }
                                 }
 
                                 if (chkCompanionData.isChecked()) {
@@ -951,35 +975,51 @@ public class DeployFragment extends Fragment {
                                     InstallationPlanner.calculateProjectedSize(requireContext(), safeTier, true, targetLang, overrideKiwixVariant, new InstallationPlanner.PlanResultListener() {
                                         @Override
                                         public void onCalculated(InstallationPlanner.StorageProjection projection) {
-                                            if (projection.resolvedFilename != null) downloadAndIndexKiwix(projection.resolvedFilename, debianRootfs);
+                                            if (projection.resolvedFilename != null)
+                                                downloadAndIndexKiwix(projection.resolvedFilename, debianRootfs);
                                             else runMapsAnsible(debianRootfs);
                                         }
-                                        @Override public void onError(String error) { runMapsAnsible(debianRootfs); }
+
+                                        @Override
+                                        public void onError(String error) {
+                                            runMapsAnsible(debianRootfs);
+                                        }
                                     });
                                 } else {
                                     finishInstallationSuccess();
                                 }
                             }
-                            @Override public void onError(String error) { abortInstallation("Extraction Failed: " + error); }
+
+                            @Override
+                            public void onError(String error) {
+                                abortInstallation(getString(R.string.install_error_extraction, error));
+                            }
                         });
                     }
-                    @Override public void onError(String error) { abortInstallation("Download Failed: " + error); }
+
+                    @Override
+                    public void onError(String error) {
+                        abortInstallation(getString(R.string.install_error_download, error));
+                    }
                 });
             };
 
             if (debianRootfs.exists() && debianRootfs.isDirectory()) {
                 new android.app.AlertDialog.Builder(requireContext())
                         .setTitle(R.string.install_btn_reinstall)
-                        .setMessage("This will wipe the current Debian system and download a fresh copy. Continue?")
-                        .setPositiveButton("Yes", (dialog, which) -> {
-                            btnFastInstall.setText("Wiping old system...");
+                        .setMessage(R.string.install_dialog_wipe_msg)
+                        .setPositiveButton(R.string.install_btn_yes, (dialog, which) -> {
+                            btnFastInstall.setText(R.string.install_status_wiping_old);
                             btnFastInstall.setEnabled(false);
                             new Thread(() -> {
-                                try { Runtime.getRuntime().exec(new String[]{"rm", "-rf", debianRootfs.getAbsolutePath()}).waitFor(); } catch (Exception ignored) {}
+                                try {
+                                    Runtime.getRuntime().exec(new String[]{"rm", "-rf", debianRootfs.getAbsolutePath()}).waitFor();
+                                } catch (Exception ignored) {
+                                }
                                 mainAct.runOnUiThread(executeDownload);
                             }).start();
                         })
-                        .setNegativeButton("No", null)
+                        .setNegativeButton(R.string.install_btn_no, null)
                         .show();
             } else {
                 executeDownload.run();
@@ -990,12 +1030,12 @@ public class DeployFragment extends Fragment {
     private void bindDeleteButtonLogic(MainActivity mainAct, File debianRootfs) {
         btnFastDelete.setOnClickListener(v -> {
             new android.app.AlertDialog.Builder(requireContext())
-                    .setTitle("Delete System?")
-                    .setMessage("This will completely erase the IIAB system, databases, and all downloaded content. This action cannot be undone.")
-                    .setPositiveButton("DELETE EVERYTHING", (dialog, which) -> {
+                    .setTitle(R.string.install_dialog_delete_title)
+                    .setMessage(R.string.install_dialog_delete_msg)
+                    .setPositiveButton(R.string.install_btn_delete_confirm, (dialog, which) -> {
                         mainAct.invalidateModuleStateTrust();
                         btnFastDelete.setEnabled(false);
-                        Snackbar.make(getView(), "Starting native deletion...", Snackbar.LENGTH_SHORT).show();
+                        Snackbar.make(getView(), R.string.install_status_deleting, Snackbar.LENGTH_SHORT).show();
                         new Thread(() -> {
                             enableSystemProtection();
                             try {
@@ -1003,13 +1043,13 @@ public class DeployFragment extends Fragment {
                                 p.waitFor();
                                 mainAct.runOnUiThread(this::updateDynamicButtons);
                             } catch (Exception e) {
-                                mainAct.runOnUiThread(() -> Snackbar.make(getView(), "Delete Failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show());
+                                mainAct.runOnUiThread(() -> Snackbar.make(getView(), getString(R.string.install_error_delete, e.getMessage()), Snackbar.LENGTH_LONG).show());
                             } finally {
                                 disableSystemProtection();
                             }
                         }).start();
                     })
-                    .setNegativeButton("Cancel", null)
+                    .setNegativeButton(R.string.cancel, null)
                     .show();
         });
     }
@@ -1017,22 +1057,212 @@ public class DeployFragment extends Fragment {
     private void bindResetButtonLogic(MainActivity mainAct, File debianRootfs) {
         if (btnAdvancedReset == null) return;
         btnAdvancedReset.setOnClickListener(v -> {
+
+            // 1. Safe Abortion Phase
+            if (isDownloadingRootfs) {
+                new android.app.AlertDialog.Builder(requireContext())
+                        .setTitle(getString(R.string.install_btn_cancel_title))
+                        .setMessage(getString(R.string.install_btn_cancel_msg))
+                        .setPositiveButton(getString(R.string.install_btn_cancel_confirm), (dialog, which) -> {
+                            if (aria2Manager != null) aria2Manager.stopDownload();
+                            disableSystemProtection();
+                            isDownloadingRootfs = false;
+
+                            // We clean the remains of the failed download if they exist
+                            String arch = getTermuxArch();
+                            String archSuffix = (arch.contains("arm") && !arch.contains("64")) ? "arm" : "aarch64";
+                            String tarball = "debian-trixie-" + archSuffix + "-pd-v4.29.0.tar.xz";
+                            File partialDownload = new File("/storage/emulated/0/Download", tarball);
+                            if (partialDownload.exists()) partialDownload.delete();
+                            File ariaState = new File("/storage/emulated/0/Download", tarball + ".aria2");
+                            if (ariaState.exists()) ariaState.delete();
+
+                            btnAdvancedReset.setText(getString(R.string.install_btn_reset));
+                            btnAdvancedReset.setEnabled(true);
+                            updateDynamicButtons();
+                            Snackbar.make(getView(), R.string.install_msg_cancelled, Snackbar.LENGTH_SHORT).show();
+                        })
+                        .setNegativeButton(R.string.cancel, null)
+                        .show();
+                return;
+            }
+
+            // 2. IF THE SYSTEM IS ALREADY DOING SOMETHING ELSE OR HAS ALREADY STARTED EXTRACTING
+            if (btnAdvancedReset.getText().toString().contains("Extract") || btnAdvancedReset.getText().toString().contains("Bootstrap")) {
+                Snackbar.make(getView(), "System extraction in progress. Please do not interrupt.", Snackbar.LENGTH_SHORT).show();
+                return;
+            }
+
+            // 3. NORMAL STATE: RESET START
             new android.app.AlertDialog.Builder(requireContext())
                     .setTitle(R.string.install_dialog_reset_title)
                     .setMessage(R.string.install_dialog_reset_msg)
                     .setPositiveButton(R.string.install_dialog_reset_confirm, (dialog, which) -> {
-                        Snackbar.make(v, "Starting reset...", Snackbar.LENGTH_SHORT).show();
+                        // IMMEDIATE LOCK AGAINST DOUBLE PRESS
+                        if (isDownloadingRootfs) return;
+                        isDownloadingRootfs = true;
+
                         mainAct.invalidateModuleStateTrust();
+                        final String originalText = getString(R.string.install_btn_reset);
+
+                        // We enable the button but change the text to serve as "Cancel"
+                        btnAdvancedReset.setEnabled(true);
+
                         new Thread(() -> {
                             enableSystemProtection();
                             try {
-                                Process p = Runtime.getRuntime().exec(new String[]{"rm", "-rf", debianRootfs.getAbsolutePath()});
-                                p.waitFor();
-                                mainAct.runOnUiThread(this::updateDynamicButtons);
+                                mainAct.runOnUiThread(() -> {
+                                    btnAdvancedReset.setText(getString(R.string.install_status_wiping_old));
+                                    Snackbar.make(getView(), R.string.install_status_starting_vanilla, Snackbar.LENGTH_SHORT).show();
+                                });
+
+                                // 1. WIPE
+                                Runtime.getRuntime().exec(new String[]{"rm", "-rf", debianRootfs.getAbsolutePath()}).waitFor();
+                                debianRootfs.mkdirs();
+
+                                // 2. DOWNLOAD
+                                mainAct.runOnUiThread(() -> btnAdvancedReset.setText(getString(R.string.install_status_downloading_debian)));
+                                if (aria2Manager == null) aria2Manager = new Aria2Manager();
+
+                                String arch = getTermuxArch();
+                                String archSuffix = (arch.contains("arm") && !arch.contains("64")) ? "arm" : "aarch64";
+                                String tarball = "debian-trixie-" + archSuffix + "-pd-v4.29.0.tar.xz";
+                                String url = "https://iiab.switnet.org/android/rootfs/proot-distro-v4.29.0/" + tarball;
+
+                                aria2Manager.startDownload(requireContext(), url, new Aria2Manager.DownloadListener() {
+                                    @Override
+                                    public void onProgress(int percentage, String speed, String eta) {
+                                        if (isAdded() && getActivity() != null) {
+                                            getActivity().runOnUiThread(() -> {
+                                                // We keep it visible that you can cancel
+                                                btnAdvancedReset.setText(getString(R.string.install_status_debian_download, percentage, speed) + " (Tap to Cancel)");
+                                            });
+                                        }
+                                    }
+
+                                    @Override
+                                    public void onComplete(String downloadPath) {
+                                        new Thread(() -> {
+                                            try {
+                                                // 3. EXTRACT
+                                                isDownloadingRootfs = false;
+                                                mainAct.runOnUiThread(() -> {
+                                                    btnAdvancedReset.setText(getString(R.string.install_status_extracting_base));
+                                                    btnAdvancedReset.setEnabled(false); // <--- SAFE DOOR CLOSURE
+                                                });
+
+                                                File downloadedArchive = new File(downloadPath, tarball);
+                                                File staticTar = new File(requireContext().getApplicationInfo().nativeLibraryDir, "libtar.so");
+                                                File staticXz = new File(requireContext().getApplicationInfo().nativeLibraryDir, "libxz.so");
+                                                String tarBin = staticTar.exists() ? staticTar.getAbsolutePath() : "tar";
+                                                String xzBin = staticXz.exists() ? staticXz.getAbsolutePath() : "xz";
+
+                                                // Pipe xz directly into tar to bypass Android's limited PATH
+                                                String extractCmd = xzBin + " -d -c " + downloadedArchive.getAbsolutePath() + " | " + tarBin + " --exclude='*/dev/*' --strip-components=1 -xf - -C " + debianRootfs.getAbsolutePath();
+
+                                                Process pExt = Runtime.getRuntime().exec(new String[]{"/system/bin/sh", "-c", extractCmd});
+                                                BufferedReader errReader = new BufferedReader(new java.io.InputStreamReader(pExt.getErrorStream()));
+                                                StringBuilder errMsg = new StringBuilder();
+                                                String errLine;
+                                                while ((errLine = errReader.readLine()) != null) {
+                                                    errMsg.append(errLine).append("\n");
+                                                    android.util.Log.e(TAG, "[TAR Extractor] " + errLine);
+                                                }
+
+                                                int exitCode = pExt.waitFor();
+                                                if (exitCode != 0) {
+                                                    throw new Exception("Extraction failed (Code " + exitCode + "):\n" + errMsg.toString());
+                                                }
+
+                                                downloadedArchive.delete();
+
+                                                // 4. BOOTSTRAP IIAB
+                                                mainAct.runOnUiThread(() -> btnAdvancedReset.setText(getString(R.string.install_status_bootstrapping)));
+
+                                                File resolvConf = new File(debianRootfs, "etc/resolv.conf");
+                                                if (resolvConf.exists()) resolvConf.delete();
+                                                java.io.FileOutputStream fos = new java.io.FileOutputStream(resolvConf);
+                                                fos.write("nameserver 1.1.1.1\nnameserver 8.8.8.8\n".getBytes());
+                                                fos.close();
+
+                                                File hostsFile = new File(debianRootfs, "etc/hosts");
+                                                java.io.FileOutputStream fosH = new java.io.FileOutputStream(hostsFile);
+                                                fosH.write("127.0.0.1 localhost\n".getBytes());
+                                                fosH.close();
+
+                                                if (prootEngine == null)
+                                                    prootEngine = new PRootEngine();
+                                                String bootstrapCmd = "export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin && " +
+                                                        "export DEBIAN_FRONTEND=noninteractive && " +
+                                                        "apt-get update && apt-get install -y curl ca-certificates sudo && " +
+                                                        "curl -fsSL https://raw.githubusercontent.com/iiab/iiab-android/main/iiab-android -o /usr/local/sbin/iiab-android && " +
+                                                        "chmod +x /usr/local/sbin/iiab-android && " +
+                                                        "apt-get clean && apt-get autoremove -y && rm -rf /var/lib/apt/lists/* /tmp/* /root/.cache";
+
+                                                prootEngine.executeInContainer(requireContext(), debianRootfs.getAbsolutePath(), "/bin/bash -c '" + bootstrapCmd + "'", new PRootEngine.OutputListener() {
+                                                    @Override
+                                                    public void onOutputLine(String line) {
+                                                        mainAct.runOnUiThread(() -> mainAct.addToLog("[Bootstrap] " + line));
+                                                    }
+
+                                                    @Override
+                                                    public void onProcessExit(int exitCode) {
+                                                        mainAct.runOnUiThread(() -> {
+                                                            disableSystemProtection();
+                                                            btnAdvancedReset.setText(originalText);
+                                                            btnAdvancedReset.setEnabled(true);
+                                                            updateDynamicButtons();
+                                                            Snackbar.make(getView(), R.string.install_success_vanilla, Snackbar.LENGTH_LONG).show();
+                                                        });
+                                                    }
+
+                                                    @Override
+                                                    public void onError(String error) {
+                                                        mainAct.runOnUiThread(() -> {
+                                                            disableSystemProtection();
+                                                            btnAdvancedReset.setText(originalText);
+                                                            btnAdvancedReset.setEnabled(true);
+                                                            updateDynamicButtons();
+                                                            Snackbar.make(getView(), getString(R.string.install_error_bootstrap, error), Snackbar.LENGTH_LONG).show();
+                                                        });
+                                                    }
+                                                });
+
+                                            } catch (Exception e) {
+                                                mainAct.runOnUiThread(() -> {
+                                                    isDownloadingRootfs = false;
+                                                    disableSystemProtection();
+                                                    btnAdvancedReset.setText(originalText);
+                                                    btnAdvancedReset.setEnabled(true);
+                                                    updateDynamicButtons();
+                                                    Snackbar.make(getView(), getString(R.string.install_error_extract_bootstrap, e.getMessage()), Snackbar.LENGTH_LONG).show();
+                                                });
+                                            }
+                                        }).start();
+                                    }
+
+                                    @Override
+                                    public void onError(String error) {
+                                        mainAct.runOnUiThread(() -> {
+                                            isDownloadingRootfs = false;
+                                            disableSystemProtection();
+                                            btnAdvancedReset.setText(originalText);
+                                            btnAdvancedReset.setEnabled(true);
+                                            updateDynamicButtons();
+                                            Snackbar.make(getView(), getString(R.string.install_error_download, error), Snackbar.LENGTH_LONG).show();
+                                        });
+                                    }
+                                });
+
                             } catch (Exception e) {
-                                mainAct.runOnUiThread(() -> Snackbar.make(getView(), "Reset Failed: " + e.getMessage(), Snackbar.LENGTH_LONG).show());
-                            } finally {
-                                disableSystemProtection();
+                                mainAct.runOnUiThread(() -> {
+                                    isDownloadingRootfs = false;
+                                    disableSystemProtection();
+                                    btnAdvancedReset.setText(originalText);
+                                    btnAdvancedReset.setEnabled(true);
+                                    updateDynamicButtons();
+                                    Snackbar.make(getView(), getString(R.string.install_error_reset, e.getMessage()), Snackbar.LENGTH_LONG).show();
+                                });
                             }
                         }).start();
                     })
@@ -1048,14 +1278,15 @@ public class DeployFragment extends Fragment {
             btnLaunchInstall.setEnabled(false);
             btnLaunchInstall.setText(getString(R.string.install_btn_launch));
             fetchLocalVarsFromPRoot();
-            if (getView() != null) Snackbar.make(getView(), R.string.install_msg_finished, Snackbar.LENGTH_LONG).show();
+            if (getView() != null)
+                Snackbar.make(getView(), R.string.install_msg_finished, Snackbar.LENGTH_LONG).show();
             return;
         }
 
         String nextModule = installationQueue.remove(0);
         saveQueueToPrefs();
         btnLaunchInstall.setEnabled(false);
-        btnLaunchInstall.setText("Installing " + nextModule + "...");
+        btnLaunchInstall.setText(getString(R.string.install_status_installing_module, nextModule));
 
         File rootfsDir = new File(requireContext().getFilesDir(), "rootfs/installed-rootfs/iiab");
         if (prootEngine == null) prootEngine = new PRootEngine();
@@ -1068,19 +1299,23 @@ public class DeployFragment extends Fragment {
         prootEngine.executeInContainer(requireContext(), rootfsDir.getAbsolutePath(), installCmd, new PRootEngine.OutputListener() {
             @Override
             public void onOutputLine(String line) {
-                if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).runOnUiThread(() -> ((MainActivity) getActivity()).addToLog("[Ansible] " + line));
+                if (getActivity() instanceof MainActivity)
+                    ((MainActivity) getActivity()).runOnUiThread(() -> ((MainActivity) getActivity()).addToLog("[Ansible] " + line));
             }
+
             @Override
             public void onProcessExit(int exitCode) {
                 if (getActivity() != null) getActivity().runOnUiThread(() -> processNextInQueue());
             }
+
             @Override
             public void onError(String error) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
                         isBatchInstalling = false;
                         updateDynamicButtons();
-                        if (getView() != null) Snackbar.make(getView(), "Error: " + error, Snackbar.LENGTH_LONG).show();
+                        if (getView() != null)
+                            Snackbar.make(getView(), getString(R.string.install_error_bootstrap, error), Snackbar.LENGTH_LONG).show();
                     });
                 }
             }
@@ -1126,12 +1361,13 @@ public class DeployFragment extends Fragment {
             java.io.FileWriter writer = new java.io.FileWriter(yamlFile);
             writer.write(text);
             writer.close();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void downloadAndIndexKiwix(String zimFilename, File debianRootfs) {
         if (getActivity() == null) return;
-        getActivity().runOnUiThread(() -> btnFastInstall.setText("Preparing Kiwix..."));
+        getActivity().runOnUiThread(() -> btnFastInstall.setText(R.string.install_status_preparing_kiwix));
 
         String zimUrl = "https://download.kiwix.org/zim/wikipedia/" + zimFilename;
         File libraryDir = new File(debianRootfs, "library/zims/content");
@@ -1141,23 +1377,42 @@ public class DeployFragment extends Fragment {
         aria2Manager.startDownload(requireContext(), zimUrl, new Aria2Manager.DownloadListener() {
             @Override
             public void onProgress(int percentage, String speed, String eta) {
-                if (isAdded() && getActivity() != null) getActivity().runOnUiThread(() -> btnFastInstall.setText("ZIM: " + percentage + "% | " + speed + "/s"));
+                if (isAdded() && getActivity() != null)
+                    getActivity().runOnUiThread(() -> btnFastInstall.setText(getString(R.string.install_status_zim_download, percentage, speed)));
             }
+
             @Override
             public void onComplete(String downloadPath) {
                 if (getActivity() == null) return;
-                getActivity().runOnUiThread(() -> btnFastInstall.setText("Indexing ZIM..."));
+                getActivity().runOnUiThread(() -> btnFastInstall.setText(R.string.install_status_indexing_zim));
                 File downloadedZim = new File(downloadPath, zimFilename);
-                if (downloadedZim.exists()) downloadedZim.renameTo(new File(libraryDir, zimFilename));
+                if (downloadedZim.exists())
+                    downloadedZim.renameTo(new File(libraryDir, zimFilename));
 
                 if (prootEngine == null) prootEngine = new PRootEngine();
                 prootEngine.executeInContainer(requireContext(), debianRootfs.getAbsolutePath(), "iiab-make-kiwix-lib", new PRootEngine.OutputListener() {
-                    @Override public void onOutputLine(String line) { if (getActivity() instanceof MainActivity) ((MainActivity) getActivity()).runOnUiThread(() -> ((MainActivity) getActivity()).addToLog("[Kiwix] " + line)); }
-                    @Override public void onProcessExit(int exitCode) { runMapsAnsible(debianRootfs); }
-                    @Override public void onError(String error) { runMapsAnsible(debianRootfs); }
+                    @Override
+                    public void onOutputLine(String line) {
+                        if (getActivity() instanceof MainActivity)
+                            ((MainActivity) getActivity()).runOnUiThread(() -> ((MainActivity) getActivity()).addToLog("[Kiwix] " + line));
+                    }
+
+                    @Override
+                    public void onProcessExit(int exitCode) {
+                        runMapsAnsible(debianRootfs);
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        runMapsAnsible(debianRootfs);
+                    }
                 });
             }
-            @Override public void onError(String error) { runMapsAnsible(debianRootfs); }
+
+            @Override
+            public void onError(String error) {
+                runMapsAnsible(debianRootfs);
+            }
         });
     }
 
@@ -1167,26 +1422,34 @@ public class DeployFragment extends Fragment {
         InstallationPlanner.Tier safeTier = (selectedTier != null) ? selectedTier : InstallationPlanner.Tier.BASIC;
 
         if (safeTier == InstallationPlanner.Tier.BASIC) {
-            // BYPASS PARA BASIC: It is already configured, we do not burn CPU/Network with Ansible.
-            getActivity().runOnUiThread(() -> btnFastInstall.setText("Maps already provisioned..."));
-            // We give 1.5 seconds for the user to read the message before finishing
+            // BYPASS PARA BASIC
+            getActivity().runOnUiThread(() -> btnFastInstall.setText(R.string.install_status_maps_provisioned));
             new Handler(Looper.getMainLooper()).postDelayed(this::finishInstallationSuccess, 1500);
             return;
         }
 
-        getActivity().runOnUiThread(() -> btnFastInstall.setText("Configuring Maps..."));
+        getActivity().runOnUiThread(() -> btnFastInstall.setText(R.string.install_status_maps_configuring));
 
         if (prootEngine == null) prootEngine = new PRootEngine();
         String installCmd = "cd /opt/iiab/iiab && ./runrole --reinstall maps";
 
         prootEngine.executeInContainer(requireContext(), debianRootfs.getAbsolutePath(), installCmd, new PRootEngine.OutputListener() {
-            @Override public void onOutputLine(String line) {
+            @Override
+            public void onOutputLine(String line) {
                 if (getActivity() instanceof MainActivity) {
                     ((MainActivity) getActivity()).runOnUiThread(() -> ((MainActivity) getActivity()).addToLog("[Ansible] " + line));
                 }
             }
-            @Override public void onProcessExit(int exitCode) { finishInstallationSuccess(); }
-            @Override public void onError(String error) { finishInstallationSuccess(); }
+
+            @Override
+            public void onProcessExit(int exitCode) {
+                finishInstallationSuccess();
+            }
+
+            @Override
+            public void onError(String error) {
+                finishInstallationSuccess();
+            }
         });
     }
 
@@ -1199,7 +1462,8 @@ public class DeployFragment extends Fragment {
                 btnFastInstall.setAlpha(1.0f);
                 updateDynamicButtons();
                 requestFreshLocalVarsSilently();
-                if (getView() != null) Snackbar.make(getView(), "System Deployment Successful!", Snackbar.LENGTH_LONG).show();
+                if (getView() != null)
+                    Snackbar.make(getView(), R.string.install_success_deployment, Snackbar.LENGTH_LONG).show();
             });
         }
     }
@@ -1212,7 +1476,8 @@ public class DeployFragment extends Fragment {
                 btnFastInstall.setText(R.string.install_btn_install);
                 btnFastInstall.setAlpha(1.0f);
                 updateDynamicButtons();
-                if (getView() != null) Snackbar.make(getView(), message, Snackbar.LENGTH_LONG).show();
+                if (getView() != null)
+                    Snackbar.make(getView(), message, Snackbar.LENGTH_LONG).show();
             });
         }
     }
@@ -1269,7 +1534,8 @@ public class DeployFragment extends Fragment {
                     try {
                         boolean isTrue = val.equals("true") || val.equals("yes") || val.equals("1");
                         json.put(key, isTrue);
-                    } catch (Exception ignored) {}
+                    } catch (Exception ignored) {
+                    }
                 }
             }
         }
@@ -1357,7 +1623,8 @@ public class DeployFragment extends Fragment {
                                 card.setOnClickListener(v -> checkBox.toggle());
                             }
 
-                            if (!newInstallCheckboxes.contains(checkBox)) newInstallCheckboxes.add(checkBox);
+                            if (!newInstallCheckboxes.contains(checkBox))
+                                newInstallCheckboxes.add(checkBox);
                             checkBox.setOnCheckedChangeListener((buttonView, isChecked) -> evaluateLaunchButton());
                         }
                     });
@@ -1368,7 +1635,8 @@ public class DeployFragment extends Fragment {
 
             final boolean finalDiscrepancy = discrepancyFound;
             getActivity().runOnUiThread(() -> {
-                if (discrepancyWarning != null) discrepancyWarning.setVisibility(finalDiscrepancy ? View.VISIBLE : View.GONE);
+                if (discrepancyWarning != null)
+                    discrepancyWarning.setVisibility(finalDiscrepancy ? View.VISIBLE : View.GONE);
                 evaluateLaunchButton();
             });
 
@@ -1419,7 +1687,8 @@ public class DeployFragment extends Fragment {
         });
 
         exportBackupLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/gzip"), uri -> {
-            if (uri != null && selectedBackupFile != null) exportBackupSafely(uri, selectedBackupFile);
+            if (uri != null && selectedBackupFile != null)
+                exportBackupSafely(uri, selectedBackupFile);
         });
     }
 
@@ -1448,8 +1717,14 @@ public class DeployFragment extends Fragment {
             new Thread(() -> {
                 enableSystemProtection();
                 try {
-                    String date = new java.text.SimpleDateFormat("yyyyMMdd_HHmmss", java.util.Locale.US).format(new java.util.Date());
-                    File backupFile = new File(backupsDir, "iiab_backup_" + date + ".tar.gz");
+                    // Format: iiab-oa_rootfs_$year.$day_of_year_3_digits_$arch.tar.gz
+                    java.util.Calendar calendar = java.util.Calendar.getInstance();
+                    int year = calendar.get(java.util.Calendar.YEAR);
+                    int dayOfYear = calendar.get(java.util.Calendar.DAY_OF_YEAR);
+                    String arch = getTermuxArch();
+
+                    String fileName = String.format(java.util.Locale.US, "iiab-oa_%04d.%03d_%s.tar.gz", year, dayOfYear, arch);
+                    File backupFile = new File(backupsDir, fileName);
 
                     File staticTar = new File(requireContext().getApplicationInfo().nativeLibraryDir, "libtar.so");
                     File staticGzip = new File(requireContext().getApplicationInfo().nativeLibraryDir, "libgzip.so");
@@ -1489,15 +1764,6 @@ public class DeployFragment extends Fragment {
             }).start();
         });
 
-        if (btnExportBackup != null) {
-            btnExportBackup.setOnClickListener(v -> {
-                if (selectedBackupFile == null) {
-                    Snackbar.make(v, getString(R.string.install_msg_export_please_select), Snackbar.LENGTH_LONG).show();
-                    return;
-                }
-                exportBackupLauncher.launch(selectedBackupFile);
-            });
-        }
         if (btnImportBackup != null) {
             btnImportBackup.setOnClickListener(v -> {
                 importBackupLauncher.launch(new String[]{"application/gzip", "application/x-gzip", "*/*"});
@@ -1523,14 +1789,25 @@ public class DeployFragment extends Fragment {
                     containerBackupList.addView(noBackups);
                 } else {
                     java.util.Arrays.sort(backups, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
-                    android.widget.RadioGroup radioGroup = new android.widget.RadioGroup(requireContext());
-                    radioGroup.setOrientation(android.widget.RadioGroup.VERTICAL);
-                    String defaultNa = getString(R.string.install_msg_backup_na);
+
+                    // We use a general LinearLayout instead of a RadioGroup
+                    LinearLayout listContainer = new LinearLayout(requireContext());
+                    listContainer.setOrientation(LinearLayout.VERTICAL);
+
+                    // Ready to manage the exclusivity of RadioButtons manually
+                    List<android.widget.RadioButton> radioButtons = new ArrayList<>();
+                    int iconPadding = (int) (12 * getResources().getDisplayMetrics().density);
 
                     for (File b : backups) {
                         String filename = b.getName();
                         String size = String.format(java.util.Locale.US, "%.2f MB", b.length() / (1024.0 * 1024.0));
                         String date = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(new java.util.Date(b.lastModified()));
+
+                        // Horizontal row that will contain the RadioButton + Export Button + Delete Button
+                        LinearLayout row = new LinearLayout(requireContext());
+                        row.setOrientation(LinearLayout.HORIZONTAL);
+                        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+                        row.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
                         android.widget.RadioButton rb = new android.widget.RadioButton(requireContext());
                         rb.setText(getString(R.string.install_msg_backup_details, filename, size, date));
@@ -1538,18 +1815,72 @@ public class DeployFragment extends Fragment {
                         rb.setPadding(0, 16, 0, 16);
                         rb.setTag(filename);
 
+                        // We give a weight of 1f to the RadioButton so that it pushes the icons to the right
+                        LinearLayout.LayoutParams rbParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
+                        rb.setLayoutParams(rbParams);
+                        radioButtons.add(rb);
+
+                        // Single selection logic
                         rb.setOnClickListener(radioView -> {
-                            if (filename.equals(selectedBackupFile)) {
-                                radioGroup.clearCheck();
-                                selectedBackupFile = null;
-                            } else {
-                                selectedBackupFile = filename;
+                            for (android.widget.RadioButton other : radioButtons) {
+                                if (other != rb) other.setChecked(false);
                             }
+                            selectedBackupFile = rb.isChecked() ? filename : null;
                             refreshRestoreButtonLogic();
                         });
-                        radioGroup.addView(rb);
+
+                        // Export Button (Orange)
+                        android.widget.ImageButton btnExport = new android.widget.ImageButton(requireContext());
+                        btnExport.setImageResource(android.R.drawable.ic_menu_upload_you_tube); // Native upload icon
+                        btnExport.setBackgroundColor(Color.TRANSPARENT);
+                        btnExport.setColorFilter(Color.parseColor("#FF9800")); // Orange
+                        btnExport.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
+
+                        btnExport.setOnClickListener(btn -> {
+                            // Autoselect this row
+                            selectedBackupFile = filename;
+                            for (android.widget.RadioButton other : radioButtons) {
+                                other.setChecked(other == rb);
+                            }
+                            refreshRestoreButtonLogic();
+                            // Trigger export
+                            exportBackupLauncher.launch(selectedBackupFile);
+                        });
+
+                        // Delete Button (Red)
+                        android.widget.ImageButton btnDelete = new android.widget.ImageButton(requireContext());
+                        btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel); // Native X Icon
+                        btnDelete.setBackgroundColor(Color.TRANSPARENT);
+                        btnDelete.setColorFilter(Color.parseColor("#F44336")); // Red
+                        btnDelete.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
+
+                        btnDelete.setOnClickListener(btn -> {
+                            new android.app.AlertDialog.Builder(requireContext())
+                                    .setTitle(R.string.install_dialog_delete_backup_title)
+                                    .setMessage(getString(R.string.install_dialog_delete_backup_msg, filename))
+                                    .setPositiveButton(R.string.install_btn_delete_confirm, (dialog, which) -> {
+                                        File toDelete = new File(backupsDir, filename);
+                                        if (toDelete.delete()) {
+                                            if (filename.equals(selectedBackupFile)) {
+                                                selectedBackupFile = null;
+                                            }
+                                            // Reload view by collapsing and opening
+                                            txtSelectBackupTitle.performClick();
+                                            txtSelectBackupTitle.performClick();
+                                            Snackbar.make(getView(), R.string.install_msg_backup_deleted, Snackbar.LENGTH_SHORT).show();
+                                        }
+                                    })
+                                    .setNegativeButton(R.string.cancel, null)
+                                    .show();
+                        });
+
+                        row.addView(rb);
+                        row.addView(btnExport);
+                        row.addView(btnDelete);
+
+                        listContainer.addView(row);
                     }
-                    containerBackupList.addView(radioGroup);
+                    containerBackupList.addView(listContainer);
                 }
                 refreshRestoreButtonLogic();
             } else {
@@ -1580,12 +1911,12 @@ public class DeployFragment extends Fragment {
 
                 File backupFile = new File(new File(requireContext().getFilesDir(), "rootfs/backups"), selectedBackupFile);
                 if (!backupFile.exists()) {
-                    Snackbar.make(v, "Backup file missing!", Snackbar.LENGTH_SHORT).show();
+                    Snackbar.make(v, R.string.install_error_backup_missing, Snackbar.LENGTH_SHORT).show();
                     return;
                 }
 
                 btnAdvancedRestore.setEnabled(false);
-                btnAdvancedRestore.setText("Restoring...");
+                btnAdvancedRestore.setText(getString(R.string.install_status_restoring));
                 File iiabRootDir = new File(requireContext().getFilesDir(), "rootfs");
                 TarExtractor tarExtractor = new TarExtractor();
 
@@ -1597,10 +1928,11 @@ public class DeployFragment extends Fragment {
                             disableSystemProtection();
                             btnAdvancedRestore.setEnabled(true);
                             btnAdvancedRestore.setText(getString(R.string.install_btn_restore));
-                            Snackbar.make(getView(), "Restore Complete!", Snackbar.LENGTH_LONG).show();
+                            Snackbar.make(getView(), R.string.install_success_restore, Snackbar.LENGTH_LONG).show();
                             updateDynamicButtons();
                         });
                     }
+
                     @Override
                     public void onError(String error) {
                         mainAct.runOnUiThread(() -> {
@@ -1665,8 +1997,6 @@ public class DeployFragment extends Fragment {
     }
 
     private void exportBackupSafely(Uri destUri, String backupFileName) {
-        btnExportBackup.setEnabled(false);
-        btnExportBackup.setText(getString(R.string.install_msg_exporting, backupFileName));
         Snackbar.make(getView(), getString(R.string.install_msg_exporting, backupFileName), Snackbar.LENGTH_LONG).show();
 
         new Thread(() -> {
@@ -1686,16 +2016,12 @@ public class DeployFragment extends Fragment {
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        btnExportBackup.setEnabled(true);
-                        btnExportBackup.setText(getString(R.string.install_btn_export_backup));
                         Snackbar.make(getView(), getString(R.string.install_msg_export_success), Snackbar.LENGTH_LONG).show();
                     });
                 }
             } catch (Exception e) {
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {
-                        btnExportBackup.setEnabled(true);
-                        btnExportBackup.setText(getString(R.string.install_btn_export_backup));
                         Snackbar.make(getView(), getString(R.string.install_msg_export_failed, e.getMessage()), Snackbar.LENGTH_LONG).show();
                     });
                 }
@@ -1742,7 +2068,10 @@ public class DeployFragment extends Fragment {
         btnAdbAction.setOnClickListener(v -> {
             if (isConnectedToAdb) {
                 new Thread(() -> {
-                    try { IIABAdbManager.getInstance(requireContext()).disconnect(); } catch (Exception ignored) {}
+                    try {
+                        IIABAdbManager.getInstance(requireContext()).disconnect();
+                    } catch (Exception ignored) {
+                    }
                 }).start();
                 isConnectedToAdb = false;
                 updateUiState(false);
@@ -1775,8 +2104,8 @@ public class DeployFragment extends Fragment {
             btnAdbAction.setText(getString(R.string.adb_btn_disconnect));
             btnAdbAction.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
 
-            txtDcpr.setText(android.text.Html.fromHtml("Child Process<br><i>(Checking...)</i>", android.text.Html.FROM_HTML_MODE_COMPACT));
-            txtPpk.setText(android.text.Html.fromHtml("PPK Limit<br><i>(Checking...)</i>", android.text.Html.FROM_HTML_MODE_COMPACT));
+            txtDcpr.setText(android.text.Html.fromHtml(getString(R.string.adb_ui_checking_cp), android.text.Html.FROM_HTML_MODE_COMPACT));
+            txtPpk.setText(android.text.Html.fromHtml(getString(R.string.adb_ui_checking_ppk), android.text.Html.FROM_HTML_MODE_COMPACT));
             ledDcpr.setBackgroundResource(R.drawable.led_off);
             ledDcpr.setBackgroundTintList(null);
             ledPpk.setBackgroundResource(R.drawable.led_off);
@@ -1788,8 +2117,8 @@ public class DeployFragment extends Fragment {
             btnAdbAction.setText(getString(R.string.adb_btn_connect));
             btnAdbAction.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#2196F3")));
 
-            txtDcpr.setText("Child Process\n(--)");
-            txtPpk.setText("PPK Limit\n(--)");
+            txtDcpr.setText(getString(R.string.adb_ui_unknown_cp));
+            txtPpk.setText(getString(R.string.adb_ui_unknown_ppk));
             ledDcpr.setBackgroundResource(R.drawable.led_off);
             ledDcpr.setBackgroundTintList(null);
             ledPpk.setBackgroundResource(R.drawable.led_off);
@@ -1797,7 +2126,9 @@ public class DeployFragment extends Fragment {
         }
     }
 
-    private void startAdbPairingFlow() { startAdbPairingFlow(false); }
+    private void startAdbPairingFlow() {
+        startAdbPairingFlow(false);
+    }
 
     private void startAdbPairingFlow(boolean isSilentScan) {
         isScanning = true;
@@ -1835,8 +2166,10 @@ public class DeployFragment extends Fragment {
             BufferedReader reader = new BufferedReader(new java.io.InputStreamReader(process.getInputStream()));
             String portStr = reader.readLine();
             reader.close();
-            if (portStr != null && !portStr.trim().isEmpty()) return Integer.parseInt(portStr.trim());
-        } catch (Exception ignored) {}
+            if (portStr != null && !portStr.trim().isEmpty())
+                return Integer.parseInt(portStr.trim());
+        } catch (Exception ignored) {
+        }
         return fallbackPort;
     }
 
@@ -1855,7 +2188,11 @@ public class DeployFragment extends Fragment {
                     connected = true;
                     break;
                 } catch (Exception e) {
-                    try { adbManager.disconnect(); Thread.sleep(600); } catch (Exception ignored) {}
+                    try {
+                        adbManager.disconnect();
+                        Thread.sleep(600);
+                    } catch (Exception ignored) {
+                    }
                 }
             }
 
@@ -1863,7 +2200,8 @@ public class DeployFragment extends Fragment {
                 new Handler(Looper.getMainLooper()).post(() -> {
                     stopDiscovery();
                     isConnectedToAdb = true;
-                    if (btnAdbAction != null) btnAdbAction.setText(getString(R.string.adb_status_connected));
+                    if (btnAdbAction != null)
+                        btnAdbAction.setText(getString(R.string.adb_status_connected));
                     updateUiState(true);
                 });
                 adbManager.startCpuMonitor(appContext);
@@ -1886,12 +2224,30 @@ public class DeployFragment extends Fragment {
 
     private android.net.nsd.NsdManager.DiscoveryListener createDiscoveryListener(String serviceType) {
         return new android.net.nsd.NsdManager.DiscoveryListener() {
-            @Override public void onDiscoveryStarted(String regType) {}
-            @Override public void onServiceLost(android.net.nsd.NsdServiceInfo service) {}
-            @Override public void onDiscoveryStopped(String serviceType) {}
-            @Override public void onStartDiscoveryFailed(String serviceType, int errorCode) { nsdManager.stopServiceDiscovery(this); }
-            @Override public void onStopDiscoveryFailed(String serviceType, int errorCode) { nsdManager.stopServiceDiscovery(this); }
-            @Override public void onServiceFound(android.net.nsd.NsdServiceInfo service) {
+            @Override
+            public void onDiscoveryStarted(String regType) {
+            }
+
+            @Override
+            public void onServiceLost(android.net.nsd.NsdServiceInfo service) {
+            }
+
+            @Override
+            public void onDiscoveryStopped(String serviceType) {
+            }
+
+            @Override
+            public void onStartDiscoveryFailed(String serviceType, int errorCode) {
+                nsdManager.stopServiceDiscovery(this);
+            }
+
+            @Override
+            public void onStopDiscoveryFailed(String serviceType, int errorCode) {
+                nsdManager.stopServiceDiscovery(this);
+            }
+
+            @Override
+            public void onServiceFound(android.net.nsd.NsdServiceInfo service) {
                 if (service.getServiceType().contains("_adb-tls")) resolveService(service);
             }
         };
@@ -1899,8 +2255,12 @@ public class DeployFragment extends Fragment {
 
     private void resolveService(android.net.nsd.NsdServiceInfo serviceInfo) {
         nsdManager.resolveService(serviceInfo, new android.net.nsd.NsdManager.ResolveListener() {
-            @Override public void onResolveFailed(android.net.nsd.NsdServiceInfo serviceInfo, int errorCode) {}
-            @Override public void onServiceResolved(android.net.nsd.NsdServiceInfo serviceInfo) {
+            @Override
+            public void onResolveFailed(android.net.nsd.NsdServiceInfo serviceInfo, int errorCode) {
+            }
+
+            @Override
+            public void onServiceResolved(android.net.nsd.NsdServiceInfo serviceInfo) {
                 int port = serviceInfo.getPort();
                 String type = serviceInfo.getServiceType();
                 String hostIp = serviceInfo.getHost().getHostAddress();
@@ -1957,8 +2317,14 @@ public class DeployFragment extends Fragment {
 
     private void stopDiscovery() {
         try {
-            if (connectDiscoveryListener != null) { nsdManager.stopServiceDiscovery(connectDiscoveryListener); connectDiscoveryListener = null; }
-            if (pairingDiscoveryListener != null) { nsdManager.stopServiceDiscovery(pairingDiscoveryListener); pairingDiscoveryListener = null; }
+            if (connectDiscoveryListener != null) {
+                nsdManager.stopServiceDiscovery(connectDiscoveryListener);
+                connectDiscoveryListener = null;
+            }
+            if (pairingDiscoveryListener != null) {
+                nsdManager.stopServiceDiscovery(pairingDiscoveryListener);
+                pairingDiscoveryListener = null;
+            }
         } catch (Exception ignored) {
         } finally {
             if (multicastLock != null && multicastLock.isHeld()) multicastLock.release();
@@ -2048,7 +2414,8 @@ public class DeployFragment extends Fragment {
             } else {
                 requireContext().startService(intent);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void disableSystemProtection() {
@@ -2060,7 +2427,8 @@ public class DeployFragment extends Fragment {
 //            intent.setAction(WatchdogService.ACTION_START);
             intent.setAction(WatchdogService.ACTION_STOP);
             requireContext().startService(intent);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void saveQueueToPrefs() {
@@ -2102,7 +2470,8 @@ public class DeployFragment extends Fragment {
         android.net.wifi.WifiManager wm = (android.net.wifi.WifiManager) requireContext().getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (wm != null) {
             int ip = wm.getConnectionInfo().getIpAddress();
-            if (ip != 0) return String.format(java.util.Locale.US, "%d.%d.%d.%d", (ip & 0xff), (ip >> 8 & 0xff), (ip >> 16 & 0xff), (ip >> 24 & 0xff));
+            if (ip != 0)
+                return String.format(java.util.Locale.US, "%d.%d.%d.%d", (ip & 0xff), (ip >> 8 & 0xff), (ip >> 16 & 0xff), (ip >> 24 & 0xff));
         }
         return "127.0.0.1";
     }
@@ -2112,12 +2481,16 @@ public class DeployFragment extends Fragment {
             android.content.pm.ApplicationInfo info = requireContext().getApplicationInfo();
             String nativeLibDir = info.nativeLibraryDir;
             if (nativeLibDir != null) {
-                if (nativeLibDir.endsWith("arm64") || nativeLibDir.contains("arm64-v8a")) return "arm64-v8a";
-                if (nativeLibDir.endsWith("arm") || nativeLibDir.contains("armeabi-v7a")) return "armeabi-v7a";
-                if (nativeLibDir.endsWith("x86_64") || nativeLibDir.contains("x86_64")) return "x86_64";
+                if (nativeLibDir.endsWith("arm64") || nativeLibDir.contains("arm64-v8a"))
+                    return "arm64-v8a";
+                if (nativeLibDir.endsWith("arm") || nativeLibDir.contains("armeabi-v7a"))
+                    return "armeabi-v7a";
+                if (nativeLibDir.endsWith("x86_64") || nativeLibDir.contains("x86_64"))
+                    return "x86_64";
                 if (nativeLibDir.endsWith("x86") || nativeLibDir.contains("x86")) return "x86";
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         if (android.os.Build.SUPPORTED_ABIS.length > 0) return android.os.Build.SUPPORTED_ABIS[0];
         return "unknown";
     }
@@ -2128,7 +2501,8 @@ public class DeployFragment extends Fragment {
             android.net.Uri uri = android.net.Uri.fromParts("package", requireContext().getPackageName(), null);
             intent.setData(uri);
             startActivity(intent);
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void checkInternetAccess() {
@@ -2173,7 +2547,8 @@ public class DeployFragment extends Fragment {
                 br.close();
                 lastKnownState = new JSONObject(text.toString());
                 verifyInstallationState(lastKnownState);
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -2184,8 +2559,10 @@ public class DeployFragment extends Fragment {
             isDevModeOn = android.provider.Settings.Global.getInt(
                     requireContext().getContentResolver(),
                     android.provider.Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) != 0;
-        } catch (Exception ignored) {}
-        if (ledDevMode != null) ledDevMode.setBackgroundResource(isDevModeOn ? R.drawable.led_on_green : R.drawable.led_off);
+        } catch (Exception ignored) {
+        }
+        if (ledDevMode != null)
+            ledDevMode.setBackgroundResource(isDevModeOn ? R.drawable.led_on_green : R.drawable.led_off);
     }
 
     private float parseCpuUsage(String cpuLine) {
@@ -2197,10 +2574,16 @@ public class DeployFragment extends Fragment {
                 float idleCpu = Float.parseFloat(m.group(2));
                 if (totalCpu > 0) return ((totalCpu - idleCpu) / totalCpu) * 100f;
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
         return -1f;
     }
 
-    private void requestFreshLocalVars() { fetchLocalVarsFromPRoot(); }
-    private void requestFreshLocalVarsSilently() { fetchLocalVarsFromPRoot(); }
+    private void requestFreshLocalVars() {
+        fetchLocalVarsFromPRoot();
+    }
+
+    private void requestFreshLocalVarsSilently() {
+        fetchLocalVarsFromPRoot();
+    }
 }

@@ -692,17 +692,6 @@
                     android:textAllCaps="false" />
             </LinearLayout>
 
-            <Button
-                android:id="@+id/btn_export_backup"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="16dp"
-                android:text="@string/install_btn_export_backup"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="12sp"
-                android:textAllCaps="false"
-                android:background="?attr/selectableItemBackground" />
-
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

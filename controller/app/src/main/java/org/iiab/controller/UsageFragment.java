@@ -312,10 +312,17 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
     // =========================================================================
     // Empty methods kept to prevent crashes from MainActivity's legacy broadcast receivers
     // =========================================================================
-    public void startFusionPulse() { }
-    public void startExitPulse() { }
-    public void finalizeEntryPulse() { }
-    public void finalizeExitPulse() { }
+    public void startFusionPulse() {
+    }
+
+    public void startExitPulse() {
+    }
+
+    public void finalizeEntryPulse() {
+    }
+
+    public void finalizeExitPulse() {
+    }
 
     public void addToLog(String message) {
         requireActivity().runOnUiThread(() -> {
