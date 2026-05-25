@@ -1,12 +1,10 @@
 /*
- ============================================================================
- Name        : AppListActivity.java
- Author      : hev <r@hev.cc>
- Contributors: IIAB Project
- Copyright   : Copyright (c) 2025 xyz
- Copyright (c) 2026 IIAB Project
- Description : App List Activity
- ============================================================================
+ * ============================================================================
+ * Name        : AppListActivity.java
+ * Author      : IIAB Project
+ * Copyright   : Copyright (c) 2026 IIAB Project
+ * Description :
+ * ============================================================================
  */
 
 package org.iiab.controller;

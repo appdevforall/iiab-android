@@ -34,7 +34,7 @@
                     android:layout_alignParentStart="true"
                     android:layout_centerVertical="true"
                     android:layout_toStartOf="@+id/btn_flip_qr"
-                    android:text="Wi-Fi Network"
+                    android:text="@string/qr_title_wifi"
                     android:textColor="#FFFFFF"
                     android:textSize="22sp"
                     android:textStyle="bold" />
@@ -80,7 +80,7 @@
         android:layout_width="match_parent"
         android:layout_height="56dp"
         android:layout_marginTop="24dp"
-        android:text="Close"
+        android:text="@string/qr_btn_close"
         android:backgroundTint="@color/btn_danger"
         android:textColor="#FFFFFF" />
 

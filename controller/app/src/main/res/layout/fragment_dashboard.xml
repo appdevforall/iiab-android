@@ -12,15 +12,46 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <TextView
-            android:id="@+id/dash_text_device_name"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/dash_device"
-            android:textSize="22sp"
-            android:textStyle="bold"
-            android:textColor="@color/dash_text_primary"
-            android:layout_marginBottom="8dp" />
+            android:orientation="vertical"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:id="@+id/dash_text_device_name"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/dash_device"
+                android:textSize="22sp"
+                android:textStyle="bold"
+                android:textColor="@color/dash_text_primary"
+                android:layout_marginBottom="2dp" />
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dash_android_version_label"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="13sp"
+                    android:layout_marginEnd="6dp" />
+
+                <TextView
+                    android:id="@+id/dash_text_android_version"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="13sp"
+                    android:textStyle="bold"
+                    android:fontFamily="@font/orbitron"
+                    tools:text="11 (API 30)" />
+            </LinearLayout>
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -35,28 +66,33 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="8dp">
+                android:layout_marginBottom="8dp"
+                android:baselineAligned="false"
+                android:weightSum="2">
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:paddingEnd="12dp">
 
                     <ImageView
+                        android:id="@+id/ic_wifi"
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:src="@drawable/outline_android_wifi_3_bar_24"
                         app:tint="#888888"
-                        android:layout_marginEnd="6dp" />
+                        android:layout_centerVertical="true" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Wi-Fi: "
+                        android:text="Wi-Fi"
                         android:textColor="#888888"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        android:layout_toEndOf="@id/ic_wifi"
+                        android:layout_marginStart="6dp"
+                        android:layout_centerVertical="true" />
 
                     <TextView
                         android:id="@+id/dash_text_wifi_ip"
@@ -66,29 +102,34 @@
                         android:textStyle="bold"
                         android:fontFamily="@font/orbitron"
                         android:textSize="11.5sp"
-                        tools:text="192.168.1.158" />
-                </LinearLayout>
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
+                        tools:text="192.168.1.X" />
+                </RelativeLayout>
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:paddingStart="12dp">
 
                     <ImageView
+                        android:id="@+id/ic_hotspot"
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:src="@drawable/outline_connect_without_contact_24"
                         app:tint="#888888"
-                        android:layout_marginEnd="6dp" />
+                        android:layout_centerVertical="true" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Hotspot: "
+                        android:text="Hotspot"
                         android:textColor="#888888"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        android:layout_toEndOf="@id/ic_hotspot"
+                        android:layout_marginStart="6dp"
+                        android:layout_centerVertical="true" />
 
                     <TextView
                         android:id="@+id/dash_text_hotspot_ip"
@@ -98,36 +139,43 @@
                         android:textStyle="bold"
                         android:fontFamily="@font/orbitron"
                         android:textSize="11.5sp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
                         tools:text="--" />
-                </LinearLayout>
+                </RelativeLayout>
             </LinearLayout>
 
             <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="16dp">
+                android:layout_marginBottom="16dp"
+                android:baselineAligned="false"
+                android:weightSum="2">
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:paddingEnd="12dp">
 
                     <ImageView
+                        android:id="@+id/ic_uptime"
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:src="@drawable/outline_clock_arrow_up_24"
                         app:tint="#888888"
-                        android:layout_marginEnd="6dp" />
+                        android:layout_centerVertical="true" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Uptime: "
+                        android:text="Uptime"
                         android:textColor="#888888"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        android:layout_toEndOf="@id/ic_uptime"
+                        android:layout_marginStart="6dp"
+                        android:layout_centerVertical="true" />
 
                     <TextView
                         android:id="@+id/dash_text_uptime"
@@ -137,29 +185,34 @@
                         android:textStyle="bold"
                         android:fontFamily="@font/orbitron"
                         android:textSize="11.5sp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
                         tools:text="9d 06h 34m" />
-                </LinearLayout>
+                </RelativeLayout>
 
-                <LinearLayout
+                <RelativeLayout
                     android:layout_width="0dp"
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
+                    android:paddingStart="12dp">
 
                     <ImageView
+                        android:id="@+id/ic_battery"
                         android:layout_width="16dp"
                         android:layout_height="16dp"
                         android:src="@drawable/outline_battery_4_bar_24"
                         app:tint="#888888"
-                        android:layout_marginEnd="6dp" />
+                        android:layout_centerVertical="true" />
 
                     <TextView
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Battery: "
+                        android:text="Battery"
                         android:textColor="#888888"
-                        android:textSize="13sp" />
+                        android:textSize="13sp"
+                        android:layout_toEndOf="@id/ic_battery"
+                        android:layout_marginStart="6dp"
+                        android:layout_centerVertical="true" />
 
                     <TextView
                         android:id="@+id/dash_text_battery"
@@ -169,57 +222,96 @@
                         android:textStyle="bold"
                         android:fontFamily="@font/orbitron"
                         android:textSize="11.5sp"
+                        android:layout_alignParentEnd="true"
+                        android:layout_centerVertical="true"
                         tools:text="100%" />
-                </LinearLayout>
+                </RelativeLayout>
             </LinearLayout>
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="1dp"
                 android:background="@color/dash_divider"
-                android:layout_marginBottom="12dp" />
+                android:layout_marginBottom="8dp" />
 
-            <LinearLayout
-                android:id="@+id/dash_gauges_root"
+            <!-- NEW SWIPEABLE GAUGES CONTAINER -->
+            <RelativeLayout
+                android:id="@+id/dash_gauges_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:orientation="vertical"
-                android:clickable="true"
-                android:focusable="true"
+                android:layout_gravity="center_horizontal"
                 android:layout_marginBottom="4dp">
 
-                <org.iiab.controller.ResourceGaugeView
-                    android:id="@+id/gauge_storage"
-                    android:layout_width="225dp"
-                    android:layout_height="225dp"
-                    android:layout_gravity="center"
-                    android:layout_marginBottom="4dp" />
+                <!-- The flip button (Top Right) -->
+                <ImageButton
+                    android:id="@+id/btn_flip_gauges"
+                    android:layout_width="28dp"
+                    android:layout_height="28dp"
+                    android:layout_alignParentEnd="true"
+                    android:layout_alignParentTop="true"
+                    android:layout_marginTop="0dp"
+                    android:layout_marginEnd="0dp"
+                    android:background="?attr/selectableItemBackgroundBorderless"
+                    android:src="@android:drawable/ic_popup_sync"
+                    app:tint="@color/dash_text_secondary"
+                    android:padding="2dp"
+                    android:elevation="2dp" />
 
-                <LinearLayout
-                    android:id="@+id/dash_gauges_bottom_row"
+                <!-- The Flipper holding the pages -->
+                <ViewFlipper
+                    android:id="@+id/gauge_flipper"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center"
-                    android:layout_marginBottom="0dp">
+                    android:layout_marginTop="24dp">
 
-                    <org.iiab.controller.ResourceGaugeView
-                        android:id="@+id/gauge_ram"
-                        android:layout_width="0dp"
+                    <!-- PAGE 1: Storage & Battery -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginEnd="8dp"
-                        android:layout_weight="1" />
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:baselineAligned="false">
 
-                    <org.iiab.controller.ResourceGaugeView
-                        android:id="@+id/gauge_swap"
-                        android:layout_width="0dp"
+                        <org.iiab.controller.ResourceGaugeView
+                            android:id="@+id/gauge_storage"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp" />
+
+                        <org.iiab.controller.ResourceGaugeView
+                            android:id="@+id/gauge_battery"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp" />
+                    </LinearLayout>
+
+                    <!-- PAGE 2: RAM & Swap -->
+                    <LinearLayout
+                        android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1" />
-                </LinearLayout>
-            </LinearLayout>
+                        android:orientation="horizontal"
+                        android:gravity="center"
+                        android:baselineAligned="false">
+
+                        <org.iiab.controller.ResourceGaugeView
+                            android:id="@+id/gauge_ram"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginEnd="8dp" />
+
+                        <org.iiab.controller.ResourceGaugeView
+                            android:id="@+id/gauge_swap"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_weight="1"
+                            android:layout_marginStart="8dp" />
+                    </LinearLayout>
+                </ViewFlipper>
+            </RelativeLayout>
         </LinearLayout>
-
 
         <TextView
             android:layout_width="wrap_content"
@@ -324,20 +416,22 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:orientation="horizontal"
-                    android:baselineAligned="false">
+                    android:baselineAligned="false"
+                    android:weightSum="2">
 
-                    <LinearLayout
+                    <RelativeLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="horizontal">
+                        android:paddingEnd="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/dash_arch_termux"
                             android:textSize="12sp"
-                            android:textColor="?android:attr/textColorSecondary" />
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:layout_alignParentStart="true" />
 
                         <TextView
                             android:id="@+id/dash_text_termux_arch"
@@ -347,21 +441,23 @@
                             android:textStyle="bold"
                             android:textColor="?android:attr/textColorPrimary"
                             android:fontFamily="@font/orbitron"
-                            tools:text="arm64-v8a" />
-                    </LinearLayout>
+                            tools:text="arm64-v8a"
+                            android:layout_alignParentEnd="true" />
+                    </RelativeLayout>
 
-                    <LinearLayout
+                    <RelativeLayout
                         android:layout_width="0dp"
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
-                        android:orientation="horizontal">
+                        android:paddingStart="12dp">
 
                         <TextView
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:text="@string/dash_arch_proot"
                             android:textSize="12sp"
-                            android:textColor="?android:attr/textColorSecondary" />
+                            android:textColor="?android:attr/textColorSecondary"
+                            android:layout_alignParentStart="true" />
 
                         <TextView
                             android:id="@+id/dash_text_debian_arch"
@@ -371,8 +467,9 @@
                             android:textStyle="bold"
                             android:textColor="?android:attr/textColorPrimary"
                             android:fontFamily="@font/orbitron"
-                            tools:text="arm64" />
-                    </LinearLayout>
+                            tools:text="arm64"
+                            android:layout_alignParentEnd="true" />
+                    </RelativeLayout>
                 </LinearLayout>
             </LinearLayout>
         </LinearLayout>

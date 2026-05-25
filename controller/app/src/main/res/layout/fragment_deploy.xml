@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/dash_bg_main">
@@ -11,6 +12,7 @@
         android:padding="16dp">
 
         <LinearLayout
+            android:id="@+id/container_adb_leds"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
@@ -33,7 +35,7 @@
                 android:gravity="center">
 
                 <View
-                    android:id="@+id/led_install_termux"
+                    android:id="@+id/led_install_internet"
                     android:layout_width="10dp"
                     android:layout_height="10dp"
                     android:background="@drawable/led_off"
@@ -42,8 +44,8 @@
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
-                    android:text="@string/install_led_termux"
-                    android:textColor="#FFFFFF"
+                    android:text="@string/install_led_internet"
+                    android:textColor="@color/dash_text_inverted"
                     android:fontFamily="@font/orbitron"
                     android:textSize="9sp"
                     android:gravity="center"
@@ -56,7 +58,6 @@
                 android:layout_weight="1"
                 android:orientation="vertical"
                 android:gravity="center">
-
                 <View
                     android:id="@+id/led_install_dev_mode"
                     android:layout_width="10dp"
@@ -68,7 +69,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/install_led_dev_options"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/dash_text_inverted"
                     android:fontFamily="@font/orbitron"
                     android:textSize="9sp"
                     android:gravity="center"
@@ -151,7 +152,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="⚠️"
+                android:text="@string/install_warning_server_icon"
                 android:textSize="16sp"
                 android:layout_marginEnd="8dp" />
 
@@ -307,6 +308,186 @@
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/rounded_button"
+            android:backgroundTint="@color/dash_module_bg"
+            android:padding="16dp"
+            android:layout_marginBottom="16dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:baselineAligned="false"
+                android:weightSum="2">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center">
+
+                    <org.iiab.controller.MultiResourceGaugeView
+                        android:id="@+id/storage_projection_gauge"
+                        android:layout_width="130dp"
+                        android:layout_height="130dp" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:gravity="center_vertical"
+                    android:paddingStart="16dp">
+
+                    <Button
+                        android:id="@+id/btn_tier_basic"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/install_tier_basic"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/rounded_button"
+                        android:backgroundTint="#333333"
+                        android:textAllCaps="false"/>
+
+                    <Button
+                        android:id="@+id/btn_tier_standard"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/install_tier_standard"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/rounded_button"
+                        android:backgroundTint="#333333"
+                        android:layout_marginTop="8dp"
+                        android:textAllCaps="false"/>
+
+                    <Button
+                        android:id="@+id/btn_tier_full"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:minHeight="48dp"
+                        android:text="@string/install_tier_full"
+                        android:textColor="#FFFFFF"
+                        android:background="@drawable/rounded_button"
+                        android:backgroundTint="#333333"
+                        android:layout_marginTop="8dp"
+                        android:textAllCaps="false"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginTop="8dp"
+                android:weightSum="4">
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="3"
+                    android:gravity="center">
+                    <CheckBox
+                        android:id="@+id/chk_companion_data"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/install_chk_companion"
+                        android:textSize="12sp"
+                        android:textColor="@color/dash_text_secondary"
+                        android:buttonTint="#008000" />
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:gravity="center">
+                    <ImageButton
+                        android:id="@+id/btn_kiwix_settings"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:src="@drawable/outline_dashboard_2_gear_24"
+                        android:background="?attr/selectableItemBackgroundBorderless"
+                        app:tint="#555555" />
+                </LinearLayout>
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:layout_marginTop="12dp"
+                android:background="@drawable/rounded_button"
+                android:backgroundTint="#1Affffff"
+                android:padding="12dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:baselineAligned="false"
+                    android:weightSum="2">
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingEnd="12dp">
+                        <View android:id="@+id/dot_iiab" android:layout_width="10dp" android:layout_height="10dp" android:background="#00FFFF" android:layout_centerVertical="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_iiab" android:textSize="12sp" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_iiab" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
+                        <TextView android:id="@+id/txt_legend_iiab" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0G" android:textSize="12sp" android:textColor="@color/dash_text_inverted" android:fontFamily="@font/orbitron" android:layout_alignParentEnd="true" android:layout_centerVertical="true"/>
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingStart="12dp">
+                        <View android:id="@+id/dot_maps" android:layout_width="10dp" android:layout_height="10dp" android:background="#FF9800" android:layout_centerVertical="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_maps" android:textSize="12sp" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_maps" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
+                        <TextView android:id="@+id/txt_legend_maps" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0G" android:textSize="12sp" android:textColor="@color/dash_text_inverted" android:fontFamily="@font/orbitron" android:layout_alignParentEnd="true" android:layout_centerVertical="true"/>
+                    </RelativeLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginTop="8dp"
+                    android:baselineAligned="false"
+                    android:weightSum="2">
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingEnd="12dp">
+                        <View android:id="@+id/dot_kiwix" android:layout_width="10dp" android:layout_height="10dp" android:background="#008000" android:layout_centerVertical="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_kiwix" android:textSize="12sp" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_kiwix" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
+                        <TextView android:id="@+id/txt_legend_kiwix" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0G" android:textSize="12sp" android:textColor="@color/dash_text_inverted" android:fontFamily="@font/orbitron" android:layout_alignParentEnd="true" android:layout_centerVertical="true"/>
+                    </RelativeLayout>
+
+                    <RelativeLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:paddingStart="12dp">
+                        <View android:id="@+id/dot_free" android:layout_width="10dp" android:layout_height="10dp" android:background="#777777" android:layout_centerVertical="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_free" android:textSize="12sp" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_free" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
+                        <TextView android:id="@+id/txt_legend_free" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0G" android:textSize="12sp" android:textColor="@color/dash_text_inverted" android:fontFamily="@font/orbitron" android:layout_alignParentEnd="true" android:layout_centerVertical="true"/>
+                    </RelativeLayout>
+                </LinearLayout>
+            </LinearLayout>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:layout_marginBottom="8dp">
 
@@ -315,7 +496,7 @@
                 android:layout_width="0dp"
                 android:layout_height="60dp"
                 android:layout_weight="1"
-                android:text="@string/install_btn_install"
+                android:text="@string/install_btn_provision"
                 android:textColor="#FFFFFF"
                 android:textStyle="bold"
                 android:background="@drawable/rounded_button"
@@ -362,7 +543,7 @@
                 android:id="@+id/btn_refresh_modules"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Refresh"
+                android:text="@string/install_btn_refresh"
                 android:textSize="14sp"
                 android:textStyle="bold"
                 android:padding="12dp"
@@ -481,7 +662,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:layout_marginBottom="16dp"
+                android:layout_marginBottom="8dp"
                 android:baselineAligned="false">
 
                 <Button
@@ -544,6 +725,20 @@
                     android:backgroundTint="#F44336"
                     android:textAllCaps="false" />
             </LinearLayout>
+
+            <Button
+                android:id="@+id/btn_import_backup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="16dp"
+                android:text="@string/install_btn_import_backup"
+                android:textColor="?android:attr/textColorSecondary"
+                android:textSize="12sp"
+                android:textAllCaps="false"
+                android:background="?attr/selectableItemBackground"
+                app:icon="@android:drawable/stat_sys_download"
+                app:iconTint="#4CAF50"
+                app:iconGravity="textStart" />
 
             <LinearLayout
                 android:layout_width="match_parent"

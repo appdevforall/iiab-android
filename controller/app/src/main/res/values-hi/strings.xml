@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">IIAB-oA Controller</string>
-    <string name="default_version">v0.1.x</string>
 
     <string name="cancel">रद्द करें</string>
     <string name="copy_all">सभी कॉपी करें</string>
@@ -9,16 +8,15 @@
     <string name="save">सहेजें</string>
 
     <string name="advanced_settings_label">टनल सेटिंग्स</string>
-    <string name="configuration_label">कॉन्फ़िगरेशन</string>
     <string name="connection_log_label">कनेक्शन लॉग</string>
     <string name="label_separator_down">▼ %s</string>
     <string name="label_separator_up">▶ %s</string>
     <string name="settings_label">सेटिंग्स</string>
 
-    <string name="tab_deploy">इंस्टालेशन</string>
+    <string name="tab_deploy">इंस्टॉल</string>
     <string name="tab_status">स्थिति</string>
     <string name="tab_usage">उपयोग</string>
-
+    <string name="tab_share">साझा करें</string>
 
     <string name="setup_title">प्रारंभिक सेटअप</string>
     <string name="setup_welcome">%1$s सेटअप विज़ार्ड में आपका स्वागत है।\n\nठीक से काम करने के लिए, हमें निम्नलिखित अनुमतियों की आवश्यकता है:</string>
@@ -27,48 +25,36 @@
     <string name="setup_perm_battery">बैटरी अनुकूलन अक्षम करें</string>
     <string name="setup_perm_notifications">पुश सूचनाएं</string>
     <string name="setup_perm_storage">स्थानीय स्टोरेज एक्सेस</string>
-    <string name="setup_perm_termux">Termux निष्पादन</string>
-    <string name="setup_perm_vpn">Safe Pocket Web (VPN)</string>
+    <string name="setup_perm_overlay">अन्य ऐप्स के ऊपर दिखाएं</string>
+    <string name="setup_lang_title">सामग्री की भाषा</string>
+    <string name="setup_lang_desc">कृपया अपनी भाषा चुनें, क्योंकि सामग्री का अनुरोध करते समय इस पर विचार किया जाएगा।</string>
+    <string name="setup_manage_all_permissions">सभी अनुमतियां प्रबंधित करें</string>
 
-    <string name="setup_termux_storage_btn">फ़ाइलें और मीडिया (स्टोरेज)</string>
-    <string name="termux_not_installed">Termux इंस्टॉल नहीं है।</string>
-    <string name="termux_not_installed_error">Termux इंस्टॉल नहीं है या डिवाइस समर्थित नहीं है।</string>
-
-    <string name="notif_perm_denied">सूचना अनुमति अस्वीकार</string>
+    <string name="notif_perm_denied">सूचना अनुमति अस्वीकार कर दी गई</string>
     <string name="notif_perm_granted">सूचना अनुमति दी गई</string>
-    <string name="revoke_permission_warning">अनुमतियां रद्द करने के लिए, आपको सिस्टम सेटिंग्स में जाना होगा।</string>
-    <string name="termux_perm_denied">Termux अनुमति अस्वीकार</string>
-    <string name="termux_perm_granted">Termux अनुमति दी गई</string>
-
-
-    <string name="dash_title">IIAB-oA Controller</string>
-    <string name="dash_subtitle_localhost">localhost</string>
+    <string name="revoke_permission_warning">अनुमतियां रद्द करने के लिए, आपको सिस्टम सेटिंग्स से ऐसा करना होगा।</string>
 
     <string name="dash_device">डिवाइस लोड हो रहा है...</string>
-    <string name="dash_ip">IP: %1$s</string>
-    <string name="dash_uptime">अपटाइम: %1$s</string>
-    <string name="dash_battery_format"><b>बैटरी:</b> %1$d%%</string>
-    <string name="dash_battery_no_value"><b>बैटरी:</b> --%%</string>
-    <string name="dash_hotspot_format"><b>हॉटस्पॉट:</b> %1$s</string>
-    <string name="dash_uptime_format"><b>अपटाइम:</b> %1$s</string>
-    <string name="dash_wifi_format"><b>Wi-Fi:</b> %1$s</string>
-    <string name="dash_main_storage">मुख्य स्टोरेज</string>
-    <string name="dash_ram_memory">RAM मेमोरी</string>
+    <string name="dash_main_storage">स्टोरेज</string>
+    <string name="dash_ram_memory">रैम (RAM)</string>
     <string name="dash_swap_virtual">स्वैप (वर्चुअल)</string>
 
     <string name="dash_server_status">सर्वर स्थिति:</string>
     <string name="dash_offline">ऑफ़लाइन</string>
     <string name="dash_online">ऑनलाइन</string>
-    <string name="dash_system_state">सिस्टम स्थिति</string>
-    <string name="dash_iiab_system">सिस्टम IIAB-oA</string>
+    <string name="dash_iiab_system">IIAB-oA सिस्टम</string>
+    <string name="dash_android_version_label">बेस Android संस्करण:</string>
+    <string name="dash_android_version_value">%1$s (API %2$s)</string>
 
-    <string name="dash_state_debian_only">बेस OS इंस्टॉल है। IIAB इंस्टॉल करना जारी रखें।</string>
+    <string name="dash_state_debian_only">बेस OS इंस्टॉल है। IIAB इंस्टॉल करने के लिए आगे बढ़ें।</string>
     <string name="dash_state_installer">इंस्टॉलर मिला, अधिक जानकारी के लिए इंस्टालेशन टैब खोलें।</string>
-    <string name="dash_state_none">कोई घटक नहीं मिला, यहाँ तक कि Termux भी नहीं।</string>
+    <string name="dash_state_none">कोई घटक नहीं पहचाना गया।</string>
     <string name="dash_state_offline">IIAB-oA ऑफ़लाइन लग रहा है, इसे लॉन्च करने का प्रयास करें।</string>
     <string name="dash_state_online">IIAB-oA ऑनलाइन है।</string>
-    <string name="dash_state_termux_only">Termux मिला, इसे प्रबंधित करने के लिए इंस्टालेशन टैब पर जाएं।</string>
     <string name="dash_termux_searching">इंस्टालेशन खोज रहा है...</string>
+    <string name="dash_architectures_title">आर्किटेक्चर</string>
+    <string name="dash_arch_termux">"ऐप: "</string>
+    <string name="dash_arch_proot">"PRoot: "</string>
 
     <string name="dash_installed_modules">उपलब्ध मॉड्यूल</string>
     <string name="dash_books">पुस्तकें</string>
@@ -77,17 +63,34 @@
     <string name="dash_maps">मानचित्र</string>
     <string name="dash_matomo">Matomo</string>
     <string name="dash_system">सिस्टम</string>
+    <string name="dash_code">कोड</string>
 
+    <string name="dash_diag_title">सिस्टम डायग्नोस्टिक्स</string>
+    <string name="dash_diag_dir_missing">डायरेक्टरी मौजूद नहीं है:\n%1$s</string>
+    <string name="dash_diag_dir_empty">डायरेक्टरी पूरी तरह से खाली है।</string>
+    <string name="dash_diag_dir_contains">इसमें %1$d आइटम हैं:\n\n%2$s</string>
+    <string name="dash_diag_btn_ok">OK</string>
+
+    <string name="dash_battery_title">बैटरी</string>
+    <string name="dash_format_gb">%1$.2f GB / %2$.2f GB</string>
+    <string name="dash_format_gb_int">%1$d GB / %2$d GB</string>
+    <string name="dash_format_na">-- / --</string>
+    <string name="dash_format_pct">%1$d%%</string>
+    <string name="dash_format_pct_charging">%1$d%% ⚡</string>
+    <string name="dash_format_pct_na">--%%</string>
+    <string name="dash_format_uptime_days">%1$d दिन %2$02dh %3$02dm</string>
+    <string name="dash_format_uptime_hours">%1$02dh %2$02dm</string>
+    <string name="dash_network_na">--</string>
 
     <string name="apps">ऐप्स</string>
-    <string name="browse_content">🚀 सामग्री देखें</string>
-    <string name="launch_server">🚀 सर्वर लॉन्च करें</string>
+    <string name="browse_content">🚀 सामग्री एक्सप्लोर करें</string>
+    <string name="launch_server">🚀 सर्वर प्रारंभ करें</string>
     <string name="stop_server">🛑 सर्वर बंद करें</string>
 
-    <string name="server_not_installed_warning">IIAB-oA सिस्टम (पूरी तरह से) इंस्टॉल नहीं लग रहा है। कृपया अधिक जानकारी के लिए स्थिति या इंस्टालेशन टैब देखें।</string>
+    <string name="server_not_installed_warning">IIAB-oA सिस्टम (पूरी तरह से) इंस्टॉल नहीं लग रहा है। कृपया अधिक जानकारी के लिए स्थिति या इंस्टालेशन टैब जांचें।</string>
     <string name="server_booting">बूट हो रहा है...</string>
     <string name="server_shutting_down">बंद हो रहा है...</string>
-    <string name="server_timeout_warning">चेतावनी: सर्वर स्थिति परिवर्तन का समय समाप्त हो गया।</string>
+    <string name="server_timeout_warning">चेतावनी: सर्वर स्थिति संक्रमण का समय समाप्त हो गया।</string>
     <string name="system_ready">सिस्टम तैयार...\n</string>
 
     <string name="hotspot">हॉटस्पॉट</string>
@@ -100,7 +103,6 @@
     <string name="qr_title_hotspot">हॉटस्पॉट नेटवर्क</string>
     <string name="qr_title_wifi">Wi-Fi नेटवर्क</string>
 
-
     <string name="control_disable">Safe Pocket Web अक्षम करें</string>
     <string name="control_enable">Safe Pocket Web सक्षम करें</string>
 
@@ -110,68 +112,38 @@
     <string name="ipv4">IPv4</string>
     <string name="ipv6">IPv6</string>
     <string name="maintenance_mode">रखरखाव मोड</string>
-    <string name="maintenance_warning_msg">संशोधन करने के लिए Safe Pocket Web अक्षम करें</string>
+    <string name="maintenance_warning_msg">सेटिंग्स को संशोधित करने के लिए Safe Pocket Web अक्षम करें।</string>
     <string name="remote_dns">रिमोट DNS</string>
     <string name="socks_addr">Socks पता:</string>
     <string name="socks_pass">Socks पासवर्ड:</string>
     <string name="socks_port">Socks पोर्ट:</string>
     <string name="socks_udp_addr">Socks UDP पता:</string>
-    <string name="socks_user">Socks उपयोगकर्ता नाम:</string>
+    <string name="socks_user">Socks उपयोगकर्ता:</string>
     <string name="udp_in_tcp">TCP पर UDP रिले</string>
 
-    <string name="recovery_channel_name">VPN रिकवरी</string>
-    <string name="recovery_notif_text">सुरक्षित वातावरण को तुरंत बहाल करने के लिए टैप करें।</string>
-    <string name="recovery_notif_title">Safe Pocket Web बाधित</string>
-    <string name="tproxy_channel_name">socks5</string>
-    <string name="user_initiated_conn">उपयोगकर्ता द्वारा शुरू किया गया कनेक्शन</string>
+    <string name="user_initiated_conn">उपयोगकर्ता द्वारा आरंभ किया गया कनेक्शन</string>
     <string name="vpn_description">अनुकूल URL सक्षम करें। खतरों को ब्लॉक करें।</string>
     <string name="vpn_permission_granted">VPN अनुमति दी गई। कनेक्ट हो रहा है...</string>
     <string name="vpn_starting">VPN शुरू हो रहा है...</string>
     <string name="vpn_stopping">VPN बंद हो रहा है...</string>
 
-
-    <string name="watchdog_disable">मास्टर वॉचडॉग\nअक्षम करें</string>
-    <string name="watchdog_enable">मास्टर वॉचडॉग\nसक्षम करें</string>
-    <string name="watchdog_description">Termux को Doze मोड से बचाता है और Wi-Fi को सक्रिय रखता है।</string>
-
-    <string name="watchdog_channel_desc">यह सुनिश्चित करता है कि स्क्रीन बंद होने पर भी सेवाएं सक्रिय रहें।</string>
+    <string name="watchdog_channel_desc">यह सुनिश्चित करता है कि स्क्रीन बंद होने पर सेवाएं सक्रिय रहें।</string>
     <string name="watchdog_channel_name">IIAB वॉचडॉग सेवा</string>
-    <string name="watchdog_notif_text">Termux वातावरण की सुरक्षा...</string>
     <string name="watchdog_notif_title">IIAB वॉचडॉग सक्रिय</string>
-
-    <string name="cpu_wakelock_acquired">VPN सुरक्षा के तहत CPU WakeLock प्राप्त</string>
-    <string name="cpu_wakelock_released">CPU WakeLock जारी</string>
-    <string name="error_acquiring_locks">लॉक प्राप्त करने में त्रुटि</string>
-    <string name="syncing_watchdog">वॉचडॉग स्थिति सिंक हो रही है। सक्षम: %b</string>
     <string name="watchdog_started">वॉचडॉग शुरू</string>
     <string name="watchdog_stopped">वॉचडॉग बंद</string>
-    <string name="watchdog_thread_ended">वॉचडॉग थ्रेड: लूप समाप्त</string>
-    <string name="watchdog_thread_error">वॉचडॉग थ्रेड: लूप में त्रुटि</string>
-    <string name="watchdog_thread_interrupted">वॉचडॉग थ्रेड: बाधित, बंद हो रहा है...</string>
-    <string name="watchdog_thread_started">वॉचडॉग थ्रेड: लूप शुरू हुआ</string>
-    <string name="wifi_lock_acquired">VPN सुरक्षा के तहत Wi-Fi Lock प्राप्त</string>
-    <string name="wifi_lock_released">Wi-Fi Lock जारी</string>
 
-    <string name="critical_os_blocked">क्रिटिकल: OS ने Termux उत्तेजना को ब्लॉक कर दिया (SecurityException)।</string>
-    <string name="failed_termux_intent">क्रिटिकल: Termux इंटेंट विफल: %s</string>
-    <string name="force_termux_foreground">Termux को फॉरग्राउंड में मजबूर किया जा रहा है...</string>
-    <string name="maintenance_mode_enabled">रखरखाव मोड सक्षम: Termux के पास सीधा इंटरनेट एक्सेस है</string>
+    <string name="critical_os_blocked">क्रिटिकल: OS ने वर्चुअल वातावरण उत्तेजना को ब्लॉक कर दिया (SecurityException)।</string>
     <string name="maintenance_write_failed">रखरखाव लेखन विफल</string>
     <string name="permission_denied_log">अनुमति अस्वीकार: सुनिश्चित करें कि मैनिफ़ेस्ट में RUN_COMMAND है और ऐप प्रतिबंधित नहीं है।</string>
     <string name="ping_fail">PING 8085: विफल (%s)</string>
     <string name="ping_ok">PING 8085: OK</string>
     <string name="pulse_error_log">पल्स त्रुटि: %s</string>
-    <string name="pulse_stimulating">पल्स: Termux को उत्तेजित करना...</string>
-    <string name="recovery_pulse_received">सिस्टम से रिकवरी पल्स प्राप्त। VPN लागू किया जा रहा है...</string>
-    <string name="sent_to_termux">Termux को भेजा गया: %s</string>
+    <string name="pulse_stimulating">पल्स: सिस्टम को उत्तेजित करना...</string>
     <string name="session_started">हार्टबीट सत्र शुरू हुआ</string>
     <string name="session_stopped">हार्टबीट सत्र बंद हुआ</string>
-    <string name="termux_invocation_error">Termux को बुलाने में त्रुटि: %1$s</string>
-    <string name="termux_pulse_error">[Termux] पल्स त्रुटि (exit %1$d): %2$s</string>
-    <string name="termux_stimulus_ok">[Termux] स्टिमुलस OK (exit 0)</string>
-    <string name="termux_stuck_warning">Termux नहीं खुल रहा है? फोकस पाने के लिए मास्टर वॉचडॉग सक्षम करें।</string>
-    <string name="unexpected_error_termux">Termux पर इंटेंट भेजने में अनपेक्षित त्रुटि</string>
-
+    <string name="termux_stuck_warning">क्या वातावरण शुरू नहीं हो रहा है? फोकस बाध्य करने के लिए मास्टर वॉचडॉग सक्षम करें।</string>
+    <string name="unexpected_error_termux">वर्चुअल वातावरण में इंटेंट भेजने में अनपेक्षित त्रुटि।</string>
 
     <string name="end_of_history">--- इतिहास का अंत ---</string>
     <string name="error_reading_history">इतिहास पढ़ने में त्रुटि: %s</string>
@@ -182,50 +154,318 @@
     <string name="log_reset_confirm_msg">यह सभी संग्रहीत कनेक्शन लॉग को स्थायी रूप से हटा देगा। यह कार्रवाई पूर्ववत नहीं की जा सकती।</string>
     <string name="log_reset_confirm_title">लॉग इतिहास रीसेट करें?</string>
     <string name="failed_reset_log">लॉग रीसेट करने में विफल: %s</string>
-    <string name="log_reset_log">लॉग रीसेट किया गया</string>
     <string name="log_reset_user">उपयोगकर्ता द्वारा लॉग रीसेट</string>
     <string name="log_size_bytes">%d B</string>
     <string name="log_size_format">आकार: %1$s / 10MB</string>
     <string name="log_size_kb">%.1f KB</string>
     <string name="log_size_mb">%.2f MB</string>
-    <string name="log_warning_rapid_growth">लॉग फ़ाइल बहुत तेज़ी से बढ़ रही है, आपको जांचना चाहिए कि क्या कुछ विफल हो रहा है</string>
+    <string name="log_warning_rapid_growth">लॉग फ़ाइल बहुत तेज़ी से बढ़ रही है, आपको जांचना चाहिए कि क्या कुछ विफल हो रहा है।</string>
     <string name="no_blackbox_found">--- कोई BlackBox फ़ाइल नहीं मिली ---</string>
-
+    <string name="reset_log">लॉग रीसेट करें</string>
 
     <string name="auth_required_subtitle">सुरक्षित वातावरण को अक्षम करने के लिए प्रमाणित करें</string>
     <string name="auth_required_title">प्रमाणीकरण आवश्यक है</string>
     <string name="auth_success_disconnect">प्रमाणीकरण सफल। डिस्कनेक्ट हो रहा है...</string>
     <string name="security_required_msg">सुरक्षित वातावरण को सक्षम करने से पहले आपको अपने डिवाइस पर PIN, पैटर्न या फ़िंगरप्रिंट सेट करना होगा।</string>
     <string name="security_required_title">सुरक्षा आवश्यक</string>
-    <string name="unlock_watchdog_subtitle">Termux सुरक्षा को रोकने के लिए प्रमाणीकरण आवश्यक है</string>
-    <string name="unlock_watchdog_title">मास्टर वॉचडॉग अनलॉक करें</string>
-
 
     <string name="battery_opt_denied">ऐप को 100% काम करने के लिए, कृपया बैटरी अनुकूलन को अक्षम करें।</string>
     <string name="battery_opt_msg">वॉचडॉग के विश्वसनीय रूप से काम करने के लिए, कृपया इस ऐप के लिए बैटरी अनुकूलन को अक्षम करें।</string>
-    <string name="battery_opt_oppo_extra">\n\nOPPO/Realme पहचाना गया: कृपया सुनिश्चित करें कि आप इस ऐप की सेटिंग्स में \'Allow background activity\' सक्षम करें।</string>
+    <string name="battery_opt_oppo_extra">\n\nOPPO/Realme पहचाना गया: कृपया सुनिश्चित करें कि आप इस ऐप की सेटिंग्स में \'Allow background activity\' (पृष्ठभूमि गतिविधि की अनुमति दें) सक्षम करें।</string>
     <string name="battery_opt_title">बैटरी अनुकूलन</string>
-    <string name="battery_opt_xiaomi_extra">\n\nXiaomi पहचाना गया: कृपया सेटिंग्स में बैटरी सेवर को \'No restrictions\' पर सेट करें।</string>
+    <string name="battery_opt_xiaomi_extra">\n\nXiaomi पहचाना गया: कृपया सेटिंग्स में बैटरी सेवर को \'No restrictions\' (कोई प्रतिबंध नहीं) पर सेट करें।</string>
     <string name="go_to_settings">सेटिंग्स पर जाएं</string>
 
-
     <string name="app_started">एप्लिकेशन शुरू हुआ</string>
-    <string name="deploy_wip_desc">Termux मॉड्यूल और वातावरण इंस्टॉलर जल्द ही यहां उपलब्ध होंगे।</string>
-    <string name="deploy_wip_title">WIP - निर्माणाधीन</string>
-
-    <string name="battery_custom">"Battery: "</string>
-    <string name="battery_no_value">Battery: --%</string>
-    <string name="hotspot_fdash">हॉटस्पॉट: --</string>
     <string name="pref_file_internal">IIAB_Internal</string>
     <string name="pref_key_setup_complete">setup_complete</string>
     <string name="saved_toast">सहेजा गया</string>
     <string name="settings_saved">सेटिंग्स सहेजी गईं</string>
-    <string name="uptime_no_value">अपटाइम: --</string>
-    <string name="version_footer_fallback">IIAB-oA · 2026 · Controller v0.1.xbeta</string>
+    <string name="version_footer_fallback">IIAB-oA · 2026 · Controller v0.3.xbeta</string>
     <string name="version_footer_format">IIAB-oA · 2026 · Controller %1$s</string>
-    <string name="wi_fi_fdash">Wi-Fi: --</string>
-    <string name="setup_display_over_other_apps">Display over other apps</string>
-    <string name="setup_manage_all_permissions">Manage All Permissions</string>
-    <string name="setup_manage_termux_permissions">Manage Termux permissions</string>
-    <string name="setup_termux_custom_permissions">Termux custom permissions</string>
+
+    <string name="update_dialog_title">नया संस्करण उपलब्ध है: %1$s</string>
+    <string name="update_dialog_message">क्या आप एप्लिकेशन को अपडेट करना चाहते हैं?\n\nनया क्या है:\n%1$s</string>
+    <string name="update_dialog_positive">अपडेट करें</string>
+    <string name="update_dialog_negative">बाद में</string>
+    <string name="download_title">IIAB Controller अपडेट हो रहा है</string>
+    <string name="download_description">नया संस्करण डाउनलोड हो रहा है...</string>
+    <string name="download_started_toast">डाउनलोड शुरू हुआ...</string>
+    <string name="ota_toast_checking">अपडेट की जांच की जा रही है...</string>
+    <string name="ota_toast_latest">आपके पास पहले से ही नवीनतम संस्करण स्थापित है।</string>
+    <string name="ota_toast_error_server">सर्वर से संपर्क करने में त्रुटि (%1$d)</string>
+    <string name="ota_toast_error_network">नेटवर्क त्रुटि या अमान्य JSON।</string>
+    <string name="ota_toast_cooldown">कृपया पुनः प्रयास करने से पहले कुछ सेकंड प्रतीक्षा करें।</string>
+
+    <string name="install_led_dev_options">डेवलपर\nमोड</string>
+    <string name="install_led_child_process">प्रक्रिया\nप्रतिबंध</string>
+    <string name="install_led_ppk">Phantom\nProcess Killer</string>
+    <string name="install_led_internet">इंटरनेट\nएक्सेस</string>
+
+    <string name="install_header_fast">त्वरित इंस्टालेशन</string>
+    <string name="install_desc_fast">मुख्य ऐप्स के लिए वैकल्पिक डेटा के साथ, पहले से संकलित IIAB सिस्टम प्रदान करता है।</string>
+    <string name="install_header_roles">मॉड्यूल प्रबंधन</string>
+    <string name="install_header_maintenance">रखरखाव और पुनर्प्राप्ति</string>
+    <string name="install_desc_maintenance">सिस्टम प्रबंधन कार्य करें</string>
+    <string name="install_warning_server_running">इंस्टालेशन और रखरखाव टूल का उपयोग करने से पहले कृपया सर्वर बंद करें।</string>
+    <string name="install_warning_server_icon">⚠️</string>
+
+    <string name="install_btn_install">इंस्टॉल</string>
+    <string name="install_btn_reinstall">पुनर्स्थापित करें</string>
+    <string name="install_btn_delete">हटाएं</string>
+    <string name="install_btn_launch">इंस्टालेशन प्रारंभ करें</string>
+    <string name="install_btn_provision">सिस्टम प्रोविजन करें</string>
+    <string name="install_btn_refresh">रिफ्रेश</string>
+    <string name="install_btn_reset">पूर्ण रीसेट (Scratch Reset)</string>
+    <string name="install_btn_backup">बैकअप</string>
+    <string name="install_btn_restore">बैकअप पुनर्स्थापित करें</string>
+    <string name="install_btn_force_stop">बलपूर्वक रोकें</string>
+
+    <string name="install_tier_basic">बेसिक</string>
+    <string name="install_tier_standard">स्टैंडर्ड</string>
+    <string name="install_tier_full">पूर्ण (Full)</string>
+    <string name="install_chk_companion">इस संस्करण के लिए सहयोगी डेटा डाउनलोड करें</string>
+    <string name="install_legend_iiab">IIAB</string>
+    <string name="install_legend_maps">IIAB मानचित्र</string>
+    <string name="install_legend_kiwix">विकिपीडिया</string>
+    <string name="install_legend_free">मुक्त</string>
+
+    <string name="install_msg_termux_missing">कृपया पहले बेस Debian सिस्टम इंस्टॉल करें।</string>
+    <string name="install_adv_monitoring_title">उन्नत मॉनिटरिंग</string>
+    <string name="install_warning_discrepancy_icon">⚠️</string>
+    <string name="install_warning_discrepancy_msg">कृपया मैन्युअल रूप से इंस्टालेशन की जांच करें, दर्ज की गई और पहचानी गई जानकारी के बीच विसंगति प्रतीत होती है।</string>
+    <string name="install_msg_confirmed">मॉड्यूल इंस्टालेशन की सफलतापूर्वक पुष्टि की गई, केवल एक पुनर्स्थापना की अनुमति है।</string>
+    <string name="install_msg_finished">सभी इंस्टालेशन पूरे हो गए हैं!</string>
+    <string name="install_modules_disclaimer">आपके इंटरनेट की गति और डिवाइस के प्रदर्शन के आधार पर मॉड्यूल इंस्टालेशन में कई मिनट लग सकते हैं।</string>
+
+    <string name="install_dialog_reset_title">पूर्ण रीसेट (Scratch Reset)</string>
+    <string name="install_dialog_reset_msg">क्या आपको यकीन है? यह क्रिया वर्तमान इंस्टालेशन और उसके सभी डेटा को पूरी तरह से हटा देगी, जिसके लिए CLI से नए सिरे से इंस्टालेशन की आवश्यकता होगी।</string>
+    <string name="install_dialog_reset_confirm">हां, रीसेट करें</string>
+    <string name="install_dialog_reset_cancel">रद्द करें</string>
+    <string name="install_msg_offline_trusted">सर्वर ऑफ़लाइन है। मॉड्यूल स्थिति विश्वसनीय और अप टू डेट है।</string>
+    <string name="install_msg_server_running_lock">मॉड्यूल प्रबंधित करने के लिए कृपया सर्वर बंद करें।</string>
+
+    <string name="install_adv_select_backup">▶ बैकअप चुनें...</string>
+    <string name="install_adv_select_backup_open">▼ बैकअप चुनें...</string>
+    <string name="install_msg_fetching_backups">बैकअप प्राप्त किए जा रहे हैं...</string>
+    <string name="install_msg_no_backups">कोई बैकअप नहीं मिला।</string>
+    <string name="install_msg_restore_failed">पुनर्स्थापना उम्मीद के मुताबिक आगे नहीं बढ़ी। कृपया पुनः प्रयास करें।</string>
+    <string name="install_msg_backup_na">N/A</string>
+    <string name="install_msg_backup_details">फ़ाइल: %1$s\nआकार: %2$s\nदिनांक: %3$s</string>
+    <string name="install_msg_restore_starting">%1$s की पुनर्स्थापना शुरू हो रही है…</string>
+    <string name="install_msg_select_backup_first">कृपया पहले एक बैकअप चुनें।</string>
+
+    <string name="install_btn_cancel_title">इंस्टालेशन रद्द करें?</string>
+    <string name="install_btn_cancel_msg">क्या आप सुनिश्चित हैं कि आप डाउनलोड रोकना चाहते हैं? वर्तमान प्रगति खो जाएगी।</string>
+    <string name="install_btn_cancel_confirm">हां, रोकें</string>
+    <string name="install_msg_cancelled">इंस्टालेशन रद्द कर दिया गया।</string>
+    <string name="install_dialog_delete_backup_title">बैकअप हटाएं?</string>
+    <string name="install_dialog_delete_backup_msg">क्या आप वाकई %1$s को स्थायी रूप से हटाना चाहते हैं?\n\nयह क्रिया पूर्ववत नहीं की जा सकती।</string>
+    <string name="install_msg_backup_deleted">बैकअप सफलतापूर्वक हटा दिया गया।</string>
+
+    <string name="install_error_no_tier">अरे! इंस्टॉल करने के लिए एक संस्करण चुनें (बेसिक, स्टैंडर्ड या पूर्ण)।</string>
+    <string name="install_error_no_storage">पर्याप्त स्टोरेज नहीं है! कृपया स्थान खाली करें या एक छोटा संस्करण चुनें। (5GB का सुरक्षा बफर आवश्यक है)</string>
+    <string name="install_status_os_download">OS: %1$d%% | %2$s/s</string>
+    <string name="install_status_extracting">सिस्टम निकाला जा रहा है...\n(इसमें कुछ समय लगेगा)</string>
+    <string name="install_error_no_archive">त्रुटि: डाउनलोड किया गया संग्रह (Archive) नहीं मिला।</string>
+    <string name="install_error_extraction">निष्कर्षण विफल: %1$s</string>
+    <string name="install_error_download">डाउनलोड विफल: %1$s</string>
+    <string name="install_dialog_wipe_msg">यह वर्तमान Debian सिस्टम को मिटा देगा और एक नई प्रति डाउनलोड करेगा। जारी रखें?</string>
+    <string name="install_btn_yes">हां</string>
+    <string name="install_btn_no">नहीं</string>
+
+    <string name="install_dialog_delete_title">सिस्टम हटाएं?</string>
+    <string name="install_dialog_delete_msg">यह IIAB सिस्टम, डेटाबेस और सभी डाउनलोड की गई सामग्री को पूरी तरह से मिटा देगा। यह क्रिया पूर्ववत नहीं की जा सकती।</string>
+    <string name="install_btn_delete_confirm">सब कुछ हटाएं</string>
+    <string name="install_status_deleting">नेटिव निष्कासन शुरू किया जा रहा है...</string>
+    <string name="install_error_delete">हटाना विफल: %1$s</string>
+
+    <string name="install_status_installing_module">%1$s इंस्टॉल हो रहा है...</string>
+    <string name="install_status_preparing_kiwix">Kiwix तैयार किया जा रहा है...</string>
+    <string name="install_status_zim_download">ZIM: %1$d%% | %2$s/s</string>
+    <string name="install_status_indexing_zim">ZIM इंडेक्स किया जा रहा है...</string>
+    <string name="install_status_maps_provisioned">मानचित्र पहले से ही तैयार हैं...</string>
+    <string name="install_status_maps_configuring">मानचित्र कॉन्फ़िगर किए जा रहे हैं...</string>
+    <string name="install_success_deployment">सिस्टम परिनियोजन (Deployment) सफल!</string>
+
+    <string name="install_status_wiping_old">पुराना सिस्टम मिटाया जा रहा है...</string>
+    <string name="install_status_starting_vanilla">Vanilla Debian रीसेट शुरू किया जा रहा है...</string>
+    <string name="install_status_downloading_debian">Debian डाउनलोड हो रहा है...</string>
+    <string name="install_status_debian_download">Debian: %1$d%% | %2$s/s</string>
+    <string name="install_status_extracting_base">बेस निकाला जा रहा है...</string>
+    <string name="install_status_bootstrapping">IIAB बूटस्ट्रैप किया जा रहा है...</string>
+    <string name="install_success_vanilla">Vanilla बेस सिस्टम सफलतापूर्वक बूटस्ट्रैप किया गया!</string>
+    <string name="install_error_bootstrap">बूटस्ट्रैप त्रुटि: %1$s</string>
+    <string name="install_error_extract_bootstrap">निष्कर्षण/बूटस्ट्रैप विफल: %1$s</string>
+    <string name="install_error_reset">रीसेट विफल: %1$s</string>
+
+    <string name="install_error_backup_missing">बैकअप फ़ाइल गायब है!</string>
+    <string name="install_status_restoring">पुनर्स्थापित हो रहा है...</string>
+    <string name="install_success_restore">पुनर्स्थापना पूर्ण!</string>
+
+    <string name="install_btn_export_backup">📤 SD कार्ड में बैकअप निर्यात करें</string>
+    <string name="install_btn_import_backup">SD कार्ड से बैकअप आयात करें</string>
+    <string name="install_msg_backup_in_progress_title">बैकअप प्रगति पर है</string>
+    <string name="install_msg_backup_in_progress_body">40GB+ की बैकअप प्रक्रिया पहले से ही पृष्ठभूमि में चल रही है। इसे अभी बाधित करने से फ़ाइल दूषित हो सकती है।\n\nक्या आप इसे बलपूर्वक रोकना चाहते हैं?</string>
+    <string name="install_btn_force_stop_process">बलपूर्वक रोकें</string>
+    <string name="install_btn_let_finish">इसे पूरा होने दें</string>
+    <string name="install_msg_backup_aborted">उपयोगकर्ता द्वारा बैकअप निरस्त किया गया।</string>
+    <string name="install_msg_compressing">संपीड़ित (Compress) किया जा रहा है...\n(कृपया बंद न करें)</string>
+    <string name="install_msg_creating_backup">नेटिव बैकअप बनाया जा रहा है... (इसमें कुछ समय लगेगा)</string>
+    <string name="install_msg_backup_complete">बैकअप पूर्ण: %1$s</string>
+    <string name="install_msg_backup_failed">बैकअप विफल (कोड: %1$d)</string>
+    <string name="install_msg_backup_error">बैकअप त्रुटि: %1$s</string>
+
+    <string name="install_msg_export_please_select">कृपया पहले ऊपर दिए गए मेनू से एक आंतरिक बैकअप चुनें।</string>
+    <string name="install_msg_exporting">%1$s निर्यात किया जा रहा है...</string>
+    <string name="install_msg_export_success">निर्यात सफलतापूर्वक पूर्ण हुआ!</string>
+    <string name="install_msg_export_failed">निर्यात विफल: %1$s</string>
+
+    <string name="install_msg_importing">बैकअप आयात किया जा रहा है... कृपया प्रतीक्षा करें।</string>
+    <string name="install_msg_import_success">बैकअप सफलतापूर्वक आयात किया गया!</string>
+    <string name="install_msg_import_failed">आयात विफल: %1$s</string>
+
+    <string name="kiwix_cache_wiped">Kiwix कैश सफलतापूर्वक साफ़ किया गया</string>
+    <string name="kiwix_select_variant_error">कृपया सूची से ZIM संस्करण चुनें</string>
+    <string name="kiwix_catalog_error">कैटलॉग लोड करने में त्रुटि: %1$s</string>
+
+    <string name="adb_notif_title">IIAB वायरलेस डिबगिंग</string>
+    <string name="adb_notif_desc">ADB पोर्ट मिल गए! नीचे \'पिन दर्ज करें\' पर टैप करें।</string>
+    <string name="adb_notif_action_pin">पिन दर्ज करें</string>
+    <string name="adb_notif_input_hint">6-अंकीय पिन दर्ज करें</string>
+    <string name="adb_toast_scan_timeout">ADB स्कैन का समय समाप्त हो गया। पुनः प्रयास करें।</string>
+
+    <string name="adb_status_connected">कनेक्टेड!</string>
+    <string name="adb_status_offline">ऑफ़लाइन</string>
+    <string name="adb_btn_connect">ADB से कनेक्ट करें</string>
+    <string name="adb_btn_disconnect">ADB डिस्कनेक्ट करें</string>
+    <string name="adb_btn_scanning">नेटवर्क स्कैन किया जा रहा है...</string>
+
+    <string name="adb_desc_monitoring">CPU उपयोग की निगरानी करने, चाइल्ड प्रोसेस प्रतिबंधों को प्रबंधित करने और फैंटम प्रोसेस किलर (PPK) को ठीक करने के लिए आवश्यक है।</string>
+    <string name="adb_graph_title">CPU इतिहास (60 सेकंड)</string>
+    <string name="adb_snack_dev_options">डेवलपर विकल्प मैन्युअल रूप से खोलें</string>
+    <string name="adb_ppk_default">डिफ़ॉल्ट (32)</string>
+    <string name="adb_ppk_limit_not_required"><![CDATA[PPK सीमा: <b>%1$s</b><br><small>(आवश्यक नहीं)</small>]]></string>
+    <string name="adb_ppk_limit_active"><![CDATA[PPK सीमा: <b>%1$s</b>]]></string>
+
+    <string name="adb_cp_disabled_ok"><![CDATA[प्रक्रिया प्रतिबंध<br><b>(अक्षम - OK)</b>]]></string>
+    <string name="adb_cp_enabled_limiting"><![CDATA[प्रक्रिया प्रतिबंध<br><b>(सक्षम - सीमित कर रहा है)</b>]]></string>
+    <string name="adb_cp_unknown"><![CDATA[प्रक्रिया प्रतिबंध<br><b>(अज्ञात)</b>]]></string>
+    <string name="adb_cp_not_required"><![CDATA[प्रक्रिया प्रतिबंध<br><small>(आवश्यक नहीं)</small>]]></string>
+
+    <string name="adb_snack_disabling_cp">प्रक्रिया प्रतिबंध अक्षम किए जा रहे हैं...</string>
+    <string name="adb_snack_setting_ppk">PPK सीमा 256 पर सेट की जा रही है...</string>
+    <string name="adb_status_securing">कनेक्शन सुरक्षित किया जा रहा है...</string>
+    <string name="adb_ui_checking_cp"><![CDATA[चाइल्ड प्रोसेस<br><i>(जांच की जा रही है...)</i>]]></string>
+    <string name="adb_ui_checking_ppk"><![CDATA[PPK सीमा<br><i>(जांच की जा रही है...)</i>]]></string>
+    <string name="adb_ui_unknown_cp">चाइल्ड प्रोसेस\n(--)</string>
+    <string name="adb_ui_unknown_ppk">PPK सीमा\n(--)</string>
+
+    <string name="adb_enforcer_title">सिस्टम ऑप्टिमाइज़ेशन आवश्यक</string>
+    <string name="adb_enforcer_body">विशाल फ़ाइलों के स्थिर स्थानांतरण को सुनिश्चित करने के लिए, Android की सख्त पृष्ठभूमि प्रक्रिया सीमाओं को अस्थायी रूप से बायपास किया जाना चाहिए।\n\nकृपया इंस्टॉल टैब में \'उन्नत मॉनिटरिंग\' पर जाएं, ADB के माध्यम से कनेक्ट करें, और अनुशंसित \'प्रक्रिया प्रतिबंध\' सेटिंग्स लागू करें।</string>
+    <string name="adb_enforcer_btn_setup">सेटअप</string>
+    <string name="adb_enforcer_btn_ok">OK</string>
+
+    <string name="sync_mode_share">सिस्टम साझा करें</string>
+    <string name="sync_mode_receive">सिस्टम प्राप्त करें</string>
+
+    <string name="sync_share_status_off">शेयर डेमन बंद है</string>
+    <string name="sync_btn_start_server">साझाकरण सेवा प्रारंभ करें</string>
+    <string name="sync_btn_stop_server">साझाकरण सेवा रोकें</string>
+    <string name="sync_btn_scan_qr">QR कोड स्कैन करें</string>
+
+    <string name="sync_transfer_filename">सिंक्रनाइज़ किया जा रहा है: %1$s...</string>
+    <string name="sync_transfer_speed_default">-- MB/s</string>
+    <string name="sync_transfer_eta_default">ETA: --:--</string>
+    <string name="sync_btn_cancel_transfer">रद्द करें</string>
+    <string name="sync_error_stop_server_first">फ़ाइल भ्रष्टाचार को रोकने के लिए कृपया पहले IIAB सर्वर बंद करें (STOP)।</string>
+    <string name="sync_error_no_network">कोई सक्रिय नेटवर्क नहीं मिला। कृपया Wi-Fi या हॉटस्पॉट सक्षम करें।</string>
+    <string name="sync_error_daemon_failed">शेयर डेमन प्रारंभ करने में विफल।</string>
+
+    <string name="rsync_error_binary_missing">नेटिव rsync बाइनरी नहीं मिली!</string>
+    <string name="rsync_error_cancelled">उपयोगकर्ता द्वारा स्थानांतरण रद्द कर दिया गया।</string>
+    <string name="rsync_error_host_dropped">होस्ट ने कनेक्शन समाप्त कर दिया या नेटवर्क गिर गया।</string>
+    <string name="rsync_error_exit_code">Rsync निकास कोड (exit code) के साथ विफल हुआ: %1$d</string>
+    <string name="rsync_error_fatal">गंभीर त्रुटि: %1$s</string>
+    <string name="rsync_error_dry_run_cancelled">उपयोगकर्ता द्वारा गणना रद्द की गई।</string>
+    <string name="rsync_error_dry_run_failed">ड्राई रन (Dry run) विफल। निकास कोड: %1$d</string>
+    <string name="rsync_error_dry_run_fatal">आकार की गणना करते समय गंभीर त्रुटि: %1$s</string>
+    <string name="rsync_success_complete">स्थानांतरण सफलतापूर्वक पूर्ण हुआ!</string>
+
+    <string name="sync_msg_calculating">सिस्टम अंतरों का विश्लेषण किया जा रहा है...\nइसमें कुछ मिनट लग सकते हैं।</string>
+    <string name="sync_error_storage_title">अपर्याप्त स्टोरेज</string>
+    <string name="sync_error_storage_msg">अपडेट के लिए %1$.2f GB की आवश्यकता है, लेकिन आपके पास केवल %2$.2f GB उपलब्ध है (5GB सुरक्षा बफर को ध्यान में रखते हुए)।</string>
+    <string name="sync_title_update">सिस्टम अपडेट करें</string>
+    <string name="sync_title_install">सिस्टम इंस्टॉल करें</string>
+    <string name="sync_msg_confirm_transfer">आप %.2f GB डाउनलोड करने वाले हैं।\nआपके पास पर्याप्त स्टोरेज स्थान है।\n\nक्या आप अभी स्थानांतरण शुरू करना चाहते हैं?</string>
+    <string name="sync_btn_start_transfer">स्थानांतरण प्रारंभ करें</string>
+    <string name="sync_error_calc_title">गणना विफल</string>
+    <string name="sync_error_calc_msg">सिस्टम अंतर की गणना नहीं की जा सकी: %1$s</string>
+    <string name="sync_success_title">सफलता</string>
+    <string name="sync_error_title">स्थानांतरण त्रुटि</string>
+    <string name="sync_error_body">Rsync को एक समस्या आई:\n\n%1$s</string>
+
+    <string name="sync_btn_share_app">ऐप साझा करें (APK)</string>
+    <string name="sync_btn_stop_app">ऐप सर्वर (APK) रोकें</string>
+    <string name="sync_error_stop_apk_first">Rsync डेमन शुरू करने से पहले कृपया APK सर्वर बंद करें।</string>
+
+    <string name="sync_dialog_server_running_title">सर्वर चल रहा है</string>
+    <string name="sync_dialog_missing_env_title">वातावरण गायब है</string>
+    <string name="sync_dialog_missing_env_msg">ऐसा लगता है कि इस डिवाइस पर IIAB वातावरण इंस्टॉल नहीं है। क्या आप फिर भी शेयर डेमन शुरू करना चाहते हैं?</string>
+    <string name="sync_dialog_btn_continue">हां, जारी रखें</string>
+    <string name="sync_dialog_stop_title">शेयर डेमन रोकें?</string>
+    <string name="sync_dialog_stop_msg">यह वर्तमान में सिस्टम डाउनलोड कर रहे किसी भी सहकर्मी (peer) को तुरंत डिस्कनेक्ट कर देगा। क्या आप सुनिश्चित हैं कि आप रोकना चाहते हैं?</string>
+    <string name="sync_toast_invalid_qr">अमान्य QR कोड।</string>
+    <string name="sync_dialog_empty_host_title">चेतावनी: होस्ट खाली है</string>
+    <string name="sync_dialog_empty_host_msg">होस्ट डिवाइस रिपोर्ट करता है कि उसमें पूर्ण IIAB वातावरण स्थापित नहीं है। क्या आप अभी भी स्थानांतरण का प्रयास करना चाहते हैं?</string>
+    <string name="sync_dialog_btn_try_anyway">हां, फिर भी प्रयास करें</string>
+    <string name="sync_msg_connecting">होस्ट से कनेक्ट हो रहा है…</string>
+    <string name="sync_dialog_conn_failed_title">कनेक्शन विफल</string>
+    <string name="sync_dialog_conn_failed_msg">होस्ट तक %1$s पर नहीं पहुंचा जा सका।\nक्या आप सुनिश्चित हैं कि आप उसी Wi-Fi नेटवर्क या हॉटस्पॉट से जुड़े हैं?</string>
+
+    <string name="sync_card_title_system">IIAB + सामग्री साझा करें</string>
+    <string name="sync_card_desc_system">जब दोनों डिवाइस में IIAB-oA Controller ऐप हो, तो आप IIAB प्लेटफ़ॉर्म और इसकी सभी सामग्री (कुछ सौ MB से लेकर कई GB तक) साझा कर सकते हैं।</string>
+    <string name="sync_card_title_apk">IIAB-oA Controller ऐप साझा करें</string>
+    <string name="sync_card_desc_apk">Android पर IIAB का उपयोग करने के लिए, दूसरे डिवाइस को पहले ऐप की आवश्यकता होती है। यह सुविधा आपको इसे स्थानीय रूप से साझा करने की अनुमति देती है। इंटरनेट की आवश्यकता नहीं है!</string>
+    <string name="sync_card_title_receive">IIAB + सामग्री प्राप्त करें</string>
+    <string name="sync_card_desc_receive">IIAB प्लेटफ़ॉर्म और चयनित सामग्री प्राप्त करना शुरू करने के लिए होस्ट डिवाइस पर प्रदर्शित QR कोड को स्कैन करें।</string>
+
+    <string name="sync_share_status_wifi">"1. सुनिश्चित करें कि दूसरा डिवाइस उसी Wi-Fi पर है।\n2. दूसरे डिवाइस पर इस QR को स्कैन करें।"</string>
+    <string name="sync_share_status_hotspot">"1. दूसरे डिवाइस को अपने हॉटस्पॉट से कनेक्ट करने के लिए कहें।\n2. दूसरे डिवाइस पर इस QR को स्कैन करें।"</string>
+    <string name="sync_app_status_wifi">"1. सुनिश्चित करें कि दूसरा डिवाइस उसी Wi-Fi पर है।\n2. किसी भी सामान्य कैमरे से इस QR को स्कैन करें।"</string>
+    <string name="sync_app_status_hotspot">"1. दूसरे डिवाइस को अपने हॉटस्पॉट से कनेक्ट करने के लिए कहें।\n2. किसी भी सामान्य कैमरे से इस QR को स्कैन करें।"</string>
+
+    <string name="terminal_locked">टर्मिनल लॉक है (स्क्रॉल सक्षम)</string>
+    <string name="terminal_unlocked">टर्मिनल अनलॉक है (बंद करने के लिए नीचे स्वाइप करें)</string>
+    <string name="terminal_crash_title">टर्मिनल स्पॉन क्रैश</string>
+    <string name="terminal_copied_toast">टेक्स्ट कॉपी किया गया</string>
+    <string name="sessions_title">सत्र (SESSIONS)</string>
+    <string name="new_session_btn">+ नया सत्र</string>
+
+    <string name="log_cli_backup_triggered">CLI के माध्यम से बैकअप शुरू किया गया!</string>
+    <string name="log_cli_restore_triggered">CLI के माध्यम से पुनर्स्थापना शुरू की गई!</string>
+    <string name="terminal_auth_title">टर्मिनल एक्सेस अनुरोध</string>
+    <string name="terminal_auth_subtitle">Debian के अंदर SD कार्ड माउंट करने के लिए प्रमाणित करें</string>
+    <string name="log_cli_sdcard_granted">CLI के माध्यम से SD कार्ड एक्सेस दिया गया।</string>
+    <string name="log_cli_sdcard_denied">SD कार्ड एक्सेस अस्वीकार कर दिया गया।</string>
+    <string name="ota_error_launching_installer">इंस्टॉलर लॉन्च करने में त्रुटि। आपको अपने डाउनलोड फ़ोल्डर से डाउनलोड किए गए APK को मैन्युअल रूप से इंस्टॉल करना पड़ सकता है।</string>
+    <string name="log_server_booting_native">IIAB वातावरण को नेटिव रूप से बूट किया जा रहा है...</string>
+    <string name="log_server_engine_shutdown">[सर्वर] इंजन बंद (कोड: %1$d)</string>
+    <string name="log_server_error">[सर्वर त्रुटि] %1$s</string>
+    <string name="log_server_stopping_gracefully">IIAB वातावरण को सही ढंग से बंद किया जा रहा है...</string>
+    <string name="log_server_stop_error">[स्टॉप त्रुटि] %1$s</string>
+    <string name="log_critical_binary_missing">क्रिटिकल: नेटिव लाइब्रेरी से %1$s गायब है!</string>
+
+    <string name="setup_back_blocked_msg">कृपया जारी रखने के लिए सेटअप पूरा करें।</string>
+    <string name="sync_scanner_prompt">IIAB होस्ट QR कोड स्कैन करें</string>
+
+    <string name="kiwix_dialog_lang_label">Kiwix भाषा</string>
+    <string name="kiwix_dialog_variants_label">उपलब्ध ZIM संस्करण</string>
+    <string name="kiwix_dialog_wipe_cache">कैश मिटाएं</string>
+    <string name="kiwix_dialog_wipe_zim_cache">ZIM कैश मिटाएं</string>
+    <string name="kiwix_dialog_select">चुनें</string>
+
+    <string name="qr_btn_close">बंद करें</string>
+    <string name="qr_content_description">QR कोड</string>
+    <string name="sync_share_status_init">सर्वर शुरू हो रहा है...</string>
 </resources>

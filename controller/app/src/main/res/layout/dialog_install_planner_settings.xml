@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:background="@color/dash_bg_main"
+    android:padding="16dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/kiwix_dialog_lang_label"
+        android:textColor="@color/dash_text_secondary"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"/>
+
+    <Spinner
+        android:id="@+id/spinner_kiwix_lang"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:background="@drawable/rounded_button"
+        android:backgroundTint="@color/dash_module_bg"
+        android:popupBackground="@color/dash_bg_card"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/kiwix_dialog_variants_label"
+        android:textColor="@color/dash_text_primary"
+        android:textStyle="bold"
+        android:textSize="12sp"
+        android:layout_marginBottom="8dp"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="220dp"
+        android:background="@drawable/rounded_button"
+        android:backgroundTint="@color/dash_module_bg"
+        android:padding="8dp"
+        android:layout_marginBottom="16dp">
+
+        <RadioGroup
+            android:id="@+id/rg_kiwix_variants"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical" />
+    </ScrollView>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:weightSum="2">
+
+        <Button
+            android:id="@+id/btn_wipe_cache"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="8dp"
+            android:text="@string/kiwix_dialog_wipe_cache"
+            android:textColor="#FFFFFF"
+            android:textAllCaps="false"
+            android:background="@drawable/rounded_button"
+            android:backgroundTint="#0000FF" />
+
+        <Button
+            android:id="@+id/btn_select_variant"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="8dp"
+            android:text="@string/kiwix_dialog_select"
+            android:textColor="#FFFFFF"
+            android:textAllCaps="false"
+            android:background="@drawable/rounded_button"
+            android:backgroundTint="#008000" />
+    </LinearLayout>
+</LinearLayout>

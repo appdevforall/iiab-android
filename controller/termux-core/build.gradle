@@ -1,0 +1,99 @@
+plugins {
+    id 'com.android.library'
+}
+
+// 1. Task to copy and patch Termux source code on the fly
+// (This prevents us from modifying the original git submodule)
+task patchTermuxSources(type: Copy) {
+    from 'termux-source'
+    into "$buildDir/generated/patched_termux"
+    include '**/*.java'
+
+    // We filter line by line to redirect rogue R's to the main namespace
+    filter { String line ->
+        line.replaceAll('com.termux.view.R', 'com.termux.shared.R')
+                .replaceAll('org.iiab.termuxcore.R', 'com.termux.shared.R')
+    }
+}
+
+// We ensure that the task runs before trying to compile Java
+preBuild.dependsOn patchTermuxSources
+
+android {
+    // 2. We use the exact namespace that Termux expects
+    namespace 'com.termux.shared'
+    compileSdk 34
+
+    defaultConfig {
+        minSdk 24
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+
+        // --- 1. NATIVE ENGINE CONFIGURATION (C++) ---
+        externalNativeBuild {
+            cmake {
+                cFlags "-fno-exceptions", "-fno-rtti"
+                // --- THE PATCH FOR ANDROID 15 (16 KB Page Size) ---
+                arguments "-DCMAKE_SHARED_LINKER_FLAGS=-Wl,-z,max-page-size=16384",
+                        "-DCMAKE_EXE_LINKER_FLAGS=-Wl,-z,max-page-size=16384"
+            }
+        }
+        ndk {
+            abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
+        }
+    }
+
+    // --- 2. ROUTE OF THE BRIDGE ---
+    externalNativeBuild {
+        cmake {
+            path "CMakeLists.txt"
+        }
+    }
+
+    // --- 3. THE MASTER TRICK: CODE HIJACKING ---
+    sourceSets {
+        main {
+            // We read the Java code from our temporary patched folder
+            java.srcDirs = [
+                    'src/main/java',
+                    "$buildDir/generated/patched_termux/termux-shared/src/main/java",
+                    "$buildDir/generated/patched_termux/terminal-emulator/src/main/java",
+                    "$buildDir/generated/patched_termux/terminal-view/src/main/java"
+            ]
+            // We can read the resources directly from the original submodule
+            res.srcDirs = [
+                    'src/main/res',
+                    'termux-source/termux-shared/src/main/res',
+                    'termux-source/terminal-view/src/main/res'
+            ]
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.13.0'
+
+    // --- TERMUX PATCHES ---
+    implementation 'com.google.guava:guava:31.1-jre'
+    implementation 'commons-io:commons-io:2.11.0'
+
+    // Markdown
+    implementation 'io.noties.markwon:core:4.6.2'
+    implementation 'io.noties.markwon:ext-strikethrough:4.6.2'
+    implementation 'io.noties.markwon:linkify:4.6.2'
+    implementation 'io.noties.markwon:recycler:4.6.2'
+
+    implementation 'org.lsposed.hiddenapibypass:hiddenapibypass:4.3'
+    implementation 'com.termux:termux-am-library:2.0.0'
+    implementation 'androidx.window:window:1.1.0'
+
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+}

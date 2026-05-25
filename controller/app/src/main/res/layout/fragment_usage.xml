@@ -398,18 +398,14 @@
             android:layout_marginBottom="8dp"
             android:background="#00000000"
             android:padding="3dp"
-            android:orientation="horizontal"
-            android:baselineAligned="false"
-            android:weightSum="2">
+            android:orientation="horizontal">
 
             <org.iiab.controller.ProgressButton
                 android:id="@+id/btn_server_control"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginEnd="4dp"
+                android:layout_width="match_parent"
+                android:layout_height="90dp"
                 android:text="Launch Server"
-                android:textSize="15sp"
+                android:textSize="20sp"
                 android:textStyle="bold"
                 android:textColor="#FFFFFF"
                 android:background="@drawable/rounded_button"
@@ -418,30 +414,7 @@
                 app:progressButtonHeight="6dp"
                 app:progressButtonDuration="@integer/server_cool_off_duration_ms"
                 app:progressButtonColor="#FF9800" />
-
-            <Button
-                android:id="@+id/watchdog_control"
-                android:layout_width="0dp"
-                android:layout_height="80dp"
-                android:layout_weight="1"
-                android:layout_marginStart="4dp"
-                android:text="@string/watchdog_enable"
-                android:textSize="15sp"
-                android:textStyle="bold"
-                android:textColor="#FFFFFF"
-                android:background="@drawable/rounded_button"
-                android:backgroundTint="@color/btn_watchdog_off"
-                android:textAllCaps="false" />
         </LinearLayout>
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/watchdog_description"
-            android:textSize="13sp"
-            android:gravity="center"
-            android:textColor="?android:attr/textColorSecondary"
-            android:layout_marginBottom="0dp" />
 
         <View
             android:layout_width="match_parent"
@@ -491,7 +464,6 @@
             android:layout_height="250dp"
             android:background="#000000"
             android:textColor="#00FF00"
-            android:fontFamily="@font/orbitron"
             android:padding="8dp"
             android:visibility="gone"
             android:scrollbars="vertical"
@@ -527,6 +499,7 @@
                 android:layout_weight="1"
                 android:text="@string/reset_log"
                 android:textSize="12sp"
+                android:background="@drawable/rounded_button"
                 android:backgroundTint="@color/btn_danger"
                 android:textColor="#FFFFFF"
                 android:textAllCaps="false"
@@ -539,6 +512,7 @@
                 android:layout_weight="1"
                 android:text="@string/copy_all"
                 android:textSize="12sp"
+                android:background="@drawable/rounded_button"
                 android:backgroundTint="@color/btn_success"
                 android:textColor="#FFFFFF"
                 android:textAllCaps="false"

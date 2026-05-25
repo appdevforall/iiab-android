@@ -3,7 +3,7 @@
  * Name        : DashboardFragment.java
  * Author      : IIAB Project
  * Copyright   : Copyright (c) 2026 IIAB Project
- * Description : Initial dasboard status activity
+ * Description : Initial dashboard status activity
  * ============================================================================
  */
 package org.iiab.controller;
@@ -11,19 +11,15 @@ package org.iiab.controller;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.BatteryManager;
 import android.os.Bundle;
-import android.os.Environment;
 import android.os.Handler;
 import android.os.Looper;
-import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -32,13 +28,13 @@ import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
 import java.io.BufferedReader;
-import java.io.FileReader;
 import java.io.File;
+import java.io.FileReader;
 import java.net.HttpURLConnection;
-import java.net.URL;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.URL;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -46,9 +42,15 @@ import java.util.Locale;
 public class DashboardFragment extends Fragment {
 
     private TextView txtDeviceName;
+    private TextView txtAndroidVersion;
     private TextView txtWifiIp, txtHotspotIp, txtUptime, txtBattery, badgeStatus, txtTermuxState;
-    private ResourceGaugeView gaugeStorage, gaugeRam, gaugeSwap;
-    private LinearLayout rootGauges, bottomRowGauges;
+
+    // --- GAUGE VARIABLES ---
+    private ResourceGaugeView gaugeStorage, gaugeRam, gaugeSwap, gaugeBattery;
+    private android.widget.ViewFlipper gaugeFlipper;
+    private android.widget.ImageButton btnFlipGauges;
+    private android.widget.RelativeLayout gaugesContainer;
+
     private TextView txtTermuxArch, txtDebianArch;
     private LinearLayout archContainer;
     private String cachedTermuxArch = null;
@@ -103,6 +105,33 @@ public class DashboardFragment extends Fragment {
 
         // Bindings
         txtDeviceName = view.findViewById(R.id.dash_text_device_name);
+        txtAndroidVersion = view.findViewById(R.id.dash_text_android_version);
+
+        // --- DIAGNOSTIC BYPASS (AGGRESSIVE ALERT DIALOG) ---
+        txtDeviceName.setOnClickListener(v -> {
+            File iiabDir = new File(requireContext().getFilesDir(), "rootfs/installed-rootfs/iiab");
+            String message;
+
+            if (!iiabDir.exists()) {
+                message = getString(R.string.dash_diag_dir_missing, iiabDir.getAbsolutePath());
+            } else {
+                String[] contents = iiabDir.list();
+                if (contents == null || contents.length == 0) {
+                    message = getString(R.string.dash_diag_dir_empty);
+                } else {
+                    message = getString(R.string.dash_diag_dir_contains, contents.length, java.util.Arrays.toString(contents));
+                }
+            }
+
+            // Force a blocking UI dialog to show the results
+            new androidx.appcompat.app.AlertDialog.Builder(requireContext())
+                    .setTitle(R.string.dash_diag_title)
+                    .setMessage(message)
+                    .setPositiveButton(R.string.dash_diag_btn_ok, null)
+                    .show();
+        });
+        // -------------------------
+
         txtWifiIp = view.findViewById(R.id.dash_text_wifi_ip);
         txtHotspotIp = view.findViewById(R.id.dash_text_hotspot_ip);
         txtUptime = view.findViewById(R.id.dash_text_uptime);
@@ -112,42 +141,42 @@ public class DashboardFragment extends Fragment {
         gaugeStorage = view.findViewById(R.id.gauge_storage);
         gaugeRam = view.findViewById(R.id.gauge_ram);
         gaugeSwap = view.findViewById(R.id.gauge_swap);
+        gaugeBattery = view.findViewById(R.id.gauge_battery);
+        gaugeFlipper = view.findViewById(R.id.gauge_flipper);
+        btnFlipGauges = view.findViewById(R.id.btn_flip_gauges);
+        gaugesContainer = view.findViewById(R.id.dash_gauges_container);
 
-        rootGauges = view.findViewById(R.id.dash_gauges_root);
-        bottomRowGauges = view.findViewById(R.id.dash_gauges_bottom_row);
+        // --- ANIMATION SETUP FOR VIEWFLIPPER ---
+        // Sets sliding animations for a smooth page transition
+        gaugeFlipper.setInAnimation(requireContext(), android.R.anim.slide_in_left);
+        gaugeFlipper.setOutAnimation(requireContext(), android.R.anim.slide_out_right);
 
-        // INDIVIDUAL ANIMATION (Only for gauges)
-        View.OnClickListener animateIndividualClick = v -> {
-            if (v instanceof ResourceGaugeView) {
-                ((ResourceGaugeView) v).triggerAnimation();
-            }
-        };
-        gaugeStorage.setOnClickListener(animateIndividualClick);
-        gaugeRam.setOnClickListener(animateIndividualClick);
-        gaugeSwap.setOnClickListener(animateIndividualClick);
+        btnFlipGauges.setOnClickListener(v -> {
+            gaugeFlipper.showNext();
+            // Trigger gauge animation for whichever page just became visible
+            triggerVisibleGaugesAnimation();
+        });
 
-        // GROUP ANIMATION (Only when touching the background/empty space)
-        View.OnClickListener animateAllClick = v -> {
-            if (gaugeStorage != null) gaugeStorage.triggerAnimation();
-            if (gaugeRam != null) gaugeRam.triggerAnimation();
-            if (gaugeSwap != null) gaugeSwap.triggerAnimation();
-        };
-        rootGauges.setOnClickListener(animateAllClick);
-        bottomRowGauges.setOnClickListener(animateAllClick);
-        adaptLayoutToOrientation(getResources().getConfiguration().orientation);
+        // Trigger animation when touching the gauges directly
+        View.OnClickListener animateCurrentClick = v -> triggerVisibleGaugesAnimation();
+        gaugeFlipper.setOnClickListener(animateCurrentClick);
+        gaugeStorage.setOnClickListener(animateCurrentClick);
+        gaugeBattery.setOnClickListener(animateCurrentClick);
+        gaugeRam.setOnClickListener(animateCurrentClick);
+        gaugeSwap.setOnClickListener(animateCurrentClick);
 
         ledTermuxState = view.findViewById(R.id.led_termux_state);
         txtTermuxState = view.findViewById(R.id.text_termux_state);
         txtTermuxArch = view.findViewById(R.id.dash_text_termux_arch);
         txtDebianArch = view.findViewById(R.id.dash_text_debian_arch);
-        archContainer = view.findViewById(R.id.dash_arch_container);
+        archContainer = view.findViewById(R.id.dash_arch_wrapper);
         modulesContainer = view.findViewById(R.id.modules_container);
         modulesTitle = view.findViewById(R.id.dash_modules_title);
 
         modulesContainer.setVisibility(View.GONE);
         modulesTitle.setText(String.format(getString(R.string.label_separator_up), getString(R.string.dash_installed_modules)));
 
-        // Listener to colapse/expande
+        // Listener to collapse/expand
         modulesTitle.setOnClickListener(v -> {
             boolean isGone = modulesContainer.getVisibility() == View.GONE;
             modulesContainer.setVisibility(isGone ? View.VISIBLE : View.GONE);
@@ -173,11 +202,7 @@ public class DashboardFragment extends Fragment {
         super.onResume();
         refreshHandler.post(refreshRunnable);
         // TRIGGER ANIMATION WHEN ENTERING TAB
-        new Handler(Looper.getMainLooper()).postDelayed(() -> {
-            if (gaugeStorage != null) gaugeStorage.triggerAnimation();
-            if (gaugeRam != null) gaugeRam.triggerAnimation();
-            if (gaugeSwap != null) gaugeSwap.triggerAnimation();
-        }, 100);
+        new Handler(Looper.getMainLooper()).postDelayed(this::triggerVisibleGaugesAnimation, 100);
     }
 
     @Override
@@ -189,6 +214,11 @@ public class DashboardFragment extends Fragment {
     private void updateSystemStats() {
         txtDeviceName.setText(getDeviceName());
 
+        // --- FETCH AND DISPLAY BASE ANDROID VERSION ---
+        String androidRelease = android.os.Build.VERSION.RELEASE;
+        int sdkVersion = android.os.Build.VERSION.SDK_INT;
+        txtAndroidVersion.setText(getString(R.string.dash_android_version_value, androidRelease, String.valueOf(sdkVersion)));
+
         // --- 0. CALCULATE SERVER UPTIME ---
         long uptimeMillis = android.os.SystemClock.elapsedRealtime();
         long minutes = (uptimeMillis / (1000 * 60)) % 60;
@@ -197,18 +227,18 @@ public class DashboardFragment extends Fragment {
 
         // Format: "Uptime: 2d 14h 05m" (Omit days if 0)
         String timeStr = (days > 0) ?
-                String.format(Locale.US, "%dd %02dh %02dm", days, hours, minutes) :
-                String.format(Locale.US, "%02dh %02dm", hours, minutes);
+                getString(R.string.dash_format_uptime_days, days, hours, minutes) :
+                getString(R.string.dash_format_uptime_hours, hours, minutes);
 
         txtUptime.setText(timeStr);
         txtWifiIp.setText(getWifiIp());
         txtHotspotIp.setText(getHotspotIp());
 
-        int batteryLevel = getBatteryPercentage();
-        if (batteryLevel >= 0) {
-            txtBattery.setText(batteryLevel + "%");
+        int batteryLevelText = getBatteryPercentage();
+        if (batteryLevelText >= 0) {
+            txtBattery.setText(getString(R.string.dash_format_pct, batteryLevelText));
         } else {
-            txtBattery.setText("--%");
+            txtBattery.setText(R.string.dash_format_pct_na);
         }
 
         // --- 1. GET REAL RAM AND SWAP FROM LINUX ---
@@ -243,30 +273,103 @@ public class DashboardFragment extends Fragment {
         long usedSpace = totalSpace - freeSpace;
 
         // --- UPDATE GAUGE VIEWS (ANIMATED AND COLORED) ---
-        int colorRam = ContextCompat.getColor(requireContext(), R.color.dash_bar_ram);
-        int colorSwap = ContextCompat.getColor(requireContext(), R.color.dash_bar_swap);
-        int colorStorage = ContextCompat.getColor(requireContext(), R.color.dash_bar_storage);
+        int baseColorRam = ContextCompat.getColor(requireContext(), R.color.dash_bar_ram);
+        int baseColorSwap = ContextCompat.getColor(requireContext(), R.color.dash_bar_swap);
+        int baseColorStorage = ContextCompat.getColor(requireContext(), R.color.dash_bar_storage);
 
-        // RAM Gauge
-        String strRam = String.format(Locale.US, "%.2f GB / %.2f GB", memUsedGb, memTotalGb);
+        int warnColor = Color.parseColor("#FF9800"); // Orange
+        int dangerColor = Color.parseColor("#F44336"); // Red
+
+        // RAM Gauge (Warning at 90%, Danger at 95%)
+        int finalColorRam = memProgress >= 95 ? dangerColor : (memProgress >= 90 ? warnColor : baseColorRam);
+        String strRam = getString(R.string.dash_format_gb, memUsedGb, memTotalGb);
         if (gaugeRam != null)
-            gaugeRam.updateData(memProgress, strRam, getString(R.string.dash_ram_memory), colorRam);
+            gaugeRam.updateData(memProgress, strRam, getString(R.string.dash_ram_memory), finalColorRam);
 
-        // SWAP Gauge
+        // SWAP Gauge (Warning at 90%, Danger at 95%)
         if (gaugeSwap != null) {
             if (swapTotal > 0) {
-                String strSwap = String.format(Locale.US, "%.2f GB / %.2f GB", swapUsedGb, swapTotalGb);
-                gaugeSwap.updateData(swapProgress, strSwap, getString(R.string.dash_swap_virtual), colorSwap);
+                int finalColorSwap = swapProgress >= 95 ? dangerColor : (swapProgress >= 90 ? warnColor : baseColorSwap);
+                String strSwap = getString(R.string.dash_format_gb, swapUsedGb, swapTotalGb);
+                gaugeSwap.updateData(swapProgress, strSwap, getString(R.string.dash_swap_virtual), finalColorSwap);
             } else {
-                gaugeSwap.updateData(0, "-- / --", getString(R.string.dash_swap_virtual), colorSwap);
+                gaugeSwap.updateData(0, getString(R.string.dash_format_na), getString(R.string.dash_swap_virtual), baseColorSwap);
             }
         }
 
-        // STORAGE Gauge
+        // STORAGE Gauge (Warning at 90%, Danger at 95%)
         if (gaugeStorage != null) {
-            String strStorage = usedSpace + " GB / " + totalSpace + " GB";
             int storageProgress = totalSpace > 0 ? (int) ((usedSpace * 100f) / totalSpace) : 0;
-            gaugeStorage.updateData(storageProgress, strStorage, getString(R.string.dash_main_storage), colorStorage);
+            int finalColorStorage = storageProgress >= 95 ? dangerColor : (storageProgress >= 90 ? warnColor : baseColorStorage);
+            String strStorage = getString(R.string.dash_format_gb_int, usedSpace, totalSpace);
+            gaugeStorage.updateData(storageProgress, strStorage, getString(R.string.dash_main_storage), finalColorStorage);
+        }
+
+        // --- BATTERY GAUGE LOGIC ---
+        if (gaugeBattery != null) {
+            int batLevel = -1;
+            boolean isCharging = false;
+
+            try {
+                IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
+                Intent batteryStatus = requireContext().registerReceiver(null, iFilter);
+
+                if (batteryStatus != null) {
+                    int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
+                    int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
+
+                    // Ensure percentage is always between 0 and 100
+                    if (level != -1 && scale != -1) {
+                        batLevel = (int) ((level / (float) scale) * 100f);
+                    }
+
+                    // Strict check to see if it's connected to power (AC, USB, or Wireless)
+                    int chargePlug = batteryStatus.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1);
+                    isCharging = (chargePlug == BatteryManager.BATTERY_PLUGGED_USB ||
+                            chargePlug == BatteryManager.BATTERY_PLUGGED_AC ||
+                            chargePlug == BatteryManager.BATTERY_PLUGGED_WIRELESS);
+                }
+            } catch (Exception e) {
+                android.util.Log.e("IIAB-Dashboard", "Error reading battery stats", e);
+            }
+
+            // Apply exact requested battery colors
+            int colorBattery;
+            if (batLevel <= 33) {
+                colorBattery = warnColor; // Orange (1-33%)
+            } else if (batLevel <= 66) {
+                colorBattery = Color.parseColor("#4CAF50"); // Green (34-66%)
+            } else {
+                colorBattery = Color.parseColor("#2196F3"); // Blue (67-100%)
+            }
+
+            // Update the gauge with the newly assigned 4-parameter method
+            if (batLevel >= 0) {
+                // Only add the lightning bolt if isCharging is true
+                String batStr = isCharging ? getString(R.string.dash_format_pct_charging, batLevel) : getString(R.string.dash_format_pct, batLevel);
+                gaugeBattery.updateData(batLevel, batStr, getString(R.string.dash_battery_title), colorBattery);
+
+                // Update the small text above as well ("Battery: 95%")
+                if (txtBattery != null) {
+                    txtBattery.setText(getString(R.string.dash_format_pct, batLevel));
+                }
+            } else {
+                // Default fallback if we can't read the battery
+                colorBattery = ContextCompat.getColor(requireContext(), R.color.dash_text_secondary);
+                gaugeBattery.updateData(0, getString(R.string.dash_format_pct_na), getString(R.string.dash_battery_title), colorBattery);
+                if (txtBattery != null) txtBattery.setText(R.string.dash_format_pct_na);
+            }
+        }
+    }
+
+    // Triggers the fill animation only for the gauges currently displayed on screen
+    private void triggerVisibleGaugesAnimation() {
+        if (gaugeFlipper.getDisplayedChild() == 0) {
+            if (gaugeStorage != null) gaugeStorage.triggerAnimation();
+            if (gaugeBattery != null) gaugeBattery.triggerAnimation();
+        } else {
+            if (gaugeRam != null) gaugeRam.triggerAnimation();
+            if (gaugeSwap != null) gaugeSwap.triggerAnimation();
         }
     }
 
@@ -424,11 +527,7 @@ public class DashboardFragment extends Fragment {
                         txtTermuxState.setText(getString(R.string.dash_state_installer));
                         txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
                         break;
-                    case TERMUX_ONLY:
-                        ledTermuxState.setBackgroundResource(R.drawable.led_off);
-                        txtTermuxState.setText(getString(R.string.dash_state_termux_only));
-                        txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_warning));
-                        break;
+                    case TERMUX_ONLY: // Fallthrough intended
                     case NONE:
                         ledTermuxState.setBackgroundResource(R.drawable.led_off);
                         txtTermuxState.setText(getString(R.string.dash_state_none));
@@ -555,110 +654,86 @@ public class DashboardFragment extends Fragment {
         }
     }
 
-    // --- MASTER STATE EVALUATOR ---
+    // --- MASTER STATE EVALUATOR (NATIVE WITH LEGACY MENTAL MAP) ---
     private SystemState evaluateSystemState(boolean isNginxAlive) {
 
-        // 1. Does Termux physically exist on the Android device?
-        boolean isTermuxInstalled = false;
-        long currentTermuxInstallTime = 0;
-
-        try {
-            android.content.pm.PackageInfo info = requireContext().getPackageManager().getPackageInfo("com.termux", 0);
-            isTermuxInstalled = true;
-            currentTermuxInstallTime = info.firstInstallTime; // This is our secure signature!
-        } catch (PackageManager.NameNotFoundException e) {
-            isTermuxInstalled = false;
-        }
-
-        File stateDir = new File(Environment.getExternalStorageDirectory(), ".iiab_state");
-        android.content.SharedPreferences prefs = requireContext().getSharedPreferences("iiab_internal_prefs", Context.MODE_PRIVATE);
-        long savedTermuxSignature = prefs.getLong("termux_install_signature", 0);
-
-        // --- THE PURGE: Ghost Handling & Signature Verification ---
-        // If Termux is NOT installed, OR if it IS installed but the signature doesn't match (meaning it was reinstalled)
-        if (!isTermuxInstalled || (savedTermuxSignature != 0 && currentTermuxInstallTime != savedTermuxSignature)) {
-
-            isArchCalculated = false;
-            if (stateDir.exists()) {
-                deleteRecursive(stateDir);
-            }
-
-            if (!isTermuxInstalled) {
-                // Termux is completely gone. Reset our signature memory to 0.
-                prefs.edit().putLong("termux_install_signature", 0).apply();
-                return SystemState.NONE;
-            } else {
-                // Termux was REINSTALLED. Save the new signature so we don't purge it again.
-                prefs.edit().putLong("termux_install_signature", currentTermuxInstallTime).apply();
-
-                // IMPORTANT: Here we need to reset the variables that track if the user clicked
-                // the "Display over other apps" and "Storage" menus.
-                // prefs.edit().putBoolean("termux_tapped_storage", false).apply();
-            }
-        } else if (isTermuxInstalled && savedTermuxSignature == 0) {
-            // First time we ever see Termux. Save its signature.
-            prefs.edit().putLong("termux_install_signature", currentTermuxInstallTime).apply();
-        }
-
-        // --- THE TRIGGER ---
-        if (!isArchCalculated && isTermuxInstalled) {
+        // 0. Calculate native architecture only once
+        if (!isArchCalculated) {
             cachedTermuxArch = getTermuxArch();
             cachedDebianArch = getDebianArch(cachedTermuxArch);
             isArchCalculated = true;
         }
 
-        // 2. Does the Nginx server respond?
+        // Setup paths for native direct inspection
+        File rootfsDir = new File(requireContext().getFilesDir(), "rootfs/installed-rootfs/iiab");
+        File debianBash = new File(rootfsDir, "bin/bash");
+        File flagIiabReady = new File(rootfsDir, "usr/local/pdsm/flag_install_ready");
+
+        // --- 1. Does Termux physically exist on the Android device? ---
+        /*
+         * [OBSOLETE IN NATIVE ARCHITECTURE]
+         * Previously used PackageManager to check "com.termux" and verify firstInstallTime.
+         * Handled "The Purge" (Ghost Handling) if signatures mismatched.
+         * No longer needed because PRoot and Aria2 are compiled directly into this app.
+         */
+
+        // --- 2. Does the Nginx server respond? ---
         if (isNginxAlive) {
             return SystemState.ONLINE;
         }
 
-        // 3. Is IIAB fully compiled/restored and ready?
-        File flagIiabReady = new File(stateDir, "flag_iiab_ready");
+        // --- 3. Is IIAB fully compiled/restored and ready? ---
+        /*
+         * [NATIVE ADAPTATION]
+         * Previously looked for "flag_iiab_ready" in /sdcard/.iiab_state.
+         */
         if (flagIiabReady.exists()) {
             return SystemState.OFFLINE;
         }
 
-        // 4. Is the base Debian OS installed, but NO IIAB yet?
-        File flagSystem = new File(stateDir, "flag_system_installed");
-        if (flagSystem.exists()) {
+        // --- 4. Is the base Debian OS installed, but NO IIAB yet? ---
+        /*
+         * [NATIVE ADAPTATION]
+         * Previously looked for "flag_system_installed" in /sdcard/.iiab_state.
+         * Now directly checks if TarExtractor successfully unpacked the base Linux filesystem.
+         */
+        if (debianBash.exists()) {
             return SystemState.DEBIAN_ONLY;
         }
 
-        // 5. Is only the installer ready?
-        File flagInstaller = new File(stateDir, "flag_installer_present");
-        if (flagInstaller.exists()) {
-            return SystemState.INSTALLER;
-        }
+        // --- 5. Is only the installer ready? ---
+        /*
+         * [OBSOLETE IN NATIVE ARCHITECTURE]
+         * Previously looked for "flag_installer_present" to know if the Bash script was running.
+         * The installer is now our native Java UI (Aria2Manager + TarExtractor).
+         */
 
-        // 6. Only the raw base app is present.
-        return SystemState.TERMUX_ONLY;
-    }
-
-    // Helper method to recursively delete the .iiab_state folder if Termux was uninstalled
-    private void deleteRecursive(File fileOrDirectory) {
-        if (fileOrDirectory.isDirectory()) {
-            File[] children = fileOrDirectory.listFiles();
-            if (children != null) {
-                for (File child : children) {
-                    deleteRecursive(child);
-                }
-            }
-        }
-        fileOrDirectory.delete();
+        // --- 6. Only the raw base app is present ---
+        /*
+         * Previously returned SystemState.TERMUX_ONLY.
+         * Now it means the system is completely virgin (no rootfs, no variables).
+         */
+        return SystemState.NONE;
     }
 
     // --- METHODS FOR OBTAINING ARCHITECTURES ---
     private String getTermuxArch() {
         try {
-            android.content.pm.ApplicationInfo info = requireContext().getPackageManager().getApplicationInfo("com.termux", 0);
+            // Inspecting our own app's NDK instead of an external package
+            android.content.pm.ApplicationInfo info = requireContext().getApplicationInfo();
             String nativeLibDir = info.nativeLibraryDir;
 
             if (nativeLibDir != null) {
-                if (nativeLibDir.endsWith("arm64")) return "arm64-v8a";
-                if (nativeLibDir.endsWith("arm")) return "armeabi-v7a";
+                if (nativeLibDir.endsWith("arm64") || nativeLibDir.contains("arm64-v8a"))
+                    return "arm64-v8a";
+                if (nativeLibDir.endsWith("arm") || nativeLibDir.contains("armeabi-v7a"))
+                    return "armeabi-v7a";
+                if (nativeLibDir.endsWith("x86_64") || nativeLibDir.contains("x86_64"))
+                    return "x86_64";
+                if (nativeLibDir.endsWith("x86") || nativeLibDir.contains("x86")) return "x86";
             }
-        } catch (PackageManager.NameNotFoundException e) {
-            return "N/A";
+        } catch (Exception e) {
+            android.util.Log.e("IIAB-Dashboard", "Error obtaining native architecture", e);
         }
 
         if (android.os.Build.SUPPORTED_ABIS.length > 0) {
@@ -677,71 +752,36 @@ public class DashboardFragment extends Fragment {
         return lower;
     }
 
-    @Override
-    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-        // When the user rotates the screen, we dynamically rearrange the layout
-        adaptLayoutToOrientation(newConfig.orientation);
-    }
-
-    private void adaptLayoutToOrientation(int orientation) {
-        if (rootGauges == null || bottomRowGauges == null) return;
-
-        if (orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
-            // ==========================================
-            // LANDSCAPE MODE (1 Horizontal Row)
-            // ==========================================
-            rootGauges.setOrientation(LinearLayout.HORIZONTAL);
-
-            if (gaugeRam.getParent() == bottomRowGauges) bottomRowGauges.removeView(gaugeRam);
-            if (gaugeSwap.getParent() == bottomRowGauges) bottomRowGauges.removeView(gaugeSwap);
-
-            if (gaugeRam.getParent() == null) rootGauges.addView(gaugeRam);
-            if (gaugeSwap.getParent() == null) rootGauges.addView(gaugeSwap);
-
-            bottomRowGauges.setVisibility(View.GONE);
-
-            LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(0, dpToPx(180), 1f);
-            params.gravity = android.view.Gravity.CENTER;
-
-            gaugeStorage.setLayoutParams(params);
-            gaugeRam.setLayoutParams(params);
-            gaugeSwap.setLayoutParams(params);
-
-        } else {
-            // ==========================================
-            // PORTRAIT MODE (Triangle: 1 Up, 2 Down)
-            // ==========================================
-            rootGauges.setOrientation(LinearLayout.VERTICAL);
-
-            if (gaugeRam.getParent() == rootGauges) rootGauges.removeView(gaugeRam);
-            if (gaugeSwap.getParent() == rootGauges) rootGauges.removeView(gaugeSwap);
-
-            if (gaugeRam.getParent() == null) bottomRowGauges.addView(gaugeRam);
-            if (gaugeSwap.getParent() == null) bottomRowGauges.addView(gaugeSwap);
-
-            bottomRowGauges.setVisibility(View.VISIBLE);
-
-            // Large, centered Storage gauge
-            LinearLayout.LayoutParams storageParams = new LinearLayout.LayoutParams(dpToPx(225), dpToPx(225), 0);
-            storageParams.gravity = android.view.Gravity.CENTER;
-            storageParams.bottomMargin = dpToPx(4);
-            gaugeStorage.setLayoutParams(storageParams);
-
-            // Dynamic RAM and SWAP (50% width each) to prevent clipping
-            LinearLayout.LayoutParams ramParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            ramParams.rightMargin = dpToPx(8);
-
-            LinearLayout.LayoutParams swapParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-            swapParams.leftMargin = dpToPx(8);
-
-            gaugeRam.setLayoutParams(ramParams);
-            gaugeSwap.setLayoutParams(swapParams);
-        }
-    }
-
     // Converter from DP to actual screen pixels
     private int dpToPx(int dp) {
         return (int) (dp * getResources().getDisplayMetrics().density);
+    }
+
+    @Override
+    public void onConfigurationChanged(@NonNull android.content.res.Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        // Dynamically adjust the width when the user rotates the screen
+        adaptLayoutToOrientation(newConfig.orientation);
+    }
+
+    /**
+     * Applies responsive web design principles to the gauges container.
+     * Prevents extreme stretching in landscape mode by limiting width to 75%.
+     */
+    private void adaptLayoutToOrientation(int orientation) {
+        if (gaugesContainer == null) return;
+
+        LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) gaugesContainer.getLayoutParams();
+
+        if (orientation == android.content.res.Configuration.ORIENTATION_LANDSCAPE) {
+            // Landscape: Limit width to 75% of the screen for better UX
+            int screenWidth = getResources().getDisplayMetrics().widthPixels;
+            params.width = (int) (screenWidth * 0.75f);
+        } else {
+            // Portrait: Use full available width
+            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+        }
+
+        gaugesContainer.setLayoutParams(params);
     }
 }

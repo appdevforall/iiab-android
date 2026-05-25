@@ -1,1 +1,4 @@
+rootProject.name = "iiab-controller2"
 include ':app'
+include ':controller'
+include ':termux-core'

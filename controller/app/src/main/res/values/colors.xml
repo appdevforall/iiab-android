@@ -3,53 +3,42 @@
     <color name="colorPrimary">#1A1A1A</color>
     <color name="colorPrimaryDark">#000000</color>
     <color name="colorAccent">#2E7D32</color>
+
     <color name="white">#FFFFFF</color>
     <color name="black">#000000</color>
-    <color name="lightGray66">#AAAAAA</color>
     <color name="background_dark">#121212</color>
 
-    <!-- Status Colors (Fixed for readability) -->
-    <color name="btn_watchdog_on">#D32F2F</color> <!-- Material Red -->
-    <color name="btn_watchdog_off">#1976D2</color> <!-- Material Blue -->
-    <color name="btn_vpn_on">#C62828</color> <!-- Dark Red -->
-    <color name="btn_vpn_off">#2E7D32</color> <!-- Material Green -->
+    <color name="btn_vpn_on">#C62828</color>
+    <color name="btn_vpn_off">#2E7D32</color>
     <color name="btn_explore_ready">#F57C00</color>
-    <color name="btn_explore_disabled">#9E9E9E</color>
+    <color name="btn_explore_disabled">#B0B0B0</color>
     <color name="btn_vpn_on_dim">#EF9A9A</color>
     <color name="btn_vpn_off_dim">#A5D6A7</color>
 
-    <!-- Sections -->
     <color name="section_header_bg">#333333</color>
     <color name="section_body_bg_light">#F5F5F5</color>
     <color name="section_body_bg_dark">#1A1A1A</color>
     <color name="text_warning">#FF9800</color>
-    <color name="text_muted">#888888</color>
 
-    <color name="divider_color">#444444</color>
+    <color name="divider_color">#E0E0E0</color>
     <color name="btn_danger">#D32F2F</color>
     <color name="btn_success">#388E3C</color>
 
-    <color name="bar_storage">#4DB6AC</color>
-    <color name="bar_ram">#FFB300</color>
-    <color name="bar_swap">#7986CB</color>
-    <color name="bar_background">#333333</color>
-
-    <!-- Landing -->
     <color name="dash_bar_storage">#4DB6AC</color>
     <color name="dash_bar_ram">#FFB300</color>
     <color name="dash_bar_swap">#7986CB</color>
-    <color name="dash_badge_online">#2E7D32</color>
     <color name="dash_bar_bg">#333333</color>
-
     <color name="dash_bg_main">#F4F5F7</color>
     <color name="dash_bg_card">#FFFFFF</color>
+    
     <color name="dash_text_primary">#202124</color>
     <color name="dash_text_secondary">#5F6368</color>
+    <color name="dash_text_inverted">#202124</color>
+    <color name="dash_text_gauge_title">#5F6368</color>
     <color name="dash_module_bg">#E8EAED</color>
     <color name="dash_module_text">#202124</color>
     <color name="dash_divider">#E0E0E0</color>
     <color name="dash_warning">#E65100</color>
     <color name="dash_status_online">#2E7D32</color>
 
-    <color name="footer_text_color">#FFFFFF</color>
-</resources>
+    <color name="footer_text_color">#5F6368</color> </resources>

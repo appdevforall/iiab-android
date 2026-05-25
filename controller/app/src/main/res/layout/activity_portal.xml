@@ -1,8 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:background="?android:attr/colorBackground">
 
+    <!-- WebView (Web page content handles its own background,
+    but you can force a dark theme in Java using WebSettings.setForceDark) -->
     <WebView
         android:id="@+id/myWebView"
         android:layout_width="match_parent"
@@ -14,9 +17,10 @@
         android:layout_height="30dp"
         android:layout_alignParentBottom="true"
         android:layout_centerHorizontal="true"
-        android:background="#AA000000"
+        android:background="?android:attr/colorButtonNormal"
+        android:alpha="0.8"
         android:text="⌃"
-        android:textColor="#FFFFFF"
+        android:textColor="?android:attr/textColorPrimary"
         android:textSize="18sp"
         android:padding="0dp"
         android:stateListAnimator="@null" />
@@ -26,7 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_alignParentBottom="true"
-        android:background="#EEF2F2F2"
+        android:background="?android:attr/colorBackgroundFloating"
         android:orientation="vertical"
         android:visibility="invisible"
         android:elevation="8dp">
@@ -38,7 +42,7 @@
             android:background="?android:attr/selectableItemBackground"
             android:text="⌄"
             android:textSize="20sp"
-            android:textColor="#555555"
+            android:textColor="?android:attr/textColorSecondary"
             android:stateListAnimator="@null" />
 
         <LinearLayout
@@ -54,7 +58,8 @@
                 android:layout_weight="1"
                 android:text="◀"
                 android:textSize="20sp"
-                style="?android:attr/buttonBarButtonStyle" />
+                style="?android:attr/buttonBarButtonStyle"
+                android:textColor="?android:attr/textColorPrimary" />
 
             <Button
                 android:id="@+id/btnHome"
@@ -63,7 +68,8 @@
                 android:layout_weight="1"
                 android:text="🏠"
                 android:textSize="20sp"
-                style="?android:attr/buttonBarButtonStyle" />
+                style="?android:attr/buttonBarButtonStyle"
+                android:textColor="?android:attr/textColorPrimary" />
 
             <Button
                 android:id="@+id/btnReload"
@@ -72,7 +78,8 @@
                 android:layout_weight="1"
                 android:text="↻"
                 android:textSize="20sp"
-                style="?android:attr/buttonBarButtonStyle" />
+                style="?android:attr/buttonBarButtonStyle"
+                android:textColor="?android:attr/textColorPrimary" />
 
             <Button
                 android:id="@+id/btnExit"
@@ -82,7 +89,7 @@
                 android:text="✖"
                 android:textSize="20sp"
                 style="?android:attr/buttonBarButtonStyle"
-                android:textColor="#D32F2F" />
+                android:textColor="#D32F2F" /> <!-- Red is universal alert color -->
 
             <Button
                 android:id="@+id/btnForward"
@@ -91,7 +98,8 @@
                 android:layout_weight="1"
                 android:text="▶"
                 android:textSize="20sp"
-                style="?android:attr/buttonBarButtonStyle" />
+                style="?android:attr/buttonBarButtonStyle"
+                android:textColor="?android:attr/textColorPrimary" />
         </LinearLayout>
 
     </LinearLayout>

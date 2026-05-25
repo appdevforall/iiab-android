@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">IIAB-oA Controller</string>
-    <string name="default_version">v0.1.x</string>
 
     <string name="cancel">Cancelar</string>
     <string name="copy_all">Copiar Todo</string>
@@ -9,16 +8,15 @@
     <string name="save">Guardar</string>
 
     <string name="advanced_settings_label">Ajustes del Túnel</string>
-    <string name="configuration_label">Configuración</string>
     <string name="connection_log_label">Log de Conexión</string>
     <string name="label_separator_down">▼ %s</string>
     <string name="label_separator_up">▶ %s</string>
     <string name="settings_label">AJUSTES</string>
 
-    <string name="tab_deploy">Instalación</string>
+    <string name="tab_deploy">Instalar</string>
     <string name="tab_status">Estado</string>
     <string name="tab_usage">Uso</string>
-
+    <string name="tab_share">Enviar</string>
 
     <string name="setup_title">Configuración Inicial</string>
     <string name="setup_welcome">Bienvenido al asistente de configuración de %1$s.\n\nPara funcionar correctamente, necesitamos los siguientes permisos:</string>
@@ -27,51 +25,36 @@
     <string name="setup_perm_battery">Desactivar Optimización de Batería</string>
     <string name="setup_perm_notifications">Notificaciones Push</string>
     <string name="setup_perm_storage">Acceso al almacenamiento local</string>
-    <string name="setup_perm_termux">Ejecución de Termux</string>
-    <string name="setup_perm_vpn">Safe Pocket Web (VPN)</string>
+    <string name="setup_perm_overlay">Mostrar sobre otras apps</string>
+    <string name="setup_lang_title">Idioma del contenido</string>
+    <string name="setup_lang_desc">Por favor, seleccione su idioma, ya que se tomará en cuenta al solicitar contenido.</string>
     <string name="setup_manage_all_permissions">Administrar todos los permisos</string>
-    <string name="setup_display_over_other_apps">Mostrar sobre otras aplicaciones</string>
-    <string name="setup_manage_termux_permissions">Administrar permisos de Termux</string>
-
-    <string name="setup_termux_storage_btn">Archivos y medios (Almacenamiento)</string>
-    <string name="termux_not_installed">Termux no está instalado.</string>
-    <string name="termux_not_installed_error">Termux no está instalado o el dispositivo no es compatible.</string>
 
     <string name="notif_perm_denied">Permiso de notificaciones denegado</string>
     <string name="notif_perm_granted">Permiso de notificaciones concedido</string>
     <string name="revoke_permission_warning">Para revocar permisos, debe hacerlo desde los ajustes del sistema.</string>
-    <string name="termux_perm_denied">Permiso de Termux denegado</string>
-    <string name="termux_perm_granted">Permiso de Termux concedido</string>
-
-
-    <string name="dash_title">IIAB-oA Controller</string>
-    <string name="dash_subtitle_localhost">localhost</string>
 
     <string name="dash_device">Cargando el dispositivo...</string>
-    <string name="dash_ip">IP: %1$s</string>
-    <string name="dash_uptime">Activo: %1$s</string>
-    <string name="dash_battery_format"><b>Batería:</b> %1$d%%</string>
-    <string name="dash_battery_no_value"><b>Batería:</b> --%%</string>
-    <string name="dash_hotspot_format"><b>Hotspot:</b> %1$s</string>
-    <string name="dash_uptime_format"><b>Activo:</b> %1$s</string>
-    <string name="dash_wifi_format"><b>Wi-Fi:</b> %1$s</string>
-    <string name="dash_main_storage">Almacenamiento principal</string>
+    <string name="dash_main_storage">Disco</string>
     <string name="dash_ram_memory">Memoria RAM</string>
     <string name="dash_swap_virtual">Swap (Virtual)</string>
 
     <string name="dash_server_status">Estado del Servidor:</string>
     <string name="dash_offline">Desconectado</string>
     <string name="dash_online">En línea</string>
-    <string name="dash_system_state">Estado del Sistema</string>
     <string name="dash_iiab_system">Sistema IIAB-oA</string>
+    <string name="dash_android_version_label">Versión base de Android:</string>
+    <string name="dash_android_version_value">%1$s (API %2$s)</string>
 
-    <string name="dash_state_debian_only">OS base instalado. Proceda a instalar IIAB.</string>
-    <string name="dash_state_installer">Instalador encontrado, abra la pestaña de instalación para más información.</string>
-    <string name="dash_state_none">No se identificó ningún componente, ni siquiera Termux.</string>
-    <string name="dash_state_offline">IIAB-oA parece estar desconectado, intente lanzarlo.</string>
-    <string name="dash_state_online">IIAB-oA esta en línea.</string>
-    <string name="dash_state_termux_only">Termux encontrado, vaya a la pestaña de Instalación para operarlo.</string>
+    <string name="dash_state_debian_only">SO base instalado. Proceda a instalar IIAB.</string>
+    <string name="dash_state_installer">Instalador detectado, abra la pestaña de instalación para más información.</string>
+    <string name="dash_state_none">No se identificó ningún componente.</string>
+    <string name="dash_state_offline">IIAB-oA parece estar apagado, intente iniciarlo.</string>
+    <string name="dash_state_online">IIAB-oA está en línea.</string>
     <string name="dash_termux_searching">Buscando instalación...</string>
+    <string name="dash_architectures_title">Arquitecturas</string>
+    <string name="dash_arch_termux">"Aplicación: "</string>
+    <string name="dash_arch_proot">"PRoot: "</string>
 
     <string name="dash_installed_modules">Módulos disponibles</string>
     <string name="dash_books">Libros</string>
@@ -80,7 +63,24 @@
     <string name="dash_maps">Mapas</string>
     <string name="dash_matomo">Matomo</string>
     <string name="dash_system">Sistema</string>
+    <string name="dash_code">Code</string>
 
+    <string name="dash_diag_title">Diagnóstico del Sistema</string>
+    <string name="dash_diag_dir_missing">EL DIRECTORIO NO EXISTE:\n%1$s</string>
+    <string name="dash_diag_dir_empty">EL DIRECTORIO ESTÁ COMPLETAMENTE VACÍO.</string>
+    <string name="dash_diag_dir_contains">CONTIENE %1$d ELEMENTOS:\n\n%2$s</string>
+    <string name="dash_diag_btn_ok">OK</string>
+
+    <string name="dash_battery_title">Batería</string>
+    <string name="dash_format_gb">%1$.2f GB / %2$.2f GB</string>
+    <string name="dash_format_gb_int">%1$d GB / %2$d GB</string>
+    <string name="dash_format_na">-- / --</string>
+    <string name="dash_format_pct">%1$d%%</string>
+    <string name="dash_format_pct_charging">%1$d%% ⚡</string>
+    <string name="dash_format_pct_na">--%%</string>
+    <string name="dash_format_uptime_days">%1$dd %2$02dh %3$02dm</string>
+    <string name="dash_format_uptime_hours">%1$02dh %2$02dm</string>
+    <string name="dash_network_na">--</string>
 
     <string name="apps">Aplicaciones</string>
     <string name="browse_content">🚀 Explorar Contenido</string>
@@ -103,7 +103,6 @@
     <string name="qr_title_hotspot">Red Hotspot</string>
     <string name="qr_title_wifi">Red Wi-Fi</string>
 
-
     <string name="control_disable">Desactivar Safe Pocket Web</string>
     <string name="control_enable">Activar Safe Pocket Web</string>
 
@@ -113,7 +112,7 @@
     <string name="ipv4">IPv4</string>
     <string name="ipv6">IPv6</string>
     <string name="maintenance_mode">Modo Mantenimiento</string>
-    <string name="maintenance_warning_msg">Desactive Safe Pocket Web para poder modificar</string>
+    <string name="maintenance_warning_msg">Desactive Safe Pocket Web para poder modificar configuraciones.</string>
     <string name="remote_dns">DNS Remoto</string>
     <string name="socks_addr">Dirección Socks:</string>
     <string name="socks_pass">Contraseña Socks:</string>
@@ -122,59 +121,29 @@
     <string name="socks_user">Usuario Socks:</string>
     <string name="udp_in_tcp">Relé UDP sobre TCP</string>
 
-    <string name="recovery_channel_name">Recuperación VPN</string>
-    <string name="recovery_notif_text">Toque para restaurar el entorno seguro inmediatamente.</string>
-    <string name="recovery_notif_title">Safe Pocket Web Interrumpido</string>
-    <string name="tproxy_channel_name">socks5</string>
     <string name="user_initiated_conn">Conexión iniciada por el usuario</string>
     <string name="vpn_description">Habilite URLs amigables. Bloquee las amenazas.</string>
     <string name="vpn_permission_granted">Permiso de VPN concedido. Conectando...</string>
     <string name="vpn_starting">Iniciando VPN...</string>
     <string name="vpn_stopping">Deteniendo VPN...</string>
 
-
-    <string name="watchdog_disable">Desactivar\nWatchdog Maestro</string>
-    <string name="watchdog_enable">Activar\nWatchdog Maestro</string>
-    <string name="watchdog_description">Protege Termux del Doze y mantiene el Wi-Fi activo.</string>
-
     <string name="watchdog_channel_desc">Asegura que los servicios permanezcan activos cuando la pantalla está apagada.</string>
     <string name="watchdog_channel_name">Servicio IIAB Watchdog</string>
-    <string name="watchdog_notif_text">Protegiendo el entorno Termux...</string>
     <string name="watchdog_notif_title">IIAB Watchdog Activo</string>
-
-    <string name="cpu_wakelock_acquired">CPU WakeLock adquirido bajo protección VPN</string>
-    <string name="cpu_wakelock_released">CPU WakeLock liberado</string>
-    <string name="error_acquiring_locks">Error al adquirir bloqueos</string>
-    <string name="syncing_watchdog">Sincronizando estado del Watchdog. Activado: %b</string>
     <string name="watchdog_started">Watchdog Iniciado</string>
     <string name="watchdog_stopped">Watchdog Detenido</string>
-    <string name="watchdog_thread_ended">Watchdog Thread: Bucle finalizado</string>
-    <string name="watchdog_thread_error">Watchdog Thread: Error en el bucle</string>
-    <string name="watchdog_thread_interrupted">Watchdog Thread: Interrumpido, deteniéndose...</string>
-    <string name="watchdog_thread_started">Watchdog Thread: Bucle iniciado</string>
-    <string name="wifi_lock_acquired">Wi-Fi Lock adquirido bajo protección VPN</string>
-    <string name="wifi_lock_released">Wi-Fi Lock liberado</string>
 
     <string name="critical_os_blocked">CRÍTICO: El SO bloqueó el estímulo a Termux (SecurityException).</string>
-    <string name="failed_termux_intent">CRÍTICO: Fallo en el Intent de Termux: %s</string>
-    <string name="force_termux_foreground">Forzar a Termux a pasar a primer plano...</string>
-    <string name="maintenance_mode_enabled">Modo de mantenimiento activado: Termux tiene acceso directo a Internet</string>
     <string name="maintenance_write_failed">Fallo en la escritura de mantenimiento</string>
     <string name="permission_denied_log">Permiso denegado: Asegúrese de que el manifiesto tiene RUN_COMMAND y la app no está restringida.</string>
     <string name="ping_fail">PING 8085: FALLO (%s)</string>
     <string name="ping_ok">PING 8085: OK</string>
     <string name="pulse_error_log">Error de Pulso: %s</string>
-    <string name="pulse_stimulating">Pulso: Estimulando Termux...</string>
-    <string name="recovery_pulse_received">Pulso de recuperación recibido del sistema. Forzando VPN...</string>
-    <string name="sent_to_termux">Enviado a Termux: %s</string>
+    <string name="pulse_stimulating">Pulso: Estimulando sistema...</string>
     <string name="session_started">SESIÓN DE LATIDO INICIADA</string>
     <string name="session_stopped">SESIÓN DE LATIDO DETENIDA</string>
-    <string name="termux_invocation_error">Error al invocar Termux: %1$s</string>
-    <string name="termux_pulse_error">[Termux] Error de pulso (exit %1$d): %2$s</string>
-    <string name="termux_stimulus_ok">[Termux] Estímulo OK (exit 0)</string>
-    <string name="termux_stuck_warning">¿Termux no abre? Habilite Watchdog Maestro para forzar que obtenga el foco.</string>
-    <string name="unexpected_error_termux">Error inesperado enviando intent a Termux</string>
-
+    <string name="termux_stuck_warning">¿El entorno no inicia? Habilite Watchdog Maestro para forzar que obtenga foco.</string>
+    <string name="unexpected_error_termux">Error inesperado enviando intent al entorno virtual.</string>
 
     <string name="end_of_history">--- Fin del Historial ---</string>
     <string name="error_reading_history">Error al leer el historial: %s</string>
@@ -183,26 +152,22 @@
     <string name="log_cleared_toast">Log borrado</string>
     <string name="log_copied_toast">Log copiado al portapapeles</string>
     <string name="log_reset_confirm_msg">Esto borrará permanentemente todos los logs de conexión guardados. Esta acción no se puede deshacer.</string>
-    <string name="log_reset_confirm_title">¿Reiniciar historial de log?</string>
+    <string name="log_reset_confirm_title">¿Reiniciar historial de logs?</string>
     <string name="failed_reset_log">Fallo al reiniciar el log: %s</string>
-    <string name="log_reset_log">Log reiniciado</string>
     <string name="log_reset_user">Log reiniciado por el usuario</string>
     <string name="log_size_bytes">%d B</string>
     <string name="log_size_format">Tamaño: %1$s / 10MB</string>
     <string name="log_size_kb">%.1f KB</string>
     <string name="log_size_mb">%.2f MB</string>
-    <string name="log_warning_rapid_growth">El archivo de log está creciendo demasiado rápido, verifique si algo está fallando</string>
+    <string name="log_warning_rapid_growth">El archivo de log está creciendo demasiado rápido, verifique si algo está fallando.</string>
     <string name="no_blackbox_found">--- No se encontró el archivo BlackBox ---</string>
-
+    <string name="reset_log">Reiniciar Log</string>
 
     <string name="auth_required_subtitle">Autentíquese para desactivar el entorno seguro</string>
     <string name="auth_required_title">Autenticación requerida</string>
     <string name="auth_success_disconnect">Autenticación exitosa. Desconectando...</string>
     <string name="security_required_msg">Debe configurar un PIN, Patrón o Huella digital en su dispositivo antes de activar el entorno seguro.</string>
     <string name="security_required_title">Seguridad Requerida</string>
-    <string name="unlock_watchdog_subtitle">Se requiere autenticación para detener la protección de Termux</string>
-    <string name="unlock_watchdog_title">Desbloquear Watchdog Maestro</string>
-
 
     <string name="battery_opt_denied">Para que la app funcione al 100%, desactive la optimización de batería.</string>
     <string name="battery_opt_msg">Para que el Watchdog funcione de manera confiable, desactive las optimizaciones de batería para esta aplicación.</string>
@@ -211,23 +176,296 @@
     <string name="battery_opt_xiaomi_extra">\n\nXiaomi detectado: Establezca el ahorro de batería a \'Sin restricciones\' en los ajustes.</string>
     <string name="go_to_settings">Ir a Ajustes</string>
 
-
     <string name="app_started">Aplicación Iniciada</string>
-    <string name="deploy_wip_desc">El módulo Termux y el instalador de entorno estarán disponibles aquí pronto.</string>
-    <string name="deploy_wip_title">WIP - En construcción</string>
-
-    <string name="battery_custom">"Batería: "</string>
-    <string name="battery_no_value">Batería: --%</string>
-    <string name="hotspot_fdash">Hotspot: --</string>
     <string name="pref_file_internal">IIAB_Internal</string>
     <string name="pref_key_setup_complete">setup_complete</string>
     <string name="saved_toast">Guardado</string>
     <string name="settings_saved">Ajustes Guardados</string>
-    <string name="uptime_no_value">Tiempo de actividad: --</string>
-    <string name="version_footer_fallback">IIAB-oA · 2026 · Controller v0.1.xbeta</string>
+    <string name="version_footer_fallback">IIAB-oA · 2026 · Controller v0.3.xbeta</string>
     <string name="version_footer_format">IIAB-oA · 2026 · Controller %1$s</string>
-    <string name="wi_fi_fdash">Wi-Fi: --</string>
-    <string name="setup_termux_custom_permissions">Ajuste de permisos Termux</string>
 
+    <string name="update_dialog_title">Nueva versión disponible: %1$s</string>
+    <string name="update_dialog_message">¿Desea actualizar la aplicación?\n\nNovedades:\n%1$s</string>
+    <string name="update_dialog_positive">Actualizar</string>
+    <string name="update_dialog_negative">Más tarde</string>
+    <string name="download_title">Actualizando IIAB Controller</string>
+    <string name="download_description">Descargando nueva versión...</string>
+    <string name="download_started_toast">Descarga iniciada...</string>
+    <string name="ota_toast_checking">Buscando actualizaciones...</string>
+    <string name="ota_toast_latest">Ya tiene la versión más reciente instalada.</string>
+    <string name="ota_toast_error_server">Error contactando al servidor (%1$d)</string>
+    <string name="ota_toast_error_network">Error de red o JSON inválido.</string>
+    <string name="ota_toast_cooldown">Por favor, espere unos segundos antes de volver a buscar.</string>
 
+    <string name="install_led_dev_options">Modo\nDesarrollador</string>
+    <string name="install_led_child_process">Restricción\nde Procesos</string>
+    <string name="install_led_ppk">Phantom\nProcess Killer</string>
+    <string name="install_led_internet">Acceso a\nInternet</string>
+
+    <string name="install_header_fast">Instalación rápida</string>
+    <string name="install_desc_fast">Provisiona un sistema IIAB precompilado, con datos opcionales para las aplicaciones principales.</string>
+    <string name="install_header_roles">Gestión de módulos</string>
+    <string name="install_header_maintenance">Mantenimiento y Recuperación</string>
+    <string name="install_desc_maintenance">Realice tareas de gestión del sistema</string>
+    <string name="install_warning_server_running">Por favor, apague el servidor antes de usar las herramientas de instalación y mantenimiento.</string>
+    <string name="install_warning_server_icon">⚠️</string>
+
+    <string name="install_btn_install">Instalar</string>
+    <string name="install_btn_reinstall">Reinstalar</string>
+    <string name="install_btn_delete">Eliminar</string>
+    <string name="install_btn_launch">Iniciar instalación</string>
+    <string name="install_btn_provision">Provisionar Sistema</string>
+    <string name="install_btn_refresh">Actualizar</string>
+    <string name="install_btn_reset">Reseteo completo</string>
+    <string name="install_btn_backup">Respaldo</string>
+    <string name="install_btn_restore">Restaurar respaldo</string>
+    <string name="install_btn_force_stop">Forzar detención</string>
+
+    <string name="install_tier_basic">Básico</string>
+    <string name="install_tier_standard">Estándar</string>
+    <string name="install_tier_full">Completo</string>
+    <string name="install_chk_companion">Descargar contenido adicional para esta edición</string>
+    <string name="install_legend_iiab">IIAB</string>
+    <string name="install_legend_maps">Mapas IIAB</string>
+    <string name="install_legend_kiwix">Wikipedia</string>
+    <string name="install_legend_free">Libre</string>
+
+    <string name="install_msg_termux_missing">Por favor, instale primero el sistema base Debian.</string>
+    <string name="install_adv_monitoring_title">Monitoreo avanzado</string>
+    <string name="install_warning_discrepancy_icon">⚠️</string>
+    <string name="install_warning_discrepancy_msg">Por favor revise la instalación manualmente, parece haber una discrepancia entre lo que está registrado y lo detectado.</string>
+    <string name="install_msg_confirmed">Instalación del módulo confirmada con éxito, solo se permite una reinstalación.</string>
+    <string name="install_msg_finished">¡Todas las instalaciones se han completado!</string>
+    <string name="install_modules_disclaimer">La instalación de los módulos puede tardar varios minutos dependiendo de su velocidad de internet y el rendimiento de su dispositivo.</string>
+
+    <string name="install_dialog_reset_title">Reseteo completo (Scratch Reset)</string>
+    <string name="install_dialog_reset_msg">¿Está seguro? Esta acción borrará completamente la instalación actual y todos sus datos, requiriendo una instalación limpia desde la consola CLI.</string>
+    <string name="install_dialog_reset_confirm">Sí, Resetear</string>
+    <string name="install_dialog_reset_cancel">Cancelar</string>
+    <string name="install_msg_offline_trusted">El servidor está apagado. El estado de los módulos es confiable y está actualizado.</string>
+    <string name="install_msg_server_running_lock">Por favor, apague el servidor para poder gestionar los módulos.</string>
+
+    <string name="install_adv_select_backup">▶ Seleccionar respaldo...</string>
+    <string name="install_adv_select_backup_open">▼ Seleccionar respaldo...</string>
+    <string name="install_msg_fetching_backups">Buscando respaldos...</string>
+    <string name="install_msg_no_backups">No se detectaron respaldos.</string>
+    <string name="install_msg_restore_failed">La restauración no procedió como se esperaba. Por favor intente de nuevo.</string>
+    <string name="install_msg_backup_na">N/A</string>
+    <string name="install_msg_backup_details">Archivo: %1$s\nTamaño: %2$s\nFecha: %3$s</string>
+    <string name="install_msg_restore_starting">Iniciando restauración de %1$s…</string>
+    <string name="install_msg_select_backup_first">Por favor, seleccione un respaldo primero.</string>
+
+    <string name="install_btn_cancel_title">¿Cancelar Instalación?</string>
+    <string name="install_btn_cancel_msg">¿Está seguro que desea detener la descarga? El progreso actual se perderá.</string>
+    <string name="install_btn_cancel_confirm">Sí, detener</string>
+    <string name="install_msg_cancelled">Instalación cancelada.</string>
+    <string name="install_dialog_delete_backup_title">¿Eliminar Respaldo?</string>
+    <string name="install_dialog_delete_backup_msg">¿Está seguro que desea eliminar permanentemente %1$s?\n\nEsta acción no se puede deshacer.</string>
+    <string name="install_msg_backup_deleted">Respaldo eliminado con éxito.</string>
+
+    <string name="install_error_no_tier">¡Oye! Selecciona una edición para instalar (Básica, Estándar o Completa).</string>
+    <string name="install_error_no_storage">¡No hay suficiente almacenamiento! Por favor, libere espacio o elija una edición más pequeña. (Se requiere un margen de seguridad de 5GB)</string>
+    <string name="install_status_os_download">SO: %1$d%% | %2$s/s</string>
+    <string name="install_status_extracting">Extrayendo Sistema...\n(Esto tomará un tiempo)</string>
+    <string name="install_error_no_archive">Error: Archivo descargado no encontrado.</string>
+    <string name="install_error_extraction">La extracción falló: %1$s</string>
+    <string name="install_error_download">La descarga falló: %1$s</string>
+    <string name="install_dialog_wipe_msg">Esto borrará el sistema Debian actual y descargará una copia limpia. ¿Desea continuar?</string>
+    <string name="install_btn_yes">Sí</string>
+    <string name="install_btn_no">No</string>
+
+    <string name="install_dialog_delete_title">¿Eliminar Sistema?</string>
+    <string name="install_dialog_delete_msg">Esto borrará completamente el sistema IIAB, las bases de datos y todo el contenido descargado. Esta acción no se puede deshacer.</string>
+    <string name="install_btn_delete_confirm">ELIMINAR TODO</string>
+    <string name="install_status_deleting">Iniciando eliminación nativa...</string>
+    <string name="install_error_delete">La eliminación falló: %1$s</string>
+
+    <string name="install_status_installing_module">Instalando %1$s...</string>
+    <string name="install_status_preparing_kiwix">Preparando Kiwix...</string>
+    <string name="install_status_zim_download">ZIM: %1$d%% | %2$s/s</string>
+    <string name="install_status_indexing_zim">Indexando ZIM...</string>
+    <string name="install_status_maps_provisioned">Mapas ya provisionados...</string>
+    <string name="install_status_maps_configuring">Configurando Mapas...</string>
+    <string name="install_success_deployment">¡Sistema desplegado con éxito!</string>
+
+    <string name="install_status_wiping_old">Borrando sistema anterior...</string>
+    <string name="install_status_starting_vanilla">Iniciando reseteo a Debian Vanilla...</string>
+    <string name="install_status_downloading_debian">Descargando Debian...</string>
+    <string name="install_status_debian_download">Debian: %1$d%% | %2$s/s</string>
+    <string name="install_status_extracting_base">Extrayendo base...</string>
+    <string name="install_status_bootstrapping">Inicializando IIAB...</string>
+    <string name="install_success_vanilla">¡Sistema base Vanilla inicializado con éxito!</string>
+    <string name="install_error_bootstrap">Error de inicialización: %1$s</string>
+    <string name="install_error_extract_bootstrap">Fallo de Extracción/Inicialización: %1$s</string>
+    <string name="install_error_reset">El reseteo falló: %1$s</string>
+
+    <string name="install_error_backup_missing">¡Archivo de respaldo no encontrado!</string>
+    <string name="install_status_restoring">Restaurando...</string>
+    <string name="install_success_restore">¡Restauración Completa!</string>
+
+    <string name="install_btn_export_backup">📤 Exportar Respaldo a Tarjeta SD</string>
+    <string name="install_btn_import_backup">Importar Respaldo desde Tarjeta SD</string>
+    <string name="install_msg_backup_in_progress_title">Respaldo en Progreso</string>
+    <string name="install_msg_backup_in_progress_body">Ya se está ejecutando un proceso de respaldo de más de 40GB en segundo plano. Interrumpirlo ahora podría corromper el archivo.\n\n¿Desea forzar su detención?</string>
+    <string name="install_btn_force_stop_process">Forzar Detención</string>
+    <string name="install_btn_let_finish">Dejar que termine</string>
+    <string name="install_msg_backup_aborted">Respaldo abortado por el usuario.</string>
+    <string name="install_msg_compressing">Comprimiendo...\n(No cierre la app)</string>
+    <string name="install_msg_creating_backup">Creando respaldo nativo... (Esto tomará un tiempo)</string>
+    <string name="install_msg_backup_complete">Respaldo Completo: %1$s</string>
+    <string name="install_msg_backup_failed">El respaldo falló con código: %1$d</string>
+    <string name="install_msg_backup_error">Error de respaldo: %1$s</string>
+
+    <string name="install_msg_export_please_select">Por favor, seleccione un respaldo interno del menú de arriba primero.</string>
+    <string name="install_msg_exporting">Exportando %1$s...</string>
+    <string name="install_msg_export_success">¡Exportación completada con éxito!</string>
+    <string name="install_msg_export_failed">La exportación falló: %1$s</string>
+
+    <string name="install_msg_importing">Importando respaldo... Por favor espere.</string>
+    <string name="install_msg_import_success">¡Respaldo importado con éxito!</string>
+    <string name="install_msg_import_failed">La importación falló: %1$s</string>
+
+    <string name="kiwix_cache_wiped">Caché de Kiwix borrada exitosamente</string>
+    <string name="kiwix_select_variant_error">Por favor seleccione una variante ZIM de la lista</string>
+    <string name="kiwix_catalog_error">Error cargando el catálogo: %1$s</string>
+
+    <string name="adb_notif_title">Depuración Inalámbrica IIAB</string>
+    <string name="adb_notif_desc">¡Puertos ADB encontrados! Toque \'Ingresar PIN\' abajo.</string>
+    <string name="adb_notif_action_pin">Ingresar PIN</string>
+    <string name="adb_notif_input_hint">Ingrese PIN de 6 dígitos</string>
+    <string name="adb_toast_scan_timeout">Se agotó el tiempo de escaneo ADB. Intente de nuevo.</string>
+
+    <string name="adb_status_connected">¡Conectado!</string>
+    <string name="adb_status_offline">Desconectado</string>
+    <string name="adb_btn_connect">Conectar a ADB</string>
+    <string name="adb_btn_disconnect">Desconectar ADB</string>
+    <string name="adb_btn_scanning">Escaneando red...</string>
+
+    <string name="adb_desc_monitoring">Requerido para monitorear el uso de CPU, gestionar restricciones de procesos hijos y reparar el Phantom Process Killer (PPK).</string>
+    <string name="adb_graph_title">Historial de CPU (60 segundos)</string>
+    <string name="adb_snack_dev_options">Abra las Opciones de Desarrollador manualmente</string>
+    <string name="adb_ppk_default">Por defecto (32)</string>
+    <string name="adb_ppk_limit_not_required"><![CDATA[Límite PPK: <b>%1$s</b><br><small>(No requerido)</small>]]></string>
+    <string name="adb_ppk_limit_active"><![CDATA[Límite PPK: <b>%1$s</b>]]></string>
+
+    <string name="adb_cp_disabled_ok"><![CDATA[Restricción de Procesos<br><b>(Desactivado - OK)</b>]]></string>
+    <string name="adb_cp_enabled_limiting"><![CDATA[Restricción de Procesos<br><b>(Activado - LIMITANDO)</b>]]></string>
+    <string name="adb_cp_unknown"><![CDATA[Restricción de Procesos<br><b>(Desconocido)</b>]]></string>
+    <string name="adb_cp_not_required"><![CDATA[Restricción de Procesos<br><small>(No requerido)</small>]]></string>
+
+    <string name="adb_snack_disabling_cp">Desactivando restricciones de procesos...</string>
+    <string name="adb_snack_setting_ppk">Estableciendo límite PPK a 256...</string>
+    <string name="adb_status_securing">Asegurando conexión...</string>
+    <string name="adb_ui_checking_cp"><![CDATA[Procesos Hijos<br><i>(Comprobando...)</i>]]></string>
+    <string name="adb_ui_checking_ppk"><![CDATA[Límite PPK<br><i>(Comprobando...)</i>]]></string>
+    <string name="adb_ui_unknown_cp">Procesos Hijos\n(--)</string>
+    <string name="adb_ui_unknown_ppk">Límite PPK\n(--)</string>
+
+    <string name="adb_enforcer_title">Optimización del Sistema Requerida</string>
+    <string name="adb_enforcer_body">Para asegurar transferencias estables de archivos masivos, los estrictos límites de procesos en segundo plano de Android deben omitirse temporalmente.\n\nPor favor, vaya a \'Monitoreo Avanzado\' en la pestaña Instalar, conéctese vía ADB y aplique los ajustes recomendados de \'Restricción de Procesos\'.</string>
+    <string name="adb_enforcer_btn_setup">Configurar</string>
+    <string name="adb_enforcer_btn_ok">Aceptar</string>
+
+    <string name="sync_mode_share">Compartir Sistema</string>
+    <string name="sync_mode_receive">Recibir Sistema</string>
+
+    <string name="sync_share_status_off">Servicio de compartición detenido</string>
+    <string name="sync_btn_start_server">Iniciar servicio de compartición</string>
+    <string name="sync_btn_stop_server">Detener servicio de compartición</string>
+    <string name="sync_btn_scan_qr">Escanear Código QR</string>
+
+    <string name="sync_transfer_filename">Sincronizando: %1$s...</string>
+    <string name="sync_transfer_speed_default">-- MB/s</string>
+    <string name="sync_transfer_eta_default">ETA: --:--</string>
+    <string name="sync_btn_cancel_transfer">Cancelar</string>
+    <string name="sync_error_stop_server_first">Por favor DETENGA el Servidor IIAB primero para evitar corrupción de archivos.</string>
+    <string name="sync_error_no_network">No se encontró una red activa. Por favor active Wi-Fi o Hotspot.</string>
+    <string name="sync_error_daemon_failed">Fallo al iniciar el demonio de compartición.</string>
+
+    <string name="rsync_error_binary_missing">¡No se encontró el binario nativo de rsync!</string>
+    <string name="rsync_error_cancelled">Transferencia cancelada por el usuario.</string>
+    <string name="rsync_error_host_dropped">El anfitrión terminó la conexión o la red se cayó.</string>
+    <string name="rsync_error_exit_code">Rsync falló con código de salida: %1$d</string>
+    <string name="rsync_error_fatal">Error Fatal: %1$s</string>
+    <string name="rsync_error_dry_run_cancelled">Cálculo cancelado por el usuario.</string>
+    <string name="rsync_error_dry_run_failed">La ejecución de prueba (dry run) falló. Código de salida: %1$d</string>
+    <string name="rsync_error_dry_run_fatal">Error fatal al calcular el tamaño: %1$s</string>
+    <string name="rsync_success_complete">¡Transferencia completada con éxito!</string>
+
+    <string name="sync_msg_calculating">Analizando diferencias del sistema...\nEsto puede tomar un par de minutos.</string>
+    <string name="sync_error_storage_title">Almacenamiento Insuficiente</string>
+    <string name="sync_error_storage_msg">La actualización requiere %1$.2f GB, pero solo tiene %2$.2f GB disponibles (considerando un margen de seguridad de 5GB).</string>
+    <string name="sync_title_update">Actualizar Sistema</string>
+    <string name="sync_title_install">Instalar Sistema</string>
+    <string name="sync_msg_confirm_transfer">Está a punto de descargar %.2f GB.\nTiene suficiente espacio de almacenamiento.\n\n¿Desea iniciar la transferencia ahora?</string>
+    <string name="sync_btn_start_transfer">Iniciar Transferencia</string>
+    <string name="sync_error_calc_title">Cálculo Fallido</string>
+    <string name="sync_error_calc_msg">No se pudieron calcular las diferencias del sistema: %1$s</string>
+    <string name="sync_success_title">Éxito</string>
+    <string name="sync_error_title">Error de Transferencia</string>
+    <string name="sync_error_body">Rsync encontró un problema:\n\n%1$s</string>
+
+    <string name="sync_btn_share_app">Compartir App (APK)</string>
+    <string name="sync_btn_stop_app">Detener Servidor de App (APK)</string>
+    <string name="sync_error_stop_apk_first">Por favor detenga el servidor de APK antes de iniciar el demonio Rsync.</string>
+
+    <string name="sync_dialog_server_running_title">El Servidor está Corriendo</string>
+    <string name="sync_dialog_missing_env_title">Entorno Ausente</string>
+    <string name="sync_dialog_missing_env_msg">No parece haber un entorno IIAB instalado en este dispositivo. ¿Desea iniciar el demonio de compartición de todas formas?</string>
+    <string name="sync_dialog_btn_continue">Sí, continuar</string>
+    <string name="sync_dialog_stop_title">¿Detener Demonio de Compartición?</string>
+    <string name="sync_dialog_stop_msg">Esto desconectará inmediatamente a cualquier dispositivo que esté descargando el sistema actualmente. ¿Está seguro de que desea detenerlo?</string>
+    <string name="sync_toast_invalid_qr">Código QR Inválido.</string>
+    <string name="sync_dialog_empty_host_title">Advertencia: Anfitrión Vacío</string>
+    <string name="sync_dialog_empty_host_msg">El dispositivo anfitrión reporta que no tiene un entorno IIAB completo instalado. ¿Aún desea intentar la transferencia?</string>
+    <string name="sync_dialog_btn_try_anyway">Sí, intentar de todos modos</string>
+    <string name="sync_msg_connecting">Conectando al Anfitrión…</string>
+    <string name="sync_dialog_conn_failed_title">Conexión Fallida</string>
+    <string name="sync_dialog_conn_failed_msg">No se puede alcanzar al Anfitrión en %1$s.\n¿Está seguro de que está conectado a la misma red Wi-Fi o Hotspot?</string>
+
+    <string name="sync_card_title_system">Compartir IIAB + Contenido</string>
+    <string name="sync_card_desc_system">Cuando ambos dispositivos tienen la app Controller, puede compartir la plataforma IIAB y todo su contenido (desde cientos de MB hasta varios GB).</string>
+    <string name="sync_card_title_apk">Compartir app Controller</string>
+    <string name="sync_card_desc_apk">Para usar IIAB en Android, el otro dispositivo necesita la app primero. Esta función le permite compartirla localmente. ¡No requiere internet!</string>
+    <string name="sync_card_title_receive">Recibir IIAB + Contenido</string>
+    <string name="sync_card_desc_receive">Escanee el código QR mostrado en el dispositivo Anfitrión para comenzar a recibir la plataforma IIAB y el contenido seleccionado.</string>
+
+    <string name="sync_share_status_wifi">"1. Asegúrese de que el otro dispositivo esté en el mismo Wi-Fi.\n2. Escanee este QR en el otro dispositivo."</string>
+    <string name="sync_share_status_hotspot">"1. Pida al otro dispositivo que se conecte a su Hotspot.\n2. Escanee este QR en el otro dispositivo."</string>
+    <string name="sync_app_status_wifi">"1. Asegúrese de que el otro dispositivo esté en el mismo Wi-Fi.\n2. Escanee este QR con cualquier cámara normal."</string>
+    <string name="sync_app_status_hotspot">"1. Pida al otro dispositivo que se conecte a su Hotspot.\n2. Escanee este QR con cualquier cámara normal."</string>
+
+    <string name="terminal_locked">Terminal bloqueada (Desplazamiento activado)</string>
+    <string name="terminal_unlocked">Terminal desbloqueada (Deslice hacia abajo para cerrar)</string>
+    <string name="terminal_crash_title">Error al iniciar Terminal</string>
+    <string name="terminal_copied_toast">Texto copiado</string>
+    <string name="sessions_title">SESIONES</string>
+    <string name="new_session_btn">+ NUEVA SESIÓN</string>
+
+    <string name="log_cli_backup_triggered">¡Respaldo iniciado vía CLI!</string>
+    <string name="log_cli_restore_triggered">¡Restauración iniciada vía CLI!</string>
+    <string name="terminal_auth_title">Solicitud de acceso a Terminal</string>
+    <string name="terminal_auth_subtitle">Autentíquese para montar la Tarjeta SD dentro de Debian</string>
+    <string name="log_cli_sdcard_granted">Acceso a Tarjeta SD concedido vía CLI.</string>
+    <string name="log_cli_sdcard_denied">Acceso a Tarjeta SD denegado.</string>
+    <string name="ota_error_launching_installer">Error al iniciar el instalador. Es posible que deba instalar el APK descargado manualmente desde su carpeta de Descargas.</string>
+    <string name="log_server_booting_native">Iniciando el entorno IIAB de forma nativa...</string>
+    <string name="log_server_engine_shutdown">[Servidor] Motor apagado (Código: %1$d)</string>
+    <string name="log_server_error">[Error del servidor] %1$s</string>
+    <string name="log_server_stopping_gracefully">Deteniendo el entorno IIAB correctamente...</string>
+    <string name="log_server_stop_error">[Error de detención] %1$s</string>
+    <string name="log_critical_binary_missing">CRÍTICO: ¡Falta %1$s en las librerías nativas!</string>
+
+    <string name="setup_back_blocked_msg">Por favor complete la configuración para continuar.</string>
+    <string name="sync_scanner_prompt">Escanee el código QR del Anfitrión IIAB</string>
+
+    <string name="kiwix_dialog_lang_label">Idioma de Kiwix</string>
+    <string name="kiwix_dialog_variants_label">Variantes ZIM disponibles</string>
+    <string name="kiwix_dialog_wipe_cache">Borrar Caché</string>
+    <string name="kiwix_dialog_wipe_zim_cache">Borrar Caché ZIM</string>
+    <string name="kiwix_dialog_select">Seleccionar</string>
+
+    <string name="qr_btn_close">Cerrar</string>
+    <string name="qr_content_description">Código QR</string>
+    <string name="sync_share_status_init">Iniciando servidor...</string>
 </resources>

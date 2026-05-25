@@ -14,3 +14,6 @@ app/release/
 */.cxx/
 
 .DS_Store
+
+# Ignore all native compiled libraries inside jniLibs directory
+**/jniLibs/**/*.so

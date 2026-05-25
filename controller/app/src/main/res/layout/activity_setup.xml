@@ -16,7 +16,7 @@
         android:textStyle="bold"
         android:textColor="#FFFFFF"
         android:background="@drawable/rounded_button"
-        android:backgroundTint="@color/btn_success"
+        android:backgroundTint="@color/btn_explore_disabled"
         android:textAllCaps="false"
         android:enabled="false" />
 
@@ -61,17 +61,6 @@
                 android:theme="@style/PurpleSwitchTheme" />
 
             <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switch_perm_termux"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_perm_termux"
-                android:textColor="?android:attr/textColorPrimary"
-                android:textSize="16sp"
-                android:paddingVertical="12dp"
-                android:layout_marginBottom="8dp"
-                android:theme="@style/PurpleSwitchTheme" />
-
-            <androidx.appcompat.widget.SwitchCompat
                 android:id="@+id/switch_perm_storage"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -83,10 +72,10 @@
                 android:theme="@style/PurpleSwitchTheme" />
 
             <androidx.appcompat.widget.SwitchCompat
-                android:id="@+id/switch_perm_vpn"
+                android:id="@+id/switch_perm_overlay"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/setup_perm_vpn"
+                android:text="@string/setup_perm_overlay"
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 android:paddingVertical="12dp"
@@ -101,6 +90,7 @@
                 android:textColor="?android:attr/textColorPrimary"
                 android:textSize="16sp"
                 android:paddingVertical="12dp"
+                android:layout_marginBottom="24dp"
                 android:theme="@style/PurpleSwitchTheme" />
 
             <Button
@@ -119,44 +109,37 @@
                 android:background="?android:attr/selectableItemBackground"
                 android:layout_marginBottom="24dp" />
 
-            <TextView
+            <!-- NEW LANGUAGE SELECTOR BLOCK -->
+            <LinearLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="@string/setup_termux_custom_permissions"
-                android:textSize="18sp"
-                android:textStyle="bold"
-                android:textColor="?android:attr/textColorPrimary"
-                android:layout_marginBottom="8dp" />
+                android:orientation="vertical"
+                android:layout_marginBottom="24dp">
 
-            <Button
-                android:id="@+id/btn_termux_overlay"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_display_over_other_apps"
-                android:textAllCaps="false"
-                style="?android:attr/borderlessButtonStyle"
-                android:gravity="start|center_vertical"
-                android:textColor="@color/lightGray66" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_lang_title"
+                    android:textColor="?android:attr/textColorPrimary"
+                    android:textSize="18sp"
+                    android:textStyle="bold"
+                    android:layout_marginBottom="12dp"/>
 
-            <Button
-                android:id="@+id/btn_termux_storage"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_termux_storage_btn"
-                android:textAllCaps="false"
-                style="?android:attr/borderlessButtonStyle"
-                android:gravity="start|center_vertical"
-                android:textColor="@color/lightGray66" />
+                <!-- Native Spinner -->
+                <Spinner
+                    android:id="@+id/spinner_language"
+                    android:layout_width="match_parent"
+                    android:layout_height="50dp"
+                    android:paddingHorizontal="8dp"
+                    android:layout_marginBottom="12dp" />
 
-            <Button
-                android:id="@+id/btn_manage_termux"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:text="@string/setup_manage_termux_permissions"
-                android:textAllCaps="false"
-                style="?android:attr/borderlessButtonStyle"
-                android:gravity="start|center_vertical"
-                android:textColor="@color/lightGray66" />
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="@string/setup_lang_desc"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="14sp" />
+            </LinearLayout>
 
         </LinearLayout>
     </ScrollView>

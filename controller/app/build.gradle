@@ -1,25 +1,45 @@
-apply plugin: 'com.android.application'
+plugins {
+    id 'com.android.application'
+}
+
+// 1. AUTO-VERSIONING MAP (Must be defined outside the 'android' block)
+// Assigns a unique ID to each architecture so Version Codes do not collide.
+ext.abiCodes = ['armeabi-v7a': 1, 'arm64-v8a': 2]
 
 android {
-    namespace "org.iiab.controller"
-    compileSdkVersion 34
+    // 2. Identity
+    namespace 'org.iiab.controller'
+    compileSdk 34
     ndkVersion "26.3.11579264"
 
     defaultConfig {
         applicationId "org.iiab.controller"
-        minSdkVersion 24
-        targetSdkVersion 34
-        versionCode 39
-        versionName "v0.2.8beta"
+        minSdk 24
+        // VITAL FOR PROOT AND W^X! Do not go up unless strictly necessary
+        targetSdk 28
+
+        // 3. Version Control (OTA)
+        // NOTE: With splits enabled, this number will be multiplied by 10 (e.g. 50 -> 500, 501, 502)
+        versionCode 51
+        versionName "v0.3.6.1beta"
         setProperty("archivesBaseName", "$applicationId-$versionName")
+
+        // 4. Supported architectures (NDK) - Dropping x86/x86_64
         ndk {
             abiFilters "armeabi-v7a", "arm64-v8a", "x86", "x86_64"
         }
-        externalNativeBuild {
-            ndkBuild {
-                arguments "APP_CFLAGS+=-DPKGNAME=org/iiab/controller -DCLSNAME=TProxyService -ffile-prefix-map=${rootDir}=."
-                arguments "APP_LDFLAGS+=-Wl,--build-id=none"
-            }
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        consumerProguardFiles "consumer-rules.pro"
+    }
+
+    // 5. GENERATE MULTIPLE APKS (Splits)
+    splits {
+        abi {
+            enable true
+            reset()
+            include "armeabi-v7a", "arm64-v8a"
+            universalApk true // Also generates a fat APK with both architectures
         }
     }
 
@@ -27,11 +47,13 @@ android {
         buildConfig true
     }
 
+    // 6. Updated to Java 17 (Required by modern libraries)
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17
         targetCompatibility JavaVersion.VERSION_17
     }
 
+    // 7. Signature Engine (Automatic Signatures for OTA)
     signingConfigs {
         release {
         }
@@ -48,6 +70,7 @@ android {
         }
     }
 
+    // 8. Dynamic Keystore Loading
     def propsFile = rootProject.file('store.properties')
     def configName = 'release'
 
@@ -62,38 +85,94 @@ android {
         }
     }
 
-    externalNativeBuild {
-        ndkBuild {
-            path "src/main/jni/Android.mk"
-        }
-    }
-
     lintOptions {
         checkReleaseBuilds false
-        // Or, if you prefer, you can continue to check for errors in release builds,
-        // but continue the build even when errors are found:
         abortOnError false
     }
 
     dependenciesInfo {
-        // Disables dependency metadata when building APKs.
         includeInApk = false
-        // Disables dependency metadata when building Android App Bundles.
         includeInBundle = false
+    }
+
+    // 9. DYNAMIC VERSIONING OVERRIDE
+    // Applies the math algorithm to ensure unique Version Codes per APK split
+    applicationVariants.all { variant ->
+        variant.outputs.each { output ->
+            // Try to fetch the ABI code defined at the top of the file
+            def baseAbiVersionCode = project.ext.abiCodes.get(output.getFilter(com.android.build.OutputFile.ABI))
+
+            // If null, it's the Universal APK. We assign 0.
+            if (baseAbiVersionCode == null) {
+                baseAbiVersionCode = 0
+            }
+
+            // Multiply original version by 10 and add the architecture ID
+            // Ex: Version 50 -> Universal: 500, ARM32: 501, ARM64: 502
+            output.versionCodeOverride = (variant.versionCode * 10) + baseAbiVersionCode
+        }
     }
 }
 
 dependencies {
-    implementation 'androidx.appcompat:appcompat:1.4.1'
+    // 10. Core dependencies
+    implementation 'androidx.appcompat:appcompat:1.7.1'
+    implementation 'com.google.android.material:material:1.13.0'
     implementation 'androidx.biometric:biometric:1.1.0'
-    implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.webkit:webkit:1.12.0'
-    // ZXing for QR Code generation
+
+    // IIAB Tools
     implementation 'com.google.zxing:core:3.5.2'
-    // Native ADB client in pure Java
+    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
     implementation 'com.github.MuntashirAkon:libadb-android:3.1.1'
-    // Google's cryptographic engine
     implementation 'org.conscrypt:conscrypt-android:2.5.3'
-    // Graph lib
     implementation 'com.github.PhilJay:MPAndroidChart:v3.1.0'
+    implementation 'org.nanohttpd:nanohttpd:2.3.1'
+
+    // Local Module: Our C++ engine (Termux)
+    implementation project(':termux-core')
+
+    // Testing
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
 }
+
+// =========================================================
+// IIAB SUPPLY CHAIN HOOK (SYNC ARTIFACTS)
+// =========================================================
+task syncNativeArtifacts {
+    description = 'Syncs native binaries to jniLibs and configuration to assets from the external factory'
+
+    def factoryDistDir = file("../../tools/proot-builder/dist")
+    def jniLibsDir = file("src/main/jniLibs")
+    def assetsDir = file("src/main/assets")
+
+    doLast {
+        if (!factoryDistDir.exists()) {
+            println ">> [IIAB Hook] External dist folder not found. Relying on existing files in src/main."
+            return
+        }
+
+        // 1. Route the certificate and SBOM manifest to assets
+        copy {
+            from factoryDistDir
+            into assetsDir
+            include '*.pem'
+            include '*.json'
+        }
+
+        // 2. Route the native binaries (.so) to jniLibs
+        def factoryJni = new File(factoryDistDir, "jniLibs")
+        if (factoryJni.exists()) {
+            copy {
+                from factoryJni
+                into jniLibsDir
+            }
+        }
+
+        println ">> [IIAB Hook] Successfully synced all native artifacts from the factory to src/main!"
+    }
+}
+
+preBuild.dependsOn syncNativeArtifacts

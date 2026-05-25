@@ -1,10 +1,17 @@
+/*
+ * ============================================================================
+ * Name        : ResourceGaugeView.java
+ * Author      : IIAB Project
+ * Copyright   : Copyright (c) 2026 IIAB Project
+ * Description : Custom view for displaying animated resource gauges
+ * ============================================================================
+ */
 package org.iiab.controller;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.DashPathEffect;
 import android.graphics.Paint;
 import android.graphics.RectF;
 import android.graphics.Typeface;
@@ -23,10 +30,7 @@ public class ResourceGaugeView extends View {
     private String centerText = "0%";
     private String bottomText = "-- / --";
 
-    private int baseColor = Color.parseColor("#4CAF50");
-    private int warnColor = Color.parseColor("#FF9800"); // Orange (> 90%)
-    private int dangerColor = Color.parseColor("#F44336"); // RED (> 95% or < 5% free)
-    private int currentColor;
+    private int currentColor = Color.parseColor("#4CAF50");
 
     public ResourceGaugeView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -35,7 +39,6 @@ public class ResourceGaugeView extends View {
 
     private void init(Context context) {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null);
-        currentColor = baseColor;
         rectF = new RectF();
 
         bgArcPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -54,7 +57,7 @@ public class ResourceGaugeView extends View {
 
         percentPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         percentPaint.setTextAlign(Paint.Align.CENTER);
-        percentPaint.setColor(Color.WHITE);
+        percentPaint.setColor(androidx.core.content.ContextCompat.getColor(context, R.color.dash_text_inverted));
         percentPaint.setFakeBoldText(true);
 
         valuePaint = new Paint(Paint.ANTI_ALIAS_FLAG);
@@ -72,7 +75,7 @@ public class ResourceGaugeView extends View {
             percentPaint.setTypeface(orbitron);
             valuePaint.setTypeface(orbitron);
         } catch (Exception e) {
-            // Silent fallback in case Android cannot find the source
+            // Silent fallback in case Android cannot find the font
         }
     }
 
@@ -110,10 +113,10 @@ public class ResourceGaugeView extends View {
         // Calculate the radius of the circle
         float radius = (size / 2f) - (strokeW + 5f);
 
-        // We tell the drawing rectangle to anchor itself exactly in the center of the view
+        // Anchor the drawing rectangle exactly in the center of the view
         rectF.set(cx - radius, cy - radius, cx + radius, cy + radius);
 
-        // Dynamic scale of sources
+        // Dynamic scale of fonts
         percentPaint.setTextSize(size / 5.0f);
         valuePaint.setTextSize(size / 15f);
         titlePaint.setTextSize(size / 11f);
@@ -133,11 +136,8 @@ public class ResourceGaugeView extends View {
         float centerY = getHeight() / 2f;
 
         // VERTICAL COMPACTION OF TEXTS
-        // Title a little further down
         canvas.drawText(titleText, centerX, centerY - (percentPaint.getTextSize() * 0.85f), titlePaint);
-        // Centered percentage
         canvas.drawText(centerText, centerX, centerY + (percentPaint.getTextSize() * 0.25f), percentPaint);
-        // Lower values ​​slightly higher
         canvas.drawText(bottomText, centerX, centerY + (percentPaint.getTextSize() * 0.75f), valuePaint);
     }
 
@@ -153,21 +153,12 @@ public class ResourceGaugeView extends View {
         animator.start();
     }
 
-    // Main method for updating the animated bar
-    public void updateData(float progress, String values, String title, int defaultColor) {
+    // Main method for updating the animated bar with explicit color definition
+    public void updateData(float progress, String values, String title, int customColor) {
         this.titleText = title;
-        this.baseColor = defaultColor;
+        this.currentColor = customColor;
         this.bottomText = values;
         this.centerText = (int) progress + "%";
-
-        // Color transition logic
-        if (progress >= 95f) {
-            this.currentColor = dangerColor;
-        } else if (progress >= 90f) {
-            this.currentColor = warnColor;
-        } else {
-            this.currentColor = baseColor;
-        }
 
         arcPaint.setShadowLayer(25f, 0f, 0f, currentColor);
 

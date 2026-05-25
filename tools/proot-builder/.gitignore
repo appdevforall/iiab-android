@@ -1,0 +1,8 @@
+# Ignore the cloned Termux repository (very large)
+termux-packages/
+
+# Ignore the temporary extraction folders
+extract_*/
+
+# Ignore the final compiled binaries (.so)
+dist/

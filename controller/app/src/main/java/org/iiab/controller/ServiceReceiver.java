@@ -1,12 +1,10 @@
 /*
- ============================================================================
- Name        : ServiceReceiver.java
- Author      : hev <r@hev.cc>
- Contributors: IIAB Project
- Copyright   : Copyright (c) 2023 xyz
- Copyright (c) 2026 IIAB Project
- Description : ServiceReceiver
- ============================================================================
+ * ============================================================================
+ * Name        : ServiceReceiver.java
+ * Author      : IIAB Project
+ * Copyright   : Copyright (c) 2026 IIAB Project
+ * Description : Broadcast receiver for system events
+ * ============================================================================
  */
 
 package org.iiab.controller;
@@ -25,6 +23,8 @@ public class ServiceReceiver extends BroadcastReceiver {
 
             /* Auto-start */
             if (prefs.getEnable()) {
+                // Initialize the service automatically on boot
+                /*
                 Intent i = VpnService.prepare(context);
                 if (i != null) {
                     i.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -36,6 +36,7 @@ public class ServiceReceiver extends BroadcastReceiver {
                 } else {
                     context.startService(i.setAction(TProxyService.ACTION_CONNECT));
                 }
+                */
             }
         }
     }

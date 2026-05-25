@@ -12,18 +12,13 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Handler;
 import android.text.method.ScrollingMovementMethod;
 import android.view.MotionEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.EditText;
@@ -51,12 +46,11 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
     private EditText edittext_socks_addr, edittext_socks_udp_addr, edittext_socks_port, edittext_socks_user, edittext_socks_pass, edittext_dns_ipv4, edittext_dns_ipv6;
     private CheckBox checkbox_udp_in_tcp, checkbox_remote_dns, checkbox_global, checkbox_maintenance, checkbox_ipv4, checkbox_ipv6;
     private TextView textview_maintenance_warning, configLabel, advConfigLabel, logLabel, logWarning, logSizeText, connectionLog;
-    private Button button_apps, button_save, button_control, button_browse_content, watchdogControl, btnClearLog, btnCopyLog;
+    private Button button_apps, button_save, button_control, button_browse_content, btnClearLog, btnCopyLog;
     private LinearLayout logActions, configLayout, advancedConfig, deckContainer;
     private ProgressBar logProgress;
     private ProgressButton btnServerControl;
 
-    private ObjectAnimator fusionAnimator;
     private DashboardManager dashboardManager;
 
     @Override
@@ -97,7 +91,6 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
         button_save = view.findViewById(R.id.save);
         button_control = view.findViewById(R.id.control);
         button_browse_content = view.findViewById(R.id.btnBrowseContent);
-        watchdogControl = view.findViewById(R.id.watchdog_control);
 
         logActions = view.findViewById(R.id.log_actions);
         btnClearLog = view.findViewById(R.id.btn_clear_log);
@@ -120,13 +113,6 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
         });
 
         // Listeners
-        watchdogControl.setOnClickListener(v -> {
-            if (mainActivity.currentSystemState == DashboardFragment.SystemState.NONE) {
-                Snackbar.make(v, R.string.termux_not_installed_error, Snackbar.LENGTH_LONG).show();
-                return;
-            }
-            mainActivity.handleWatchdogClick();
-        });
         button_control.setOnClickListener(v -> mainActivity.handleControlClick());
         button_browse_content.setOnClickListener(v -> mainActivity.handleBrowseContentClick(v));
         btnClearLog.setOnClickListener(this);
@@ -173,6 +159,10 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
             return false;
         });
 
+        configLabel.setText(String.format(getString(R.string.label_separator_up), getString(R.string.advanced_settings_label)));
+        advConfigLabel.setText(String.format(getString(R.string.label_separator_up), getString(R.string.advanced_settings_label)));
+        logLabel.setText(String.format(getString(R.string.label_separator_up), getString(R.string.connection_log_label)));
+
         updateUI();
     }
 
@@ -203,7 +193,6 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
         if (button_control == null) return;
 
         boolean vpnActive = mainActivity.prefs.getEnable();
-        boolean watchdogActive = mainActivity.prefs.getWatchdogEnable();
 
         if (dashboardManager != null)
             dashboardManager.setTunnelState(vpnActive, mainActivity.isProxyDegraded);
@@ -215,11 +204,7 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
             button_control.setText(R.string.control_enable);
             button_control.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_vpn_off));
         }
-        if (watchdogActive) {
-            watchdogControl.setText(R.string.watchdog_disable);
-        } else {
-            watchdogControl.setText(R.string.watchdog_enable);
-        }
+
         edittext_socks_addr.setText(mainActivity.prefs.getSocksAddress());
         edittext_socks_udp_addr.setText(mainActivity.prefs.getSocksUdpAddress());
         edittext_socks_port.setText(String.valueOf(mainActivity.prefs.getSocksPort()));
@@ -251,7 +236,6 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
         if (button_control == null) return;
 
         boolean isVpnActive = mainActivity.prefs.getEnable();
-        boolean isWatchdogOn = mainActivity.prefs.getWatchdogEnable();
 
         if (dashboardManager != null) {
             dashboardManager.setTunnelState(isVpnActive, mainActivity.isProxyDegraded);
@@ -283,7 +267,7 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
             button_browse_content.setEnabled(true);
             button_browse_content.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_explore_disabled));
             button_browse_content.setAlpha(1.0f);
-            button_browse_content.setTextColor(Color.parseColor("#888888"));
+            button_browse_content.setTextColor(Color.WHITE);
         } else if (mainActivity.isNegotiating) {
             button_browse_content.setEnabled(true);
             button_browse_content.setTextColor(Color.WHITE);
@@ -291,19 +275,10 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
             button_browse_content.setEnabled(true);
             button_browse_content.setTextColor(Color.WHITE);
             button_browse_content.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_explore_ready));
-
-            // TODO: [RESTORE] Uncomment original logic to tie Explore button to ESPW/VPN status
-            // if (isVpnActive && !mainActivity.isProxyDegraded) {
-            //     button_browse_content.setAlpha(1.0f);
-            // } else {
-            //     button_browse_content.setAlpha(0.6f);
-            // }
-
-            // TEMP BYPASS: Always fully opaque when server is running
             button_browse_content.setAlpha(1.0f);
         }
 
-// Server Control Logic
+        // Server Control Logic
         DashboardFragment.SystemState state = mainActivity.currentSystemState;
         boolean isFullyInstalled = (state == DashboardFragment.SystemState.ONLINE || state == DashboardFragment.SystemState.OFFLINE);
 
@@ -312,11 +287,6 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
             btnServerControl.setAlpha(0.6f);
             btnServerControl.setText(R.string.launch_server);
             btnServerControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_explore_disabled));
-
-            // Also gray out the watchdog since the server isn't installed
-            deckContainer.setBackgroundColor(Color.TRANSPARENT);
-            watchdogControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_watchdog_off));
-
         } else if (mainActivity.targetServerState != null) {
             // TRANSITIONING STATE
             btnServerControl.setAlpha(0.6f);
@@ -327,21 +297,10 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
             btnServerControl.setAlpha(1.0f);
             if (mainActivity.isServerAlive) {
                 btnServerControl.setText(R.string.stop_server);
-                if (isWatchdogOn) {
-                    deckContainer.setBackgroundColor(Color.parseColor("#44FF9800"));
-                    btnServerControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_watchdog_on));
-                    watchdogControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_watchdog_on));
-                } else {
-                    if (fusionAnimator == null || !fusionAnimator.isRunning())
-                        deckContainer.setBackgroundColor(Color.TRANSPARENT);
-                    btnServerControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_danger));
-                    watchdogControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_watchdog_off));
-                }
+                btnServerControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_danger));
             } else {
-                deckContainer.setBackgroundColor(Color.TRANSPARENT);
                 btnServerControl.setText(R.string.launch_server);
                 btnServerControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), R.color.btn_success));
-                watchdogControl.setBackgroundTintList(ContextCompat.getColorStateList(requireContext(), isWatchdogOn ? R.color.btn_watchdog_on : R.color.btn_watchdog_off));
             }
         }
     }
@@ -350,33 +309,19 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
         btnServerControl.stopProgress();
     }
 
+    // =========================================================================
+    // Empty methods kept to prevent crashes from MainActivity's legacy broadcast receivers
+    // =========================================================================
     public void startFusionPulse() {
-        deckContainer.setBackgroundColor(Color.parseColor("#44FF9800"));
-        if (fusionAnimator != null && fusionAnimator.isRunning()) fusionAnimator.cancel();
-        fusionAnimator = ObjectAnimator.ofFloat(deckContainer, "alpha", 1f, 0.4f);
-        fusionAnimator.setDuration(600);
-        fusionAnimator.setRepeatCount(ObjectAnimator.INFINITE);
-        fusionAnimator.setRepeatMode(ObjectAnimator.REVERSE);
-        fusionAnimator.start();
     }
 
     public void startExitPulse() {
-        if (fusionAnimator != null && fusionAnimator.isRunning()) fusionAnimator.cancel();
-        fusionAnimator = ObjectAnimator.ofFloat(deckContainer, "alpha", deckContainer.getAlpha(), 0.3f);
-        fusionAnimator.setDuration(800);
-        fusionAnimator.setRepeatCount(ObjectAnimator.INFINITE);
-        fusionAnimator.setRepeatMode(ObjectAnimator.REVERSE);
-        fusionAnimator.start();
     }
 
     public void finalizeEntryPulse() {
-        if (fusionAnimator != null) fusionAnimator.cancel();
-        deckContainer.setAlpha(1f);
     }
 
     public void finalizeExitPulse() {
-        if (fusionAnimator != null) fusionAnimator.cancel();
-        deckContainer.animate().alpha(1f).setDuration(300).withEndAction(() -> deckContainer.setBackgroundColor(Color.TRANSPARENT)).start();
     }
 
     public void addToLog(String message) {
