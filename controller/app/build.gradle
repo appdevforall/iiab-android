@@ -150,40 +150,64 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
 }
 
+import groovy.json.JsonSlurper
+
 // =========================================================
-// IIAB SUPPLY CHAIN HOOK (SYNC ARTIFACTS)
+// IIAB SUPPLY CHAIN HOOK (CLOUD ARTIFACTS SYNC)
 // =========================================================
 task syncNativeArtifacts {
-    description = 'Syncs native binaries to jniLibs and configuration to assets from the external factory'
+    description = 'Downloads native binaries and configuration from IIAB public artifacts server'
 
-    def factoryDistDir = file("../../tools/proot-builder/dist")
+    // The public URL where your artifacts are hosted
+    def baseUrl = "https://iiab.switnet.org/android/termux-artifacts"
     def jniLibsDir = file("src/main/jniLibs")
     def assetsDir = file("src/main/assets")
 
     doLast {
-        if (!factoryDistDir.exists()) {
-            println ">> [IIAB Hook] External dist folder not found. Relying on existing files in src/main."
-            return
-        }
+        println ">> [IIAB Hook] Fetching latest artifacts from ${baseUrl}..."
 
-        // 1. Route the certificate and SBOM manifest to assets
-        copy {
-            from factoryDistDir
-            into assetsDir
-            include '*.pem'
-            include '*.json'
-        }
+        // Ensure destination directories exist
+        if (!assetsDir.exists()) assetsDir.mkdirs()
 
-        // 2. Route the native binaries (.so) to jniLibs
-        def factoryJni = new File(factoryDistDir, "jniLibs")
-        if (factoryJni.exists()) {
-            copy {
-                from factoryJni
-                into jniLibsDir
+        def manifestFile = new File(assetsDir, "ninja_manifest.json")
+        def certFile = new File(assetsDir, "cacert.pem")
+
+        try {
+            // 1. Download Manifest and Certificates
+            println "   -> Fetching ninja_manifest.json and cacert.pem..."
+            ant.get(src: "${baseUrl}/ninja_manifest.json", dest: manifestFile, skipexisting: false)
+            ant.get(src: "${baseUrl}/cacert.pem", dest: certFile, skipexisting: false)
+
+            // 2. Parse Manifest
+            def slurper = new JsonSlurper()
+            def manifest = slurper.parse(manifestFile)
+
+            // 3. Download Binaries dynamically based on the manifest
+            manifest.binaries.each { arch, files ->
+                def targetArchDir = new File(jniLibsDir, arch)
+                if (!targetArchDir.exists()) targetArchDir.mkdirs()
+
+                files.each { fileName, fileInfo ->
+                    def targetFile = new File(targetArchDir, fileName)
+                    def downloadUrl = "${baseUrl}/jniLibs/${arch}/${fileName}"
+
+                    // 4. Smart Caching: Check if file exists and matches the byte size from the manifest
+                    if (targetFile.exists() && targetFile.length() == fileInfo.size_bytes) {
+                        println "   -> [CACHED] ${arch}/${fileName}"
+                    } else {
+                        println "   -> [DOWNLOADING] ${arch}/${fileName}..."
+                        ant.get(src: downloadUrl, dest: targetFile, skipexisting: false)
+                    }
+                }
             }
-        }
+            println ">> [IIAB Hook] Successfully synced all native artifacts from the network!"
 
-        println ">> [IIAB Hook] Successfully synced all native artifacts from the factory to src/main!"
+        } catch (Exception e) {
+            System.err.println ">> [IIAB Hook] ERROR: Failed to sync artifacts from ${baseUrl}"
+            System.err.println ">> [IIAB Hook] Details: ${e.message}"
+            // Throwing the exception ensures the build fails if critical binaries are missing
+            throw new GradleException("Artifact sync failed", e)
+        }
     }
 }
 
