@@ -17,8 +17,12 @@ REBUILD_XZ=0
 REBUILD_NANO=0
 REBUILD_LESS=0
 
-for arg in "$@"; do
-    case $arg in
+# Default directories
+BUILD_DIR="$(pwd)"
+OUTPUT_DIR="$(pwd)/dist"
+
+while [[ "$#" -gt 0 ]]; do
+    case $1 in
         --rebuild-all)
             REBUILD_PROOT=1
             REBUILD_ARIA2=1
@@ -38,16 +42,17 @@ for arg in "$@"; do
         --rebuild-xz)    REBUILD_XZ=1; shift ;;
         --rebuild-nano)  REBUILD_NANO=1; shift ;;
         --rebuild-less)  REBUILD_LESS=1; shift ;;
+        --build-dir)     BUILD_DIR="$2"; shift 2 ;;
+        --out-dir)       OUTPUT_DIR="$2"; shift 2 ;;
         *)
-            echo "Unknown argument: $arg"
-            echo "Usage: $0 [--rebuild-all | --rebuild-nano | --rebuild-less ...]"
+            echo "Unknown argument: $1"
+            echo "Usage: $0 [--rebuild-all] [--build-dir /opt/termux-build] [--out-dir /var/www/artifacts]"
             exit 1
             ;;
     esac
 done
 
-WORK_DIR=$(pwd)
-TERMUX_REPO="$WORK_DIR/termux-packages"
+TERMUX_REPO="$BUILD_DIR/termux-packages"
 
 echo "[1/4] Checking host dependencies..."
 if ! command -v docker &> /dev/null; then 
@@ -60,15 +65,24 @@ if ! command -v patchelf &> /dev/null; then
     sudo apt-get install -y patchelf binutils wget tar xz-utils
 fi
 
-echo "[2/4] Preparing termux-packages environment..."
-if [ ! -d "$TERMUX_REPO" ]; then
-    git clone --depth 1 https://github.com/termux/termux-packages.git "$TERMUX_REPO"
+echo "[2/4] Preparing termux-packages environment in $BUILD_DIR..."
+mkdir -p "$BUILD_DIR"
+cd "$BUILD_DIR"
+
+if [ ! -d "termux-packages" ]; then
+    git clone --depth 1 https://github.com/termux/termux-packages.git
 else
-    cd "$TERMUX_REPO"
+    cd termux-packages
     git restore .
     git pull
     cd ..
 fi
+
+# FIX FOR DOCKER PERMISSION DENIED:
+# Docker runs as UID 1000 (builder). We must ensure these directories are writable by anyone.
+echo ">> Adjusting permissions for Docker container..."
+mkdir -p "$TERMUX_REPO/output" "$TERMUX_REPO/build" "$TERMUX_REPO/debs"
+sudo chmod -R 777 "$TERMUX_REPO/output" "$TERMUX_REPO/build" "$TERMUX_REPO/debs"
 
 echo "[3/4] Patching build scripts for static compilation..."
 cd "$TERMUX_REPO"
@@ -104,7 +118,7 @@ termux_step_pre_configure() {
     echo ">> [IIAB] Injecting Static Default Provider and Lobotomizing Legacy crash..."
     # 1. We inject the static OpenSSL function into C++ so that it doesn't try to load default.so
     sed -i 's|defProv_ = OSSL_PROVIDER_load(NULL, "default");|extern "C" OSSL_provider_init_fn ossl_default_provider_init;\n    OSSL_PROVIDER_add_builtin(NULL, "default", ossl_default_provider_init);\n    defProv_ = OSSL_PROVIDER_load(NULL, "default");|g' $TERMUX_PKG_SRCDIR/src/Platform.cc
-    
+
     # 2. We ignore the failures of the legacy provider (not needed for modern certificates)
     sed -i 's/throw DL_ABORT_EX("OSSL_PROVIDER_load.*//g' $TERMUX_PKG_SRCDIR/src/Platform.cc
 
@@ -225,10 +239,11 @@ EOF
 # Define target architectures: "Termux_Arch:Android_Arch"
 ARCHS=("aarch64:arm64-v8a" "arm:armeabi-v7a")
 
+echo "[4/4] Starting compilation process..."
 for mapping in "${ARCHS[@]}"; do
     TERMUX_ARCH="${mapping%%:*}"
     ANDROID_ARCH="${mapping##*:}"
-    OUT_DIR="$WORK_DIR/dist/jniLibs/$ANDROID_ARCH"
+    OUT_DIR="$OUTPUT_DIR/jniLibs/$ANDROID_ARCH"
     mkdir -p "$OUT_DIR"
 
     echo "==================================================================="
@@ -243,7 +258,7 @@ for mapping in "${ARCHS[@]}"; do
         FORCE_FLAG=$([ "$REBUILD_PROOT" -eq 1 ] && echo "-f" || echo "")
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" proot
 
-        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_proot"
+        EXTRACT_DIR="$BUILD_DIR/extract_${TERMUX_ARCH}_proot"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
         DEB_DIR="$TERMUX_REPO/output"
         if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
@@ -266,7 +281,7 @@ for mapping in "${ARCHS[@]}"; do
         FORCE_FLAG=$([ "$REBUILD_ARIA2" -eq 1 ] && echo "-f" || echo "")
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" aria2
 
-        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_aria2"
+        EXTRACT_DIR="$BUILD_DIR/extract_${TERMUX_ARCH}_aria2"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
         DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
@@ -284,7 +299,7 @@ for mapping in "${ARCHS[@]}"; do
         FORCE_FLAG=$([ "$REBUILD_TAR" -eq 1 ] && echo "-f" || echo "")
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" tar
 
-        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_tar"
+        EXTRACT_DIR="$BUILD_DIR/extract_${TERMUX_ARCH}_tar"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
         DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
@@ -302,7 +317,7 @@ for mapping in "${ARCHS[@]}"; do
         FORCE_FLAG=$([ "$REBUILD_GZIP" -eq 1 ] && echo "-f" || echo "")
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" gzip
 
-        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_gzip"
+        EXTRACT_DIR="$BUILD_DIR/extract_${TERMUX_ARCH}_gzip"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
         DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
@@ -320,7 +335,7 @@ for mapping in "${ARCHS[@]}"; do
         FORCE_FLAG=$([ "$REBUILD_XZ" -eq 1 ] && echo "-f" || echo "")
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" "$XZ_PKG_NAME"
 
-        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_xz"
+        EXTRACT_DIR="$BUILD_DIR/extract_${TERMUX_ARCH}_xz"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
         DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
@@ -339,7 +354,7 @@ for mapping in "${ARCHS[@]}"; do
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" libiconv libpopt
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" rsync
 
-        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_rsync"
+        EXTRACT_DIR="$BUILD_DIR/extract_${TERMUX_ARCH}_rsync"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
         DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
@@ -349,9 +364,7 @@ for mapping in "${ARCHS[@]}"; do
         cd "$TERMUX_REPO"
     fi
 
-    # -------------------------------------------------------------------------
     # 7. COMPILE NANO
-    # -------------------------------------------------------------------------
     if [ -f "$OUT_DIR/libnano.so" ] && [ "$REBUILD_NANO" -eq 0 ]; then
         echo ">> libnano.so already exists. Skipping. Use --rebuild-nano to force."
     else
@@ -361,7 +374,7 @@ for mapping in "${ARCHS[@]}"; do
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" ncurses
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" nano
 
-        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_nano"
+        EXTRACT_DIR="$BUILD_DIR/extract_${TERMUX_ARCH}_nano"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
         DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
@@ -371,18 +384,15 @@ for mapping in "${ARCHS[@]}"; do
         cd "$TERMUX_REPO"
     fi
 
-    # -------------------------------------------------------------------------
     # 8. COMPILE LESS
-    # -------------------------------------------------------------------------
     if [ -f "$OUT_DIR/libless.so" ] && [ "$REBUILD_LESS" -eq 0 ]; then
         echo ">> libless.so already exists. Skipping. Use --rebuild-less to force."
     else
         echo ">> Healing sysroot and Building Less..."
         FORCE_FLAG=$([ "$REBUILD_LESS" -eq 1 ] && echo "-f" || echo "")
-        # Dependencia a ncurses resuelta arriba, compilamos directo
         ./scripts/run-docker.sh ./build-package.sh $FORCE_FLAG -a "$TERMUX_ARCH" less
 
-        EXTRACT_DIR="$WORK_DIR/extract_${TERMUX_ARCH}_less"
+        EXTRACT_DIR="$BUILD_DIR/extract_${TERMUX_ARCH}_less"
         mkdir -p "$EXTRACT_DIR" && cd "$EXTRACT_DIR"
         DEB_DIR="$TERMUX_REPO/output"; if [ ! -d "$DEB_DIR" ]; then DEB_DIR="$TERMUX_REPO/debs"; fi
 
@@ -400,11 +410,10 @@ done
 # ===================================================================
 echo ">> [IIAB] Generating Supply Chain Manifest and Certificates..."
 
-ARTIFACTS_DIR="$WORK_DIR/dist"
 echo "   -> Fetching latest cacert.pem..."
-curl -sS -o "$ARTIFACTS_DIR/cacert.pem" https://curl.se/ca/cacert.pem
+curl -sS -o "$OUTPUT_DIR/cacert.pem" https://curl.se/ca/cacert.pem
 
-MANIFEST_FILE="$ARTIFACTS_DIR/ninja_manifest.json"
+MANIFEST_FILE="$OUTPUT_DIR/ninja_manifest.json"
 echo "   -> Generating $MANIFEST_FILE..."
 
 cat <<EOF > "$MANIFEST_FILE"
@@ -415,7 +424,7 @@ cat <<EOF > "$MANIFEST_FILE"
 EOF
 
 FIRST_ARCH=1
-for arch_dir in "$WORK_DIR/dist/jniLibs"/*; do
+for arch_dir in "$OUTPUT_DIR/jniLibs"/*; do
     if [ ! -d "$arch_dir" ]; then continue; fi
     arch_name=$(basename "$arch_dir")
 
@@ -453,6 +462,6 @@ EOF
 echo ">> [IIAB] Assets prepared successfully!"
 echo "==================================================================="
 echo "STATIC BUILD SUCCESSFUL!"
-echo "Your ninja binaries are ready at: $WORK_DIR/dist/jniLibs/"
-echo "Your SBOM and Certs are ready at: $ARTIFACTS_DIR/"
+echo "Your ninja binaries are ready at: $OUTPUT_DIR/jniLibs/"
+echo "Your SBOM and Certs are ready at: $OUTPUT_DIR/"
 echo "==================================================================="
