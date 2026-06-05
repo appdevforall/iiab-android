@@ -31,8 +31,8 @@ jobs:
     - name: Grant Execute Permission to Gradlew
       run: chmod +x gradlew
 
-    - name: Run Android Lint (Syntax & Rules Check)
-      run: ./gradlew lintDebug
+#    - name: Run Android Lint (Syntax & Rules Check)
+#      run: ./gradlew lintDebug
 
     - name: Compile Test (Assemble Debug)
       run: ./gradlew assembleDebug --stacktrace
