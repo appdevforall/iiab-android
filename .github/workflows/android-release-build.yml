@@ -16,6 +16,8 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+          with:
+          submodules: recursive
 
       # We use Java 17, in sync with build.gradle
       - name: Set up JDK 17
@@ -42,7 +44,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         # Run assembleRelease injecting the signature, skipping store.properties
         run: |
-          ./gradlew assembleRelease \
+          ./gradlew assembleRelease --info \
             -Pandroid.injected.signing.store.file=$(pwd)/keystore.jks \
             -Pandroid.injected.signing.store.password=$KEYSTORE_PASSWORD \
             -Pandroid.injected.signing.key.alias=$KEY_ALIAS \
