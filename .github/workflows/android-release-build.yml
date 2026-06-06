@@ -9,6 +9,9 @@ jobs:
   build:
     name: Build Release APKs
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./controller
 
     steps:
       - name: Checkout Code
@@ -50,7 +53,7 @@ jobs:
         with:
           name: iiab-apks-release
           # The asterisk (*) will catch the 3 files: universal, arm64-v8a and armeabi-v7a
-          path: app/build/outputs/apk/release/*.apk
+          path: controller/**/build/outputs/apk/release/*.apk
           retention-days: 7
 
       - name: Cleanup Keystore
