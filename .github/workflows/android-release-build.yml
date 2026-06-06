@@ -16,7 +16,7 @@ jobs:
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
-          with:
+        with:
           submodules: recursive
 
       # We use Java 17, in sync with build.gradle
