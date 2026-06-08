@@ -509,6 +509,8 @@ if [ -d "/sdcard/.iiab_state" ]; then
 fi
 touch /usr/local/pdsm/flag_install_ready 2>/dev/null || true
 ok "Notified Android Controller: IIAB is ready."
-warn "Don't forget to stop running services:"
-warn "  pdsm stop"
-warn "before login out."
+
+log "Check status before finish"
+pdsm status
+log "Stop services to avoid issues on exit/log out"
+pdsm stop
