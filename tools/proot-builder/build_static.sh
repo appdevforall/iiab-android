@@ -21,6 +21,15 @@ REBUILD_LESS=0
 BUILD_DIR="$(pwd)"
 OUTPUT_DIR="$(pwd)/dist"
 
+# Function to create the sidecar metadata file
+write_meta() {
+    local bin_path="$1"
+    local version="$2"
+    local build_date="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+    echo "VERSION=\"$version\"" > "${bin_path}.meta"
+    echo "BUILD_DATE=\"$build_date\"" >> "${bin_path}.meta"
+}
+
 while [[ "$#" -gt 0 ]]; do
     case $1 in
         --rebuild-all)
@@ -83,6 +92,21 @@ fi
 echo ">> Adjusting permissions for Docker container..."
 mkdir -p "$TERMUX_REPO/output" "$TERMUX_REPO/build" "$TERMUX_REPO/debs"
 sudo chmod -R 777 "$TERMUX_REPO/output" "$TERMUX_REPO/build" "$TERMUX_REPO/debs"
+
+echo "[2.5] Extracting upstream package versions for SBOM..."
+cd "$TERMUX_REPO"
+
+PROOT_VER=$(grep -m1 '^TERMUX_PKG_VERSION=' packages/proot/build.sh | cut -d= -f2 | tr -d '"'\''')
+ARIA2_VER=$(grep -m1 '^TERMUX_PKG_VERSION=' packages/aria2/build.sh | cut -d= -f2 | tr -d '"'\''')
+TAR_VER=$(grep -m1 '^TERMUX_PKG_VERSION=' packages/tar/build.sh | cut -d= -f2 | tr -d '"'\''')
+GZIP_VER=$(grep -m1 '^TERMUX_PKG_VERSION=' packages/gzip/build.sh | cut -d= -f2 | tr -d '"'\''')
+RSYNC_VER=$(grep -m1 '^TERMUX_PKG_VERSION=' packages/rsync/build.sh | cut -d= -f2 | tr -d '"'\''')
+NANO_VER=$(grep -m1 '^TERMUX_PKG_VERSION=' packages/nano/build.sh | cut -d= -f2 | tr -d '"'\''')
+LESS_VER=$(grep -m1 '^TERMUX_PKG_VERSION=' packages/less/build.sh | cut -d= -f2 | tr -d '"'\''')
+
+XZ_DIR=$(grep -lr "https://tukaani.org/xz/" packages/ | grep build.sh | head -n 1 | xargs dirname)
+XZ_PKG_NAME=$(basename "$XZ_DIR")
+XZ_VER=$(grep -m1 '^TERMUX_PKG_VERSION=' "$XZ_DIR/build.sh" | cut -d= -f2 | tr -d '"'\''')
 
 echo "[3/4] Patching build scripts for static compilation..."
 cd "$TERMUX_REPO"
@@ -172,6 +196,7 @@ termux_step_pre_configure() {
     LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
     export ac_cv_func_qsort_r=no
     export gl_cv_func_qsort_r=no
+    TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --disable-year2038"
 }
 EOF
 
@@ -185,7 +210,7 @@ cat << 'EOF' >> "$XZ_DIR/build.sh"
 termux_step_pre_configure() {
     echo ">> Applying Static flags for XZ Utils..."
     LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
-    TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --enable-static --disable-shared"
+    TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --enable-static --disable-shared --disable-year2038"
 }
 termux_step_post_massage() {
     echo ">> Bypassing SOVERSION guard..."
@@ -202,7 +227,7 @@ termux_step_pre_configure() {
     mv $TERMUX_PREFIX/lib/libiconv.so* $TERMUX_PREFIX/lib/hidden_so/ 2>/dev/null || true
 
     LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
-    TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --disable-lz4 --disable-zstd --disable-xxhash --disable-openssl"
+    TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --disable-lz4 --disable-zstd --disable-xxhash --disable-openssl --disable-year2038"
 
     export ac_cv_func_lchmod=no
     export ac_cv_func_lutimes=no
@@ -222,6 +247,7 @@ termux_step_pre_configure() {
     mv $TERMUX_PREFIX/lib/libtinfo*.so* $TERMUX_PREFIX/lib/hidden_so/ 2>/dev/null || true
 
     LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
+    TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --disable-year2038"
 }
 termux_step_post_make() {
     mv $TERMUX_PREFIX/lib/hidden_so/* $TERMUX_PREFIX/lib/ 2>/dev/null || true
@@ -274,10 +300,16 @@ for mapping in "${ARCHS[@]}"; do
 
         rm -rf data control
         ar x "$DEB_DIR/proot_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
+
         cp data/data/com.termux/files/usr/bin/proot "$OUT_DIR/libproot.so"
+        write_meta "$OUT_DIR/libproot.so" "$PROOT_VER"
+
         cp data/data/com.termux/files/usr/libexec/proot/loader "$OUT_DIR/libproot-loader.so"
+        write_meta "$OUT_DIR/libproot-loader.so" "$PROOT_VER"
+
         if [ -f data/data/com.termux/files/usr/libexec/proot/loader32 ]; then
             cp data/data/com.termux/files/usr/libexec/proot/loader32 "$OUT_DIR/libproot-loader32.so"
+            write_meta "$OUT_DIR/libproot-loader32.so" "$PROOT_VER"
         fi
         cd "$TERMUX_REPO"
     fi
@@ -297,6 +329,7 @@ for mapping in "${ARCHS[@]}"; do
         rm -rf data control
         ar x "$DEB_DIR/aria2_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
         cp data/data/com.termux/files/usr/bin/aria2c "$OUT_DIR/libaria2c.so"
+        write_meta "$OUT_DIR/libaria2c.so" "$ARIA2_VER"
         cd "$TERMUX_REPO"
     fi
 
@@ -315,6 +348,7 @@ for mapping in "${ARCHS[@]}"; do
         rm -rf data control
         ar x "$DEB_DIR/tar_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
         cp data/data/com.termux/files/usr/bin/tar "$OUT_DIR/libtar.so"
+        write_meta "$OUT_DIR/libtar.so" "$TAR_VER"
         cd "$TERMUX_REPO"
     fi
 
@@ -333,6 +367,7 @@ for mapping in "${ARCHS[@]}"; do
         rm -rf data control
         ar x "$DEB_DIR/gzip_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
         cp data/data/com.termux/files/usr/bin/gzip "$OUT_DIR/libgzip.so"
+        write_meta "$OUT_DIR/libgzip.so" "$GZIP_VER"
         cd "$TERMUX_REPO"
     fi
 
@@ -351,6 +386,7 @@ for mapping in "${ARCHS[@]}"; do
         rm -rf data control
         ar x "$DEB_DIR/xz-utils_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
         cp data/data/com.termux/files/usr/bin/xz "$OUT_DIR/libxz.so"
+        write_meta "$OUT_DIR/libxz.so" "$XZ_VER"
         cd "$TERMUX_REPO"
     fi
 
@@ -370,6 +406,7 @@ for mapping in "${ARCHS[@]}"; do
         rm -rf data control
         ar x "$DEB_DIR/rsync_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
         cp data/data/com.termux/files/usr/bin/rsync "$OUT_DIR/librsync.so"
+        write_meta "$OUT_DIR/librsync.so" "$RSYNC_VER"
         cd "$TERMUX_REPO"
     fi
 
@@ -390,6 +427,7 @@ for mapping in "${ARCHS[@]}"; do
         rm -rf data control
         ar x "$DEB_DIR/nano_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
         cp data/data/com.termux/files/usr/bin/nano "$OUT_DIR/libnano.so"
+        write_meta "$OUT_DIR/libnano.so" "$NANO_VER"
         cd "$TERMUX_REPO"
     fi
 
@@ -408,6 +446,7 @@ for mapping in "${ARCHS[@]}"; do
         rm -rf data control
         ar x "$DEB_DIR/less_"*"_$TERMUX_ARCH.deb" && tar xf data.tar.xz
         cp data/data/com.termux/files/usr/bin/less "$OUT_DIR/libless.so"
+        write_meta "$OUT_DIR/libless.so" "$LESS_VER"
         cd "$TERMUX_REPO"
     fi
 
@@ -450,11 +489,27 @@ for arch_dir in "$OUTPUT_DIR/jniLibs"/*; do
         sha256=$(sha256sum "$bin_file" | awk '{print $1}')
         size=$(stat -c%s "$bin_file" 2>/dev/null || stat -f%z "$bin_file")
 
+        # Read sidecar metadata if it exists
+        BIN_VER="unknown"
+        BIN_DATE="unknown"
+        META_FILE="${bin_file}.meta"
+
+        if [ -f "$META_FILE" ]; then
+            source "$META_FILE"
+            BIN_VER="$VERSION"
+            BIN_DATE="$BUILD_DATE"
+        else
+            # Fallback to physical file modification date
+            BIN_DATE=$(date -u -r "$bin_file" +'%Y-%m-%dT%H:%M:%SZ' 2>/dev/null || echo "unknown")
+        fi
+
         if [ $FIRST_BIN -eq 0 ]; then echo "      ," >> "$MANIFEST_FILE"; fi
         FIRST_BIN=0
 
         cat <<EOF >> "$MANIFEST_FILE"
       "$bin_name": {
+        "version": "$BIN_VER",
+        "build_date": "$BIN_DATE",
         "sha256": "$sha256",
         "size_bytes": $size
       }
