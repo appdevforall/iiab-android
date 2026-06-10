@@ -355,6 +355,10 @@
     <string name="adb_cp_unknown"><![CDATA[Ограничение процессов<br><b>(Неизвестно)</b>]]></string>
     <string name="adb_cp_not_required"><![CDATA[Ограничение процессов<br><small>(Не требуется)</small>]]></string>
 
+    <string name="adb_req_cp">Чтобы проверить или изменить ограничение процессов, ADB должен быть подключен.</string>
+    <string name="adb_not_req_cp">Исправление ограничения процессов требуется только для Android 14+.</string>
+    <string name="adb_req_ppk">Чтобы проверить или изменить Phantom Process Killer, ADB должен быть подключен.</string>
+    <string name="adb_not_req_ppk">Исправление Phantom Process Killer требуется только для Android 12/13+.</string>
     <string name="adb_snack_disabling_cp">Отключение ограничений процессов...</string>
     <string name="adb_snack_setting_ppk">Установка лимита PPK на 256...</string>
     <string name="adb_status_securing">Обеспечение безопасности соединения...</string>
@@ -390,7 +394,7 @@
     <string name="rsync_error_exit_code">Rsync завершился с кодом ошибки: %1$d</string>
     <string name="rsync_error_fatal">Критическая ошибка: %1$s</string>
     <string name="rsync_error_dry_run_cancelled">Расчет отменен пользователем.</string>
-    <string name="rsync_error_dry_run_failed">Пробный запуск (dry run) не удался. Код: %1$d</string>
+    <string name="rsync_error_dry_run_failed">Пробный запуск не удался. Код: %1$d</string>
     <string name="rsync_error_dry_run_fatal">Ошибка при расчете размера: %1$s</string>
     <string name="rsync_success_complete">Передача успешно завершена!</string>
 
@@ -471,8 +475,25 @@
     <string name="qr_content_description">QR-код</string>
     <string name="sync_share_status_init">Запуск сервера...</string>
 
-    <string name="tutorial_share_title">Передача против доступа</string>
-    <string name="tutorial_share_heavy">Добро пожаловать в раздел «Поделиться»! Здесь вы можете клонировать ВСЮ систему IIAB (до нескольких гигабайт) на другое устройство. Этот процесс может занять несколько часов, что не то же самое, что мгновенный доступ к общему ресурсу.</string>    <string name="tutorial_share_light">Ищете мгновенный доступ? ☝️\nЕсли вы просто хотите, чтобы другие могли мгновенно читать Википедию или пользоваться Картовыми картами, запустите сервер и поделитесь QR-кодом здесь!</string>
+    <string name="tutorial_share_title">Передача или Доступ</string>
+    <string name="tutorial_share_heavy">Добро пожаловать в раздел «Поделиться»! Здесь вы можете клонировать ВСЮ систему IIAB (до нескольких гигабайт) на другое устройство. Этот процесс может занять несколько часов, что не то же самое, что мгновенный доступ к общему ресурсу.</string>
+    <string name="tutorial_share_light">Ищете мгновенный доступ? ☝️\nЕсли вы просто хотите, чтобы другие могли мгновенно читать Википедию или пользоваться Картовыми картами, запустите сервер и поделитесь QR-кодом здесь!</string>
     <string name="tutorial_share_dont_show">Больше не показывать</string>
     <string name="tutorial_share_got_it">Понял!</string>
+
+    <string name="install_busy_provisioning">Система в данный момент настраивается/сбрасывается. Пожалуйста, подождите.</string>
+    <string name="install_busy_modules">В данный момент устанавливаются модули. Пожалуйста, подождите.</string>
+    <string name="install_busy_backup">Выполняется резервное копирование. Пожалуйста, подождите.</string>
+    <string name="install_busy_restore">В данный момент система восстанавливается из резервной копии. Пожалуйста, подождите.</string>
+    <string name="install_busy_delete">В данный момент система удаляется. Пожалуйста, подождите.</string>
+    <string name="install_busy_import">Выполняется импорт резервной копии. Пожалуйста, подождите.</string>
+    <string name="install_busy_generic">Система в данный момент занята. Пожалуйста, подождите.</string>
+
+    <string name="sync_error_arch_title">Несовместимая архитектура</string>
+    <string name="sync_error_arch_hardware_32">Аппаратная несовместимость.\n\nХост делится 64-битной системой, но ваше устройство 32-битное. Физически невозможно выполнить эту передачу.</string>
+    <string name="sync_error_arch_fixable">Несовместимость приложения.\n\nХост использует 32-битную систему. Для синхронизации удалите это приложение, попросите Хоста поделиться своим приложением (APK) и установите его.\n\nВаше оборудование совместимо, вам просто нужно подходящее приложение!</string>
+    <string name="sync_error_arch_strict_64">Аппаратная несовместимость.\n\nХост отправляет 32-битную систему, но на вашем устройстве установлен процессор нового поколения, который поддерживает ТОЛЬКО строгие 64-битные операции. Передача заблокирована во избежание поломки системы.</string>
+    <string name="sync_app_arch_label">Архитектура App: %1$d-бит</string>
+    <string name="sync_msg_arch_compatible">Оборудование совместимо. Запуск подключения...</string>
+
 </resources>

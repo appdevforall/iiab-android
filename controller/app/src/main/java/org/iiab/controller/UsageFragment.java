@@ -325,7 +325,11 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
     }
 
     public void addToLog(String message) {
-        requireActivity().runOnUiThread(() -> {
+        // 1. We add the security padlock to avoid crashes
+        if (!isAdded() || getActivity() == null) return;
+
+        // 2. We use getActivity() instead of requireActivity() for security
+        getActivity().runOnUiThread(() -> {
             SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
             String currentTime = sdf.format(new Date());
             String logEntry = "[" + currentTime + "] " + message + "\n";
@@ -344,8 +348,11 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
     }
 
     public void updateLogSizeUI() {
-        if (logSizeText == null) return;
-        String sizeStr = LogManager.getFormattedSize(requireContext());
+        // 3. We added the lock so that it does not call the Context if it is in another tab
+        if (!isAdded() || getContext() == null || logSizeText == null) return;
+
+        // 4. We use getContext() instead of requireContext()
+        String sizeStr = LogManager.getFormattedSize(getContext());
         logSizeText.setText(getString(R.string.log_size_format, sizeStr));
     }
 

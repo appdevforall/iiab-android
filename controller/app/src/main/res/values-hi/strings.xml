@@ -490,4 +490,11 @@
     <string name="install_busy_import">बैकअप आयात किया जा रहा है। कृपया प्रतीक्षा करें।</string>
     <string name="install_busy_generic">सिस्टम वर्तमान में व्यस्त है। कृपया प्रतीक्षा करें।</string>
 
+    <string name="sync_error_arch_title">असंगत आर्किटेक्चर (Incompatible Architecture)</string>
+    <string name="sync_error_arch_hardware_32">हार्डवेयर असंगति।\n\nहोस्ट एक 64-बिट सिस्टम साझा कर रहा है, लेकिन आपका डिवाइस 32-बिट है। इस ट्रांसफर को करना भौतिक रूप से असंभव है।</string>
+    <string name="sync_error_arch_fixable">एप्लिकेशन असंगति।\n\nहोस्ट 32-बिट सिस्टम का उपयोग कर रहा है। सिंक करने के लिए, इस ऐप को अनइंस्टॉल करें, होस्ट से उनका ऐप (APK) साझा करने के लिए कहें, और इसे इंस्टॉल करें।\n\nआपका हार्डवेयर संगत है, आपको बस मैचिंग ऐप की आवश्यकता है!</string>
+    <string name="sync_error_arch_strict_64">हार्डवेयर असंगति।\n\nहोस्ट एक 32-बिट सिस्टम भेज रहा है, लेकिन आपके डिवाइस में अगली पीढ़ी का प्रोसेसर है जो केवल सख्त 64-बिट ऑपरेशन्स का समर्थन करता है। सिस्टम को टूटने से बचाने के लिए ट्रांसफर ब्लॉक कर दिया गया है।</string>
+    <string name="sync_app_arch_label">App Arch: %1$d-बिट</string>
+    <string name="sync_msg_arch_compatible">हार्डवेयर संगत है। कनेक्शन शुरू हो रहा है...</string>
+
 </resources>

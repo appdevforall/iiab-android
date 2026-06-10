@@ -503,4 +503,11 @@
     <string name="install_busy_import">A backup is being imported. Please wait.</string>
     <string name="install_busy_generic">System is currently busy. Please wait.</string>
 
+    <string name="sync_error_arch_title">Incompatible Architecture</string>
+    <string name="sync_error_arch_hardware_32">Hardware Incompatibility.\n\nThe Host is sharing a 64-bit system, but your device is 32-bit. It is physically impossible to perform this transfer.</string>
+    <string name="sync_error_arch_fixable">App Incompatibility.\n\nThe Host is using a 32-bit system. To sync, uninstall this app, ask the Host to share their App (APK), and install it.\n\nYour hardware is compatible, you just need the matching app!</string>
+    <string name="sync_error_arch_strict_64">Hardware Incompatibility.\n\nThe Host is sending a 32-bit system, but your device has a next-generation processor that ONLY supports strict 64-bit operations. Transfer blocked to prevent a broken system.</string>
+    <string name="sync_app_arch_label">App Arch: %1$d-bit</string>
+    <string name="sync_msg_arch_compatible">Hardware compatible. Starting connection...</string>
+
 </resources>

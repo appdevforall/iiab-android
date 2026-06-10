@@ -30,13 +30,15 @@ public class SyncHandshakeHelper {
         public String user;
         public String pass;
         public boolean hasRootfs;
+        public int archBits;
 
-        public SyncCredentials(String ip, int port, String user, String pass, boolean hasRootfs) {
+        public SyncCredentials(String ip, int port, String user, String pass, boolean hasRootfs, int archBits) {
             this.ip = ip;
             this.port = port;
             this.user = user;
             this.pass = pass;
             this.hasRootfs = hasRootfs;
+            this.archBits = archBits;
         }
     }
 
@@ -50,7 +52,7 @@ public class SyncHandshakeHelper {
         return sb.toString();
     }
 
-    public static String createPayload(String ip, int port, String user, String pass, boolean hasRootfs) {
+    public static String createPayload(String ip, int port, String user, String pass, boolean hasRootfs, int archBits) {
         try {
             JSONObject json = new JSONObject();
             json.put("ip", ip);
@@ -58,6 +60,7 @@ public class SyncHandshakeHelper {
             json.put("user", user);
             json.put("pass", pass);
             json.put("has_rootfs", hasRootfs);
+            json.put("a", archBits);
             json.put("app", "iiab_sync");
             return json.toString();
         } catch (Exception e) {
@@ -78,7 +81,8 @@ public class SyncHandshakeHelper {
                     json.getInt("port"),
                     json.getString("user"),
                     json.getString("pass"),
-                    json.optBoolean("has_rootfs", true) // Default to true if missing for legacy compatibility
+                    json.optBoolean("has_rootfs", true), // Default to true if missing for legacy compatibility
+                    json.optInt("a", 0)
             );
         } catch (Exception e) {
             Log.e(TAG, "Error parsing scanned QR code", e);

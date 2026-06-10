@@ -488,4 +488,11 @@
     <string name="install_busy_import">Se está importando un respaldo. Por favor, espere.</string>
     <string name="install_busy_generic">El sistema está ocupado actualmente. Por favor, espere.</string>
 
+    <string name="sync_error_arch_title">Arquitectura Incompatible</string>
+    <string name="sync_error_arch_hardware_32">Incompatibilidad de hardware.\n\nEl Anfitrión está compartiendo un sistema de 64-bits, pero tu dispositivo es de 32-bits. Es físicamente imposible realizar esta transferencia.</string>
+    <string name="sync_error_arch_fixable">Incompatibilidad de Aplicación.\n\nEl Anfitrión usa un sistema de 32-bits. Para sincronizar, desinstala esta app, pide al Anfitrión que te comparta su App (APK) e instálala.\n\n¡Tu teléfono sí es compatible, solo necesitas la app correcta!</string>
+    <string name="sync_error_arch_strict_64">Incompatibilidad de hardware.\n\nEl Anfitrión está enviando un sistema de 32-bits, pero tu dispositivo tiene un procesador de nueva generación que SOLO admite operaciones estrictas de 64-bits. Transferencia bloqueada para evitar un sistema roto.</string>
+    <string name="sync_app_arch_label">App Arch: %1$d-bit</string>
+    <string name="sync_msg_arch_compatible">Hardware compatible. Iniciando conexión...</string>
+
 </resources>

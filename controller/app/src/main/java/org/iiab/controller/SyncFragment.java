@@ -13,6 +13,8 @@ import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.content.Intent;
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -32,6 +34,7 @@ import androidx.appcompat.app.AlertDialog;
 import androidx.fragment.app.Fragment;
 import androidx.activity.result.ActivityResultLauncher;
 
+import com.google.android.material.snackbar.Snackbar;
 import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
@@ -62,6 +65,10 @@ public class SyncFragment extends Fragment {
     private TextView txtTransferFilename, txtTransferSpeed, txtTransferEta;
     private ProgressBar progressBarTransfer;
 
+    // Arch Labels
+    private TextView txtHostArchLabel;
+    private TextView txtGuestArchLabel;
+
     // Managers
     private RsyncManager rsyncManager;
     private ApkServer apkServer;
@@ -84,6 +91,10 @@ public class SyncFragment extends Fragment {
     private LinearLayout cardShareSystem;
     private LinearLayout cardShareApk;
 
+    private int getArchBits() {
+        String arch = getTermuxArch();
+        return (arch != null && arch.contains("64")) ? 64 : 32;
+    }
 
     // Scanner Launcher
     private final ActivityResultLauncher<ScanOptions> barcodeLauncher = registerForActivityResult(new ScanContract(), result -> {
@@ -142,9 +153,18 @@ public class SyncFragment extends Fragment {
         txtTransferSpeed = view.findViewById(R.id.txt_transfer_speed);
         txtTransferEta = view.findViewById(R.id.txt_transfer_eta);
         progressBarTransfer = view.findViewById(R.id.progress_bar_transfer);
-
         qrCardContainer = view.findViewById(R.id.qr_card_container);
 
+        txtHostArchLabel = view.findViewById(R.id.txt_host_arch_label);
+        txtGuestArchLabel = view.findViewById(R.id.txt_guest_arch_label);
+
+        // Static Arch Labels logic (Cleaned up with string resources)
+        String archLabelText = getString(R.string.sync_app_arch_label, getArchBits());
+
+        if (txtHostArchLabel != null) txtHostArchLabel.setText(archLabelText);
+        if (txtGuestArchLabel != null) txtGuestArchLabel.setText(archLabelText);
+
+        updateArchLabelsVisibility();
         setupToggleLogic();
         setupShareLogic();
         setupReceiveLogic();
@@ -161,6 +181,7 @@ public class SyncFragment extends Fragment {
                 containerShare.setVisibility(View.GONE);
                 containerReceive.setVisibility(View.VISIBLE);
             }
+            updateArchLabelsVisibility();
         });
     }
 
@@ -283,7 +304,6 @@ public class SyncFragment extends Fragment {
     }
 
     // --- RSYNC DAEMON METHODS ---
-
     private void startShareDaemon(File rootfsDir) {
         tempPass = SyncHandshakeHelper.generateSecurePassword();
         if (!rootfsDir.exists()) rootfsDir.mkdirs();
@@ -293,6 +313,7 @@ public class SyncFragment extends Fragment {
         if (started) {
             isDaemonRunning = true;
             enableSystemProtection();
+            updateArchLabelsVisibility();
 
             qrDisplaySection.setVisibility(View.VISIBLE);
             qrCardContainer.setVisibility(View.VISIBLE);
@@ -313,16 +334,13 @@ public class SyncFragment extends Fragment {
 
     private void updateQrDisplayRsync() {
         String currentIp = showingWifi ? wifiIp : hotspotIp;
-        String jsonPayload = SyncHandshakeHelper.createPayload(currentIp, currentRsyncPort, tempUser, tempPass, hostHasRootfs);
+        String jsonPayload = SyncHandshakeHelper.createPayload(currentIp, currentRsyncPort, tempUser, tempPass, hostHasRootfs, getArchBits());
         Bitmap qrBitmap = SyncHandshakeHelper.generateQrCode(jsonPayload, 500);
 
         if (qrBitmap != null) imgQrCode.setImageBitmap(qrBitmap);
 
-        if (showingWifi) {
-            txtShareStatus.setText(getString(R.string.sync_share_status_wifi));
-        } else {
-            txtShareStatus.setText(getString(R.string.sync_share_status_hotspot));
-        }
+        String baseText = showingWifi ? getString(R.string.sync_share_status_wifi) : getString(R.string.sync_share_status_hotspot);
+        txtShareStatus.setText(baseText);
         txtShareStatus.setTextColor(android.graphics.Color.parseColor("#AAAAAA"));
     }
 
@@ -330,6 +348,7 @@ public class SyncFragment extends Fragment {
         rsyncManager.stop();
         isDaemonRunning = false;
         disableSystemProtection();
+        updateArchLabelsVisibility();
 
         qrDisplaySection.setVisibility(View.GONE);
         btnStartServer.setText(getString(R.string.sync_btn_start_server));
@@ -379,11 +398,8 @@ public class SyncFragment extends Fragment {
 
         if (qrBitmap != null) imgQrCode.setImageBitmap(qrBitmap);
 
-        if (showingWifi) {
-            txtShareStatus.setText(getString(R.string.sync_app_status_wifi));
-        } else {
-            txtShareStatus.setText(getString(R.string.sync_app_status_hotspot));
-        }
+        String baseText = showingWifi ? getString(R.string.sync_app_status_wifi) : getString(R.string.sync_app_status_hotspot);
+        txtShareStatus.setText(baseText);
         txtShareStatus.setTextColor(android.graphics.Color.parseColor("#AAAAAA"));
     }
 
@@ -451,17 +467,46 @@ public class SyncFragment extends Fragment {
             return;
         }
 
-        if (!creds.hasRootfs) {
-            new AlertDialog.Builder(requireContext())
-                    .setTitle(getString(R.string.sync_dialog_empty_host_title))
-                    .setMessage(getString(R.string.sync_dialog_empty_host_msg))
-                    .setPositiveButton(getString(R.string.sync_dialog_btn_try_anyway), (dialog, which) -> checkNetworkAndStart(creds))
-                    .setNegativeButton(getString(R.string.cancel), null)
-                    .setIcon(android.R.drawable.ic_dialog_alert)
-                    .show();
-        } else {
-            checkNetworkAndStart(creds);
+        // --- ARCHITECTURE VALIDATION ---
+        int hostBits = creds.archBits;
+        int guestBits = getArchBits();
+
+        if (hostBits != 0 && hostBits != guestBits) {
+            if (hostBits == 64 && guestBits == 32) {
+                showArchIncompatibilityDialog(getString(R.string.sync_error_arch_hardware_32));
+                return;
+            } else if (hostBits == 32 && guestBits == 64) {
+                boolean hardwareSupports32 = false;
+                for (String abi : android.os.Build.SUPPORTED_ABIS) {
+                    if (abi.contains("v7a") || (abi.contains("arm") && !abi.contains("64"))) {
+                        hardwareSupports32 = true;
+                        break;
+                    }
+                }
+
+                if (hardwareSupports32) {
+                    showArchIncompatibilityDialog(getString(R.string.sync_error_arch_fixable));
+                } else {
+                    showArchIncompatibilityDialog(getString(R.string.sync_error_arch_strict_64));
+                }
+                return;
+            }
         }
+
+        // --- EVERYTHING IS OK: PROCEED TO DOWNLOAD ---
+        showArchCompatibilitySuccess(() -> {
+            if (!creds.hasRootfs) {
+                new AlertDialog.Builder(requireContext())
+                        .setTitle(getString(R.string.sync_dialog_empty_host_title))
+                        .setMessage(getString(R.string.sync_dialog_empty_host_msg))
+                        .setPositiveButton(getString(R.string.sync_dialog_btn_try_anyway), (dialog, which) -> checkNetworkAndStart(creds))
+                        .setNegativeButton(getString(R.string.cancel), null)
+                        .setIcon(android.R.drawable.ic_dialog_alert)
+                        .show();
+            } else {
+                checkNetworkAndStart(creds);
+            }
+        });
     }
 
     private void checkNetworkAndStart(SyncHandshakeHelper.SyncCredentials creds) {
@@ -679,5 +724,87 @@ public class SyncFragment extends Fragment {
                 .setNegativeButton(getString(R.string.adb_enforcer_btn_ok), null)
                 .setIcon(android.R.drawable.ic_dialog_alert)
                 .show();
+    }
+
+    private void showArchIncompatibilityDialog(String message) {
+        android.os.Vibrator v = (android.os.Vibrator) requireContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (v != null) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                v.vibrate(android.os.VibrationEffect.createOneShot(500, android.os.VibrationEffect.DEFAULT_AMPLITUDE));
+            } else {
+                v.vibrate(500);
+            }
+        }
+
+        new AlertDialog.Builder(requireContext())
+                .setTitle(getString(R.string.sync_error_arch_title))
+                .setMessage(message)
+                .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
+                .setIcon(android.R.drawable.ic_dialog_alert)
+                .show();
+    }
+
+    private String getTermuxArch() {
+        try {
+            android.content.pm.ApplicationInfo info = requireContext().getApplicationInfo();
+            String nativeLibDir = info.nativeLibraryDir;
+            if (nativeLibDir != null) {
+                if (nativeLibDir.endsWith("arm64") || nativeLibDir.contains("arm64-v8a"))
+                    return "arm64-v8a";
+                if (nativeLibDir.endsWith("arm") || nativeLibDir.contains("armeabi-v7a"))
+                    return "armeabi-v7a";
+                if (nativeLibDir.endsWith("x86_64") || nativeLibDir.contains("x86_64"))
+                    return "x86_64";
+                if (nativeLibDir.endsWith("x86") || nativeLibDir.contains("x86")) return "x86";
+            }
+        } catch (Exception ignored) {
+        }
+        if (android.os.Build.SUPPORTED_ABIS.length > 0) return android.os.Build.SUPPORTED_ABIS[0];
+        return "unknown";
+    }
+
+    private void showArchCompatibilitySuccess(Runnable onComplete) {
+        android.os.Vibrator v = (android.os.Vibrator) requireContext().getSystemService(Context.VIBRATOR_SERVICE);
+        if (v != null) {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
+                long[] pattern = {0, 100, 100, 150};
+                v.vibrate(android.os.VibrationEffect.createWaveform(pattern, -1));
+            } else {
+                long[] pattern = {0, 100, 100, 150};
+                v.vibrate(pattern, -1);
+            }
+        }
+
+        if (txtGuestArchLabel != null) {
+            txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#00E676")));
+            txtGuestArchLabel.setTextColor(android.graphics.Color.BLACK);
+        }
+
+        Snackbar.make(requireView(), getString(R.string.sync_msg_arch_compatible), Snackbar.LENGTH_SHORT).show();
+
+        new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            if (txtGuestArchLabel != null) {
+                txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.parseColor("#1A1A1A")));
+                txtGuestArchLabel.setTextColor(android.graphics.Color.parseColor("#4CAF50"));
+            }
+            onComplete.run();
+        }, 1500);
+    }
+    private void updateArchLabelsVisibility() {
+        boolean isShareMode = (rgSyncMode.getCheckedRadioButtonId() == R.id.rb_mode_share);
+        boolean isServerRunning = isDaemonRunning || isApkServerRunning;
+
+        if (isShareMode) {
+            // In Send mode: if the server is running, the file is up. We hide the one below.
+            // If the server is NOT running, we show the one below.
+            if (txtGuestArchLabel != null) {
+                txtGuestArchLabel.setVisibility(isServerRunning ? View.GONE : View.VISIBLE);
+            }
+        } else {
+            // In Receive mode: We always show the one below.
+            if (txtGuestArchLabel != null) {
+                txtGuestArchLabel.setVisibility(View.VISIBLE);
+            }
+        }
     }
 }
