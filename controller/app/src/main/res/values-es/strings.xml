@@ -40,7 +40,8 @@
     <string name="dash_offline">Desconectado</string>
     <string name="dash_online">En línea</string>
     <string name="dash_iiab_system">Sistema IIAB-oA</string>
-    <string name="dash_android_version_label">Versión base de Android:</string>
+    <string name="dash_android_version_label">Android base:</string>
+    <string name="dash_host_arch_label">Arquitectura:</string>
     <string name="dash_android_version_value">%1$s (API %2$s)</string>
     <string name="dash_state_debian_only">SO base instalado. Proceda a instalar IIAB.</string>
     <string name="dash_state_installer">Instalador detectado, abra la pestaña de instalación para más información.</string>

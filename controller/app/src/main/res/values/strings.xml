@@ -44,7 +44,8 @@
     <string name="dash_offline">Offline</string>
     <string name="dash_online">Online</string>
     <string name="dash_iiab_system">IIAB-oA System</string>
-    <string name="dash_android_version_label">Base Android Version:</string>
+    <string name="dash_android_version_label">Android base:</string>
+    <string name="dash_host_arch_label">Device Arch:</string>
     <string name="dash_android_version_value">%1$s (API %2$s)</string>
 
     <string name="dash_state_debian_only">Base OS installed. Proceed to install IIAB.</string>

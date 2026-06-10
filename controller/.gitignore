@@ -17,6 +17,7 @@ app/release/
 
 # Ignore all native compiled libraries inside jniLibs directory
 **/jniLibs/**/*.so
+app/src/main/jniLibs/
 
 *store.properties
 *.jks

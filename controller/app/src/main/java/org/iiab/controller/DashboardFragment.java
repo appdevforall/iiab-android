@@ -43,7 +43,8 @@ public class DashboardFragment extends Fragment {
 
     private TextView txtDeviceName;
     private TextView txtAndroidVersion;
-    private TextView txtWifiIp, txtHotspotIp, txtUptime, txtBattery, badgeStatus, txtTermuxState;
+    private TextView txtHostArch;
+    private TextView txtWifiIp, txtHotspotIp, txtUptime, badgeStatus, txtTermuxState;
 
     // --- GAUGE VARIABLES ---
     private ResourceGaugeView gaugeStorage, gaugeRam, gaugeSwap, gaugeBattery;
@@ -106,6 +107,7 @@ public class DashboardFragment extends Fragment {
         // Bindings
         txtDeviceName = view.findViewById(R.id.dash_text_device_name);
         txtAndroidVersion = view.findViewById(R.id.dash_text_android_version);
+        txtHostArch = view.findViewById(R.id.dash_text_host_arch);
 
         // --- DIAGNOSTIC BYPASS (AGGRESSIVE ALERT DIALOG) ---
         txtDeviceName.setOnClickListener(v -> {
@@ -135,7 +137,6 @@ public class DashboardFragment extends Fragment {
         txtWifiIp = view.findViewById(R.id.dash_text_wifi_ip);
         txtHotspotIp = view.findViewById(R.id.dash_text_hotspot_ip);
         txtUptime = view.findViewById(R.id.dash_text_uptime);
-        txtBattery = view.findViewById(R.id.dash_text_battery);
         badgeStatus = view.findViewById(R.id.dash_badge_status);
 
         gaugeStorage = view.findViewById(R.id.gauge_storage);
@@ -217,9 +218,14 @@ public class DashboardFragment extends Fragment {
         // --- FETCH AND DISPLAY BASE ANDROID VERSION ---
         String androidRelease = android.os.Build.VERSION.RELEASE;
         int sdkVersion = android.os.Build.VERSION.SDK_INT;
-        txtAndroidVersion.setText(getString(R.string.dash_android_version_value, androidRelease, String.valueOf(sdkVersion)));
+        txtAndroidVersion.setText(getString(R.string.dash_android_version_value, "v" + androidRelease, String.valueOf(sdkVersion)));
 
-        // --- 0. CALCULATE SERVER UPTIME ---
+        // --- FETCH AND DISPLAY HOST ARCHITECTURE ---
+        if (txtHostArch != null) {
+            txtHostArch.setText(getTermuxArch());
+        }
+
+        // --- CALCULATE SERVER UPTIME ---
         long uptimeMillis = android.os.SystemClock.elapsedRealtime();
         long minutes = (uptimeMillis / (1000 * 60)) % 60;
         long hours = (uptimeMillis / (1000 * 60 * 60)) % 24;
@@ -234,23 +240,15 @@ public class DashboardFragment extends Fragment {
         txtWifiIp.setText(getWifiIp());
         txtHotspotIp.setText(getHotspotIp());
 
-        int batteryLevelText = getBatteryPercentage();
-        if (batteryLevelText >= 0) {
-            txtBattery.setText(getString(R.string.dash_format_pct, batteryLevelText));
-        } else {
-            txtBattery.setText(R.string.dash_format_pct_na);
-        }
-
-        // --- 1. GET REAL RAM AND SWAP FROM LINUX ---
+        // --- GET REAL RAM AND SWAP FROM LINUX ---
         long memTotal = 0, memAvailable = 0, swapTotal = 0, swapFree = 0;
         try (BufferedReader br = new BufferedReader(new FileReader("/proc/meminfo"))) {
             String line;
             while ((line = br.readLine()) != null) {
                 if (line.startsWith("MemTotal:")) memTotal = parseMemLine(line);
                 else if (line.startsWith("MemAvailable:")) memAvailable = parseMemLine(line);
-                    // If phone is old and doesn't have "MemAvailable", use "MemFree"
-                else if (memAvailable == 0 && line.startsWith("MemFree:"))
-                    memAvailable = parseMemLine(line);
+                // If phone is old and doesn't have "MemAvailable", use "MemFree"
+                else if (memAvailable == 0 && line.startsWith("MemFree:")) memAvailable = parseMemLine(line);
                 else if (line.startsWith("SwapTotal:")) swapTotal = parseMemLine(line);
                 else if (line.startsWith("SwapFree:")) swapFree = parseMemLine(line);
             }
@@ -268,7 +266,7 @@ public class DashboardFragment extends Fragment {
         int swapProgress = swapTotal > 0 ? (int) (((swapTotal - swapFree) * 100) / swapTotal) : 0;
 
         File path = android.os.Environment.getDataDirectory();
-        long totalSpace = path.getTotalSpace() / (1024 * 1024 * 1024); // To GB
+        long totalSpace = path.getTotalSpace() / (1024 * 1024 * 1024);
         long freeSpace = path.getFreeSpace() / (1024 * 1024 * 1024);
         long usedSpace = totalSpace - freeSpace;
 
@@ -348,16 +346,10 @@ public class DashboardFragment extends Fragment {
                 // Only add the lightning bolt if isCharging is true
                 String batStr = isCharging ? getString(R.string.dash_format_pct_charging, batLevel) : getString(R.string.dash_format_pct, batLevel);
                 gaugeBattery.updateData(batLevel, batStr, getString(R.string.dash_battery_title), colorBattery);
-
-                // Update the small text above as well ("Battery: 95%")
-                if (txtBattery != null) {
-                    txtBattery.setText(getString(R.string.dash_format_pct, batLevel));
-                }
             } else {
                 // Default fallback if we can't read the battery
                 colorBattery = ContextCompat.getColor(requireContext(), R.color.dash_text_secondary);
                 gaugeBattery.updateData(0, getString(R.string.dash_format_pct_na), getString(R.string.dash_battery_title), colorBattery);
-                if (txtBattery != null) txtBattery.setText(R.string.dash_format_pct_na);
             }
         }
     }
@@ -384,7 +376,7 @@ public class DashboardFragment extends Fragment {
         java.util.List<IiabModule> activeModules = new java.util.ArrayList<>();
         for (IiabModule module : MASTER_ROSTER) {
             if (module.requires64Bit && !is64Bit) {
-                continue; // Skip this module entirely for 32-bit devices
+                continue;
             }
             activeModules.add(module);
         }
@@ -418,7 +410,7 @@ public class DashboardFragment extends Fragment {
                 cell.setLayoutParams(cellParams);
 
                 if (index < activeModules.size()) {
-                    IiabModule currentMod = activeModules.get(index); // Get the module object
+                    IiabModule currentMod = activeModules.get(index);
 
                     cell.setOrientation(LinearLayout.HORIZONTAL);
                     cell.setBackgroundResource(R.drawable.rounded_button);
@@ -450,9 +442,8 @@ public class DashboardFragment extends Fragment {
                     // The background ping thread relies on this tag to check the URL!
                     cell.setTag(currentMod.endpoint);
                 } else {
-                    cell.setVisibility(View.INVISIBLE); // Fill empty spaces to keep grid aligned
+                    cell.setVisibility(View.INVISIBLE);
                 }
-
                 rowLayout.addView(cell);
             }
             modulesContainer.addView(rowLayout);
@@ -527,7 +518,7 @@ public class DashboardFragment extends Fragment {
                         txtTermuxState.setText(getString(R.string.dash_state_installer));
                         txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
                         break;
-                    case TERMUX_ONLY: // Fallthrough intended
+                    case TERMUX_ONLY:  // Fallthrough intended; no longer used
                     case NONE:
                         ledTermuxState.setBackgroundResource(R.drawable.led_off);
                         txtTermuxState.setText(getString(R.string.dash_state_none));
@@ -615,21 +606,6 @@ public class DashboardFragment extends Fragment {
             e.printStackTrace();
         }
         return "--";
-    }
-
-    private int getBatteryPercentage() {
-        try {
-            IntentFilter iFilter = new IntentFilter(Intent.ACTION_BATTERY_CHANGED);
-            Intent batteryStatus = requireContext().registerReceiver(null, iFilter);
-            if (batteryStatus != null) {
-                int level = batteryStatus.getIntExtra(BatteryManager.EXTRA_LEVEL, -1);
-                int scale = batteryStatus.getIntExtra(BatteryManager.EXTRA_SCALE, -1);
-                return (int) ((level / (float) scale) * 100);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return -1;
     }
 
     // --- METHODS FOR OBTAINING THE DEVICE NAME ---

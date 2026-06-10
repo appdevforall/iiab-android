@@ -43,7 +43,8 @@
     <string name="dash_offline">Оффлайн</string>
     <string name="dash_online">В сети</string>
     <string name="dash_iiab_system">Система IIAB-oA</string>
-    <string name="dash_android_version_label">Базовая версия Android:</string>
+    <string name="dash_android_version_label">Базовый Android:</string>
+    <string name="dash_host_arch_label">Архитектура:</string>
     <string name="dash_android_version_value">%1$s (API %2$s)</string>
 
     <string name="dash_state_debian_only">Базовая ОС установлена. Перейдите к установке IIAB.</string>
