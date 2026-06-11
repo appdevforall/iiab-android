@@ -22,3 +22,6 @@ app/src/main/jniLibs/
 *store.properties
 *.jks
 *.keystore
+
+# Ignore the cache tracker for native binatires
+current_binaries_tag.txt
