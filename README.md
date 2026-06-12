@@ -18,7 +18,7 @@ http://localhost:8085/maps
 
 ## What are the current components of "IIAB on Android"?
 
-* **[termux-setup](https://github.com/iiab/iiab-android/tree/main/termux-setup) (iiab-termux)** — sets up a Debian-like environment on Android (it's called [PRoot](https://wiki.termux.com/wiki/PRoot))
+* **IIAB-oA Controller app** — Complete Android native app to Install, Use, Share and Build your setup in your pocket.
 * **Wrapper to install IIAB (iiab-android)** — sets up [`local_vars_android.yml`](https://github.com/iiab/iiab/blob/master/vars/local_vars_android.yml), then launches IIAB's installer
 * **Core IIAB portability layer** — modifications across IIAB and its existing roles, based on [PR #4122](https://github.com/iiab/iiab/pull/4122)
 * **proot-distro service manager (PDSM)** — like systemd, but for `proot_services`
@@ -30,342 +30,169 @@ http://localhost:8085/maps
 
 ---
 
-## :clipboard: Installation guide
+# User Manual
+## Internet-in-a-Box on Android (IIAB-oA)
 
-Before installing, you need to set up your Android device.  These initial steps apply to all users:
+## 1. Introduction
+Internet-in-a-Box on Android (IIAB-oA) is a mobile application designed to provide a system of online educational services and content (based on Debian ARM) for areas without an internet connection.
 
-### Part 1: Prerequisites & Device Setup
+This development has evolved from its previous Termux-dependent versions; this new iteration is an all-in-one application (manager, installer, and viewer) that allows any Android device to become an offline content server, hosting vital tools such as Wikipedia (Kiwix), Kolibri, interactive maps, digital libraries, and code editors powered by IIAB.
 
-1. **Install F-Droid & Termux**
+<p align="center">
+  <img src="docs/images/iiab-oa-controller.png" alt="IIAB-oA Controller Logo" width="220">
+</p>
 
-   **Open this web page (https://github.com/iiab/iiab-android) in your Android browser, so you can click the links below:**
 
-   * Download and install [**F-Droid**](https://f-droid.org/F-Droid.apk) (~12 MB).  You will need to allow installation from unknown sources from your web browser.
-   * Open F-Droid and wait a moment for the repositories to update automatically in the background.
-   * Install **Termux** and **Termux:API**.  Most browsers will recognize these direct links after installing F-Droid: 
-     * [**Termux**](https://f-droid.org/packages/com.termux) (~109 MB).  Again, you will need to allow installation from unknown sources.  And when you see "Unsafe app blocked", click **More details -> Install anyway**.
-     * [**Termux:API**](https://f-droid.org/packages/com.termux.api) (~4 MB)
-     * *(Alternatively, search for "Termux" and then "Termux API" using the green search button in the bottom-right of the F-Droid app.)*
-   > **Note:** You might see a *"This app was built for an older version of Android..."* label.  Ignore this; it only affects auto-updates.  Manual updates will continue to work.  [You can learn more here.](https://github.com/termux/termux-packages/wiki/Termux-and-Android-10/3e8102ecd05c4954d67971ff2b508f32900265f7)
+## 2. Main Interface and Sections
 
-2. **Configure Battery Settings (Important)**
+### Initial Setup and Permissions
+When opening the application for the first time, the **Initial Setup** screen will appear. This interface is a mandatory step to ensure that the Debian server and heavy modules can run in the Android environment without restrictions.
 
-   To run the installation and to keep IIAB services alive in the background, you must allow Termux to run without battery restrictions:
+The interface requires the activation of 4 special permissions:
 
-   * Go to your Android **Settings -> Apps -> Termux -> Battery** or **App battery usage**.
-   * Set it to **Unrestricted** or **Don't optimize** or **Allow background usage** or **Allow background activity** (exact label varies by vendor).  If you leave this restricted, Android may kill the process when your screen turns off!
-   > **Note:** Because this policy is important for a successful setup, our installation script will prompt you to verify this later!  😉  <!-- Thank you for paying attention to the manual! -->
+1. **Push Notifications:** Allows the application to send floating alerts about server status, errors, or completed synchronization processes.
 
-3. **Enable Developer Options & Process Limits**
+2. **Local Storage Access:** This is the most critical permission. It stores Wikipedia databases, Calibre books, and downloaded maps (which can exceed 50 GB in size). Without this permission, the quick installation will fail due to lack of space.
 
-   * Go to **Settings > About phone** (or About tablet) and tap **Build number** or **Software version** seven times rapidly to enable Developer Options.
-   * **For Android 14 and newer:** Go back to **Settings -> System** or **General settings** -> **Developer options** and turn on `Disable child process restrictions`.
-   * **For Android 8 to 11:** No special process restrictions apply.  You are good to go!
-   * **For Android 12 and 13:** *Please see the special section at the bottom of this guide regarding the "Phantom Process Killer" (PPK) before proceeding, as it might interrupt your installation.*
+3. **Display over other Apps:** Allows the IIAB-oA controller to keep floating windows or visual processes active while the user performs other tasks on the phone.
 
----
+4. **Disable Battery Optimization:** Crucial for performance. By default, Android closes resource-heavy applications running in the background to save battery. By "de-optimizing" the app, the IIAB-oA server is granted permission to run indefinitely even if the screen is off.
 
-### Part 2: Choose your installation path
+**Additional Options on this Screen:**
 
-There are two main ways to install IIAB on Android.  If you are unsure, we recommend the **Pre-built** method:
+* **"Manage all permissions" Button:** Opens the native Android settings for the device, allowing you to thoroughly review granted access or troubleshoot if a button gets stuck.
 
-**Pre-built - Fast & simple**  
-This is the recommended path for most users.  Instead of compiling the software on your phone, it downloads a ready-to-use, pre-configured IIAB system.  It saves a lot of time, minimizes potential errors, and gets you up and running quickly.
+* **Content Language:** A dropdown selector that allows you to choose the native language in which the server will be configured (the video shows how it automatically detects "Español (México)" after changing the phone's regional settings).
 
-**DIY build - From scratch**  
-This is the foundational build path with no shortcuts.  Your device will download and configure every component one by one.  While it takes significantly longer and uses more battery than the pre-built option, it provides complete control for developers or those needing a deeply customized setup.
+<p align="center">
+  <img src="docs/images/00-initial-setup-01.webp" alt="00-initial-setup-01" width="220">
+  <img src="docs/images/00-initial-setup-02.webp" alt="00-initial-setup-02" width="220">
+</p>
 
----
+### Status Tab: System Monitoring
+This is the home screen. Here you can monitor your device's health and the server's status.
 
-#### :rocket: Option A: Pre-built :rocket:
+* **Device Information:** Displays the phone model, Android version, device architecture, uptime, battery status, storage usage, and current connection (Wi-Fi and Hotspot).
 
-1. Open Termux and run the following command.  This will install the base tools, then automatically download and extract the official pre-built IIAB system for your device:
+* **Server Status:** Allows you to see if the IIAB-oA server is offline or online, indicating the architecture of the base operating system running in the background (e.g., Debian ARM64).
 
-   ```
-   curl iiab.io/termux.txt | bash -s pull-rootfs
-   ```
+* **Available Modules:** Shows the available services and indicates those currently installed on your device (Books, Code, Kiwix, Kolibri, IIAB Maps, System).
 
-   > **Tip:** To install a custom image instead, simply append its URL at the end of the command  
-   > (e.g., ...`bash -s pull-rootfs https://domain.com/custom_image.tar.gz`).
+<p align="center">
+  <img src="docs/images/01-status-dashboard-01.webp" alt="01-status-dashboard-01" width="220">
+  <img src="docs/images/01-status-dashboard-02.webp" alt="01-status-dashboard-02" width="220">
+  <img src="docs/images/01-status-dashboard-03.webp" alt="01-status-dashboard-03" width="220">
+</p>
 
-2. Once the process finishes successfully, your installation is complete!
-   In order to start it run:
 
-   ```
-   iiab-termux --start
-   ```
+### Use Tab: Content Explorer
+From here, you can access and interact with the modules you have installed using the application's internal browser.
 
-   And watch it start:
+* **Start/Stop Server:** Main button to turn the services on or off. It is always recommended to stop the server from here before closing the app to prevent errors.
 
-   ```
-   ~ $ iiab-termux --start
-   [iiab] Logging to: ~/.iiab-android/logs/iiab-termux.20260313.log
-   [iiab] Wakelock acquired (termux-wake-lock).
-   [iiab] Baseline stamp found: /data/data/com.termux/files/home/.iiab-android/stamp.termux_base
-   [iiab] Entering IIAB Debian (via: iiab-termux --start)
-   [iiab] Power-mode: enabled for this login session (persistent notification active).
-   [pdsm:calibre-web] running
-   [pdsm:kiwix] running
-   [pdsm:kolibri] running
-   [pdsm:mariadb] running
-   [pdsm:nginx] running
-   [pdsm:php-fpm] running
-   root@localhost:~#
-   ```
+* **Explore Content:** Opens the integrated viewer (without a URL bar to prevent external navigation) where you will find direct access to tools like Kiwix (offline Wikipedia), maps, books, and programming applications.
 
-3. **Please proceed directly to the [Test your IIAB install](#test-your-iiab-install) section below.**
+* **Share Content Access:** Through Wi-Fi or Hotspot, it is possible to share access to the content on the device with other equipment on the network, via easy-to-scan QR codes.
 
-#### :train2: Option B: DIY build :train2:
+* **Connection Log:** A real-time log to visualize active processes and connections, ideal for debugging.
 
-1. Open Termux and prepare the full environment:
+<p align="center">
+  <img src="docs/images/02-use-launch-01.webp" alt="02-use-launch-01" width="220">
+  <img src="docs/images/02-use-launch-02.webp" alt="02-use-launch-02" width="220">
+  <img src="docs/images/02-use-launch-03.webp" alt="02-use-launch-03" width="220">
+</p>
 
-   ```
-   curl iiab.io/termux.txt | bash
-   ```
 
-2. Enter PRoot Distro's IIAB Debian environment:
+### Install Tab: Module Management
+The control center to download and manage the size and content of your offline server. Requires an internet connection for the initial download.
 
-   ```
-   iiab-termux --start
-   ```
+* **Quick Installation:** Offers three pre-configured packages in 3 tiers, where adding content (ZIMs or Maps) is optional.
+    * **Basic:** Only essential software: Kiwix and IIAB Maps.
+    * **Standard:** An additional step up that includes Kolibri, just enough to increase educational use with extensive content.
+    * **Complete:** The entire available catalog (Books, Kiwix, Maps, etc.) which, by adding optional content, can weigh over 50 GB on some languages.
+* **Maintenance and Recovery:** Tools to create backups of your system, restore previous backups, force stop processes, or perform a base reset (wiping the installation for a manual setup).
 
-3. Run the installer script.  This will set up [`local_vars_android.yml`](https://wiki.iiab.io/go/FAQ#What_is_local_vars.yml_and_how_do_I_customize_it?) and launch the core IIAB installer:
+* **Module Management:** While all three levels cover the main educational tools, you can manage modules individually.
+    * **Matomo (Analytics)** is fully supported, but it is not installed by default at any level to save space and resources, as it is generally not essential for end users. You can install it manually from this tab.
 
-   ```
-   iiab-android
-   ```
+<p align="center">
+  <img src="docs/images/03-install-fast-install-1.webp" alt="03-install-fast-install-1" width="220">
+  <img src="docs/images/03-install-fast-install-2.webp" alt="03-install-fast-install-2" width="220">
+  <img src="docs/images/03-install-modules.webp" alt="03-install-modules" width="220">
+  <img src="docs/images/03-install-warning.webp" alt="03-install-warning" width="220">
+</p>
 
-   *Tip: As with any custom IIAB installation, if the installer fails or gets interrupted, you can always resume from where it left off by running:* `iiab -f`
+### Send Tab: Share System
+Allows you to share offline content with other users around you, using local Wi-Fi or the device's Hotspot.
 
-4. If the installer completes successfully, you'll see a text box reading:
+* **Share System vs. Receive System:** You can scan or generate a QR Code to transfer (copy) the environment to another device, more below.
 
-   > INTERNET-IN-A-BOX (IIAB) SOFTWARE INSTALL IS COMPLETE
 
----
+* **Transfer vs. Access:** When sharing, it is vital not to confuse two important options:
+    * **Grant Access (Client Experience):** Allows other devices to consume the content hosted on your phone. When a client scans it, their default web browser will open automatically displaying a web version of the IIAB-oA menu. No app installation is required on the client's end even possible to browse on desktop on the same network.
 
-### ⚠️ Special Notes for Android 12 & 13 users
+    <p align="center">
+      <img src="docs/images/04-share-access-01-welcome.webp" alt="04-share-access-01-welcome" width="220">
+      <img src="docs/images/04-share-access-02-start.webp" alt="04-share-access-02-start" width="220">
+      <img src="docs/images/04-share-access-03-qr.webp" alt="04-share-access-03-qr" width="220">
+    </p>
 
-Android 12 and 13 introduced a strict system limitation called the ["Phantom Process Killer" (PPK)](https://github.com/agnostic-apollo/Android-Docs/blob/master/en/docs/apps/processes/phantom-cached-and-empty-processes.md).  If left unaddressed, it can aggressively kill background tasks or corrupt your installation midway through (especially during long downloads or heavy extractions).
+    * **Transfer (Cloning):** Transfers massive files (up to tens of gigabytes) using *rsync* technology so that the other device gets an exact and independent copy of the original server without needing the Internet.
 
-To fix this safely, we use a built-in ADB workaround.  Before choosing your installation path above, please do the following:
+    <p align="center">
+      <img src="docs/images/04-share-transfer-01.webp" alt="04-share-transfer-01" width="220">
+      <img src="docs/images/04-share-transfer-02.webp" alt="04-share-transfer-02" width="220">
+      <img src="docs/images/04-share-transfer-receive.webp" alt="04-share-transfer-receive" width="220">
+    </p>
 
-1. Run `iiab-termux --all` in Termux.
-2. Make sure to opt-in to the ADB Pair/Connect steps when prompted.
-3. In your Android **Developer Options**, enable **Wireless debugging**, select **Pair device with pairing code**, and enter the Pair Code back in Termux.
-4. *Need help?* Check this [video tutorial](https://iiab.switnet.org/android/vids/A15_mDNS_hb.mp4) for a visual guide.  Once connected to ADB, our script will handle the PPK workaround automatically so your installation runs smoothly!
 
----
+## 3. Use Cases
 
-## Test your IIAB install
+### **Providing Wikipedia access in a classroom without internet**
+A teacher in a rural area needs their students to research history. The teacher activates the "Hotspot" on their phone, starts the server from the **Use** tab of IIAB-oA, and selects "Share Access". The students connect to the teacher's network, scan the QR code, and can browse the entire Wikipedia on their ouwn language (via Kiwix) from their own devices without consuming mobile data.
 
-IIAB [`pdsm` services](https://github.com/iiab/iiab/tree/master/roles/proot_services) start automatically after installation.  To check that your IIAB Apps are working (using a browser on your Android device) by visiting these URLs:
+### **Downloading a specific map for fieldwork in an area with poor connectivity**
+A team of volunteers is traveling to a rural municipality where cellular coverage is known to be spotty. Before leaving (while they still have internet access), they go to the **Use** tab, open "Maps". They select the specific region they will be visiting (FQR - Full Quality Regions), and execute the download command via the **System Dashboard**. Upon arrival, they can comfortably view street layouts and local points of interest offline, avoiding roaming charges and not relying on an unstable mobile data plan.
 
-| App                    | URL                                                            |
-|------------------------|----------------------------------------------------------------|
-| Calibre-Web            | [http://localhost:8085/books](http://localhost:8085/books)     |
-| Kiwix (for ZIM files!) | [http://localhost:8085/kiwix](http://localhost:8085/kiwix)     |
-| Kolibri                | [http://localhost:8085/kolibri](http://localhost:8085/kolibri) |
-| IIAB Maps              | [http://localhost:8085/maps](http://localhost:8085/maps)       |
-| Matomo                 | [http://localhost:8085/matomo](http://localhost:8085/matomo)   |
+### **Replicating the server on a colleague's phone**
+An educational promoter travels to an isolated community. They meet a community leader with a compatible phone and want to leave the system installed for them. The promoter goes to the **Send** tab, selects **Transfer**, and the leader scans the QR code from the **Receive** tab. An exact copy of the 38 GB of content begins transferring to the new phone wirelessly.
 
-If you encounter an error or problem, please open an [issue](https://github.com/iiab/iiab/issues) so we can help you (and others) as quickly as possible.
+## 4. Special and Advanced Features
 
-### Add a ZIM file
+* **Android Restriction Management (Phantom Process Killer)**
 
-A copy of Wikipedia (in almost any language) can now be put on your Android phone or tablet!  Here's how...
+    For clean installations or massive transfers, Android (versions 12 and up) often kills heavy background processes. The installation tab detects if you have Developer Options enabled and guides you to connect ADB and disable these restrictions when necessary, ensuring that massive downloads and installations are not interrupted.
 
-1. Browse to website: [download.kiwix.org/zim](https://download.kiwix.org/zim/)
-2. Pick a `.zim` file (ZIM file) and copy its full URL, for example:
+<p align="center">
+  <img src="docs/images/05-adb-setup-01.webp" alt="05-adb-setup-01" width="220">
+  <img src="docs/images/05-adb-setup-02.webp" alt="05-adb-setup-02" width="220">
+  <img src="docs/images/05-adb-setup-03.webp" alt="05-adb-setup-03" width="220">
+</p>
 
-   ``` 
-   https://download.kiwix.org/zim/wikipedia/wikipedia_en_100_maxi_2026-04.zim
-   ```
+* **System Dashboard (Web)**
 
-3. Open Android's Termux app, and then run:
+    An exclusive control panel for IIAB-oA that allows you to manage downloads and elements (such as extracting map regions) from the web browser without needing to use command lines for Kiwix, Maps, and Books from known repositories.
 
-   ```
-   iiab-termux --start
-   ```
+<p align="center">
+  <img src="docs/images/05-dashboard-01-landing.webp" alt="05-dashboard-01-landing" width="220">
+  <img src="docs/images/05-dashboard-02-kiwix.webp" alt="05-dashboard-02-kiwix" width="220">
+</p>
 
-   EXPLANATION: Starting from Termux's high-level CLI (Command-Line Interface), you've "shelled into" [PRoot Distro](https://wiki.termux.com/wiki/PRoot)'s low-level IIAB Debian CLI:
+* **The Hidden Terminal**
 
-   ```
-          +----------------------------------+
-          |   Android GUI (Apps, Settings)   |
-          +-----------------+----------------+
-                            |
-                   open the | Termux app
-                            v
-              +-------------+------------+
-              |   Termux (Android CLI)   |
-              | $ iiab-termux --start    |
-              +-------------+------------+
-                            |
-           "shell into" the | low-level environment
-                            v
-      +---------------------+---------------------+
-      |   proot-distro: IIAB Debian (userspace)   |
-      | debian root# cd /opt/iiab/iiab            |
-      +-------------------------------------------+
-   ```
+    For power users who need to interact directly with the Debian environment:
 
-4. Enter the folder where IIAB stores ZIM files:
+    1. Go to the bottom of any tab.
 
-   ```
-   cd /library/zims/content/
-   ```
+    2. Press and hold the footer (the section showing the app version) for 3 seconds.
 
-5. Download the ZIM file, using the URL you chose above, for example:
+    3. A minimalist slide-out Terminal will appear.
 
-   ```
-   wget https://download.kiwix.org/zim/wikipedia/wikipedia_en_100_maxi_2026-04.zim
-   ```
+        From here, you can access the Debian 13 operating system that powers our IIAB server, where you will have the ability to test and execute the core IIAB tools inside PRoot and install a large number of packages from Debian repositories itself.
 
-6. Once the download is complete, re-index your IIAB's ZIM files: (so the new ZIM file appears for users, on page http://localhost:8085/kiwix)
+    4. To hide it, you can simply press the back button or perform the back gesture several times, or unlock it at the top and slide the panel down.
 
-   ```
-   iiab-make-kiwix-lib
-   ```
-
-   TIP: Repeat this last step whenever removing or adding new ZIM files from `/library/zims/content/`
-
-## Remote Access
-
-While using the phone keyboard and screen is practical when on the move, accessing the PRoot Distro's IIAB Debian environment from a PC or laptop is very useful for debugging.  You can use an existing Wi-Fi connection or enable the native Android hotspot if no wireless LAN is available.
-
-Before you begin, obtain your Android phone or tablet’s IP address by running `ifconfig` in Termux.  Or obtain the IP by checking **About device → Status** in Android settings.
-
-### SSH
-
-To log in to IIAB on Android from your computer, follow these SSH command-line interface (CLI) instructions:
-
-1. On your Android phone or tablet, find your way to Termux's CLI.  **If you earlier ran `iiab-termux --start` to get to PRoot Distro's low-level IIAB Debian CLI — you MUST step back up to Termux's high-level CLI — e.g. by running:**
-
-   ```
-   exit
-   ```
-
-2. The fastest way to SSH into your Android phone (or tablet) is to set a password for its Termux user.  In Termux's high-level CLI, run:
-
-   ```
-   passwd
-   ```
-
-   Optionally, security can be improved by using standard SSH key-based authentication via the `~/.ssh/authorized_keys` file.
-
-3. Start the SSH service.  In Termux's high-level CLI, run:
-
-   ```
-   sshd
-   ```
-
-   The `sshd` service can be automated to start when Termux launches (see [Termux-services](https://wiki.Termux.com/wiki/Termux-services)).  We recommend doing this only after improving login security using SSH keys.
-
-4. SSH to your Android phone.
-
-   From your laptop or PC, connected to the same network as your Android phone, and knowing the phone’s IP address (for example, `192.168.10.100`), you would run:
-
-   ```
-   ssh -p 8022 192.168.10.100
-   ```
-
-   A username is NOT needed!
-
-   Note that port **8022** is used for SSH.  Since Android runs without root permissions, SSH cannot use lower-numbered ports.  (For the same reason, the IIAB web server [nginx] uses port **8085** instead of port 80.)
-
-### Log in to the IIAB environment
-
-Once you have an SSH session on your remote device, log into PRoot Distro to access and run the IIAB applications, just as during installation:
-
-```
-iiab-termux --start
-```
-
-You will then be in an IIAB Debian shell with access to the IIAB CLI (command-line interface) tools.
-
-## What about 32-bit?
-
-IIAB on Android runs on older 32-bit devices, and we are making progress!  [**IIAB Maps is now supported**](https://github.com/iiab/iiab/pull/4302).
-
-However, there are limitations:
-
-* Kiwix (currently not supported on 32-bit)
-
-While we would love to close [this gap](https://github.com/iiab/iiab-android/issues/35), porting Kiwix to this architecture requires significant development resources.  As a result, active development for this feature is currently on hold.  Community contributions are welcome if you have the expertise to help us tackle this!
-
-In the meantime, you can try the current state of our pre-built rootfs:
-
-**For older 32-bit devices:**
-
-```
-curl iiab.io/termux.txt | bash -s pull-rootfs
-```
-
-Alternatively, you can follow the full build-from-scratch steps noted in the [Choose your installation path](#part-2-choose-your-installation-path) section above.
-
-## Removal
-
-If you want to remove the IIAB installation and all associated apps, follow these steps:
-
-1. Remove the IIAB installation and data:
-
-   ```
-   iiab-termux --remove-rootfs
-   ```
-
-   > **Note:** All content in your IIAB installation will be deleted when executing this command.
-   Back up your library content first if you plan to reinstall later!
-
-2. Uninstall both Android apps, **Termux** and **Termux:API**, if you no longer need them.
-
-3. Disable Developer Options in your Android settings, especially if you only enabled it for this installation.
-
-## Advanced Usage (`iiab-termux`)
-
-For power users, debugging, or specific system tuning, `iiab-termux` includes several built-in tools for backup, restore, ADB pairing, and some other neat features.
-
-> **Tip:** Don't forget to run `iiab-termux --update` occasionally to pull the latest version of the script.  Keep an eye on our repo history to check for new features or changes.
-
-Below is the output of `iiab-termux --help`:
-
-```text
-Usage: iiab-termux [MODE] [OPTIONS]
-
-=== CORE & INSTALL ===
-  (no args)       Baseline + IIAB Debian bootstrap
-  --all           Full setup: baseline, Debian, ADB, PPK, & checks
-  --barebones     Minimal installation: Termux base + proxy (no rootfs)
-  --start, --login Start / Login IIAB Debian
-  --iiab-android  Install/update 'iiab-android' tool inside proot
-
-=== ADB & SYSTEM TUNING ===
-  --with-adb      Baseline + Debian + ADB wireless pair/connect
-  --adb-only      Only ADB pair/connect (skips Debian)
-  --connect-only  Connect to an already-paired device
-  --ppk-only      Set max_phantom_processes=256 via ADB
-  --check         Check Android readiness (Process restrictions, PPK)
-
-=== BACKUP & RESTORE ===
-  --backup-rootfs Backup IIAB Debian to .tar.gz
-  --restore-rootfs Restore IIAB Debian from local .tar.gz
-  --pull-rootfs   Download & restore rootfs from URL (P2P enabled)
-  --remove-rootfs Delete IIAB Debian rootfs and all data
-
-=== PROXY (BOXYPROXY) ===
-  --proxy-start   Start background proxy
-  --proxy-stop    Stop background proxy
-  --proxy-status  Show proxy status
-
-Options:
-  --connect-port [P]  Skip CONNECT PORT prompt
-  --timeout [SECS]    Wait time per prompt (default 180)
-  --no-meta4          Disable Metalink/P2P for --pull-rootfs
-  --keep-tarball      Keep the downloaded archive after --pull-rootfs
-  --reset-iiab        Reinstall IIAB Debian
-  --install-self      Install the current script to Termux bin path
-  --welcome           Show the welcome screen
-  --debug             Enable extra logs
-  --help, --version   Show this help or version
-
-Notes: Setup on Android 12 & 13 requires ADB due to OS design. 14+ simplifies this with system UI toggles
-```
+<p align="center">
+  <img src="docs/images/05-shell-landing-01.webp" alt="05-shell-landing-01" width="220">
+  <img src="docs/images/05-shell-landing-02.webp" alt="05-shell-landing-02" width="220">
+</p>
