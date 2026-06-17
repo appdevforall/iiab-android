@@ -2,6 +2,25 @@
 
 > Consolidated, English-language successor to `controller/TECH_DEBT_AUDIT.md` (previously Spanish). Produced from four parallel line-level audits — UI/lifecycle, deploy/install, sync/ADB, and monitoring + build/infra. Scope: 34 Java files, ~11,707 LOC under `app/src/main/java/org/iiab/controller/`. Date: 2026-06-16. Repo status: proof-of-concept. See `docs/ARCHITECTURE.md` for how the module works.
 
+## Progress log
+
+_Last updated: 2026-06-16. Tracks remediation work against the findings below. IDs map to the register in this file (F/D/S/M) and to `FORK_DELTA_ANALYSIS.md` (K)._
+
+**Phase 0 — Guardrails: DONE** (PR `chore/phase0-guardrails`)
+- Extracted `SystemStatsUtil` and added the first JVM unit tests (`SystemStatsUtilTest`, `SyncHandshakeHelperTest`); added unit-test infra (`returnDefaultValues` + real `org.json`). Addresses **M10**.
+- CI gate: blocking `testDebugUnitTest`; `:app:lintDebug` runs non-blocking (scoped to `:app`). Addresses **M11**.
+- Added a root `.gitignore` and `FORK_DELTA_ANALYSIS.md`.
+- Remaining: flip lint `abortOnError=true` once the `:app` lint backlog is triaged; broaden tests to more pure functions (`LogManager.getFormattedSize`, `InstallationPlanner` sizing, the YAML parser).
+
+**K1 — Fork delta (Termux ExtraKeys): IN PROGRESS** (PR `feat/k1-extrakeys-in-app`; details in `FORK_DELTA_ANALYSIS.md`)
+- **K1**: `loadIIABDefaultKeys()` moved out of upstream `ExtraKeysView` into app `IIABExtraKeys` (public APIs only). DONE (app side).
+- **K3**: layout is now a single-source-of-truth constant. DONE.
+- **K4**: falls back to a minimal layout if the default fails to load. DONE.
+- **K5**: unit test validating the layout grid (`IIABExtraKeysTest`). DONE.
+- Remaining: point the submodule to `appdevforall/termux-app` at clean upstream and commit the pointer.
+
+**Phases 1–4: NOT STARTED.** Next: Phase 1 security — **D2**, **D6**, **S1**, **S3**, **M4**, **D12**.
+
 ## 1. Executive summary
 
 The Controller is functional and shows real security intent (it SHA256-audits native binaries at build time, scrubs the keystore in CI, and scopes most broadcasts). But it carries debt on four fronts that scale badly toward the README's "millions of users" goal:
@@ -96,4 +115,4 @@ Begin field work immediately with this batch — all low-effort, high-signal, an
 4. **First tests:** unit-test the pure functions listed in Phase 0 to seed the safety net (`M10`).
 5. **Config extraction (start):** move scattered URLs/ports/versions into one constants class (`D3`, `S7`) — mechanical, unblocks later phases.
 
-After this batch lands, open the Phase 1 security epic with `D2`, `D6`, and `S1` as the first three tickets.
+After this 
