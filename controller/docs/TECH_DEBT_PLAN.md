@@ -1,0 +1,99 @@
+# IIAB Controller — Technical Debt Register & Remediation Plan
+
+> Consolidated, English-language successor to `controller/TECH_DEBT_AUDIT.md` (previously Spanish). Produced from four parallel line-level audits — UI/lifecycle, deploy/install, sync/ADB, and monitoring + build/infra. Scope: 34 Java files, ~11,707 LOC under `app/src/main/java/org/iiab/controller/`. Date: 2026-06-16. Repo status: proof-of-concept. See `docs/ARCHITECTURE.md` for how the module works.
+
+## 1. Executive summary
+
+The Controller is functional and shows real security intent (it SHA256-audits native binaries at build time, scrubs the keystore in CI, and scopes most broadcasts). But it carries debt on four fronts that scale badly toward the README's "millions of users" goal:
+
+1. **Security — most urgent.** Shell commands run **as root inside the container** from concatenated strings (command injection), with **no integrity verification** of multi-gigabyte downloads, over cleartext HTTP that can silently disable TLS validation. A compromised mirror or MITM can deliver a malicious rootfs that then executes as root. The ADB identity key is also mis-scoped, and an unscoped log broadcast leaks data to any installed app.
+2. **Monolithic architecture.** Two God classes — `MainActivity` (2,209 LOC) and `DeployFragment` (2,754 LOC) — hold ~8 responsibilities each. Shared state lives in **public mutable fields on `MainActivity`** that fragments read/write directly, even from background threads.
+3. **Ad-hoc concurrency.** ~30 raw `new Thread()` calls, no executor, no cancellation, no lifecycle awareness; callbacks touch `Activity`/`Context` after teardown; non-`volatile` flags race; process pipes risk deadlock.
+4. **No safety net.** **Zero tests** despite JUnit/Espresso being declared; CI only runs `assembleDebug` with lint commented out and `abortOnError false`.
+
+**Recommendation:** do **not** open with a massive rewrite. Phase 0 installs guardrails (tests + CI gate on pure logic), Phase 1 closes the security holes, and only then do Phases 2–4 attack concurrency and architecture with the net already in place.
+
+## 2. Scoring method
+
+Each item scores **Impact** (1–5, how much it slows the team), **Risk** (1–5, what happens if unfixed), and **Effort** (1–5, lower = easier). **Priority = (Impact + Risk) × (6 − Effort)** — higher is more urgent. IDs are prefixed by cluster: **F** = UI/lifecycle, **D** = deploy/install, **S** = sync/ADB, **M** = monitoring + build/infra.
+
+## 3. High-priority register (Priority ≥ 24)
+
+| ID | Location | Category | Issue | Imp | Risk | Eff | Prio |
+|----|----------|----------|-------|----|----|----|----|
+| M4 | `IIABWatchdog.java:382` | Code/Sec | `broadcastLog` sends `ACTION_LOG_MESSAGE` (log text) with no `setPackage()` — implicit system-wide broadcast = info leak + API 34 crash | 3 | 4 | 1 | 35 |
+| S3 | `IIABAdbManager.java:54` | Security | ADB keystore key created with `ENCRYPT/DECRYPT` + no padding + `setRandomizedEncryptionRequired(false)`; should be sign/verify-only | 4 | 4 | 2 | 32 |
+| M1 | `WatchdogService.java:83` | Code | `PARTIAL_WAKE_LOCK` acquired with **no timeout**; a crash before `onDestroy` pins the CPU awake until reboot | 4 | 4 | 2 | 32 |
+| M3 | `AndroidManifest.xml:34`, `WatchdogService.java:66` | Code/Infra | `specialUse` FGS without typed `startForeground` + subtype property; will be rejected on API 34+ (blocks SDK upgrade) | 4 | 4 | 2 | 32 |
+| D2 | `DeployFragment.java:1337,1204,1816` | Security | Command injection: module names/paths/lang strings interpolated into `sh -c`/`sed` and run as container root | 5 | 5 | 3 | 30 |
+| D6 | `Aria2Manager.java:96`; no `MessageDigest` | Security | No SHA256/signature check of downloaded rootfs/ZIM before extract+exec; aria2 silently drops TLS check if cacert missing | 5 | 5 | 3 | 30 |
+| S1 | `RsyncManager.java:73,134,231` | Security | rsyncd.conf + client URL built by unescaped concat from QR-scanned user/pass/path → config/URL injection | 5 | 5 | 3 | 30 |
+| M7 | `DashboardFragment.java:191` | Code | `onResume` posts the 5 s refresh loop without `removeCallbacks` first → stacking poll loops + ping-thread storms | 3 | 3 | 1 | 30 |
+| M8 | `build.gradle` (root):17,40 | Dependency | Dead `jcenter()` repo declared twice (sunset 2021) — build-reliability + supply-chain risk | 3 | 3 | 1 | 30 |
+| F4 | `MainActivity.java:96,164,433` | Code | No `onDestroy()`: three recurring `Handler` runnables capture and leak the Activity | 3 | 4 | 2 | 28 |
+| F12 | `Preferences.java:115` | Code | `MODE_MULTI_PROCESS` SharedPreferences (deprecated/unreliable) → cross-process state desync | 3 | 4 | 2 | 28 |
+| D12 | `DeployFragment.java:1022,1073,1111,1163` | Code | `Runtime.exec(...).waitFor()` with empty `catch{}` and undrained pipes → silent failures + deadlock risk | 3 | 4 | 2 | 28 |
+| S4 | `IIABAdbManager.java:191` | Security | `executeCommand` concatenates into `"shell:" + command` with no sanitization = arbitrary on-device shell | 5 | 4 | 3 | 27 |
+| F5 | `MainActivity.java:582,825` | Code | Asymmetric receiver register/unregister across lifecycle pairs — fragile | 3 | 3 | 2 | 24 |
+| F7 | `MainActivity.java:491,1043` | Code | Bare `catch(Exception){return false;}` hides network/parse failures; no retry/backoff | 3 | 3 | 2 | 24 |
+| F14 | `MainActivity.java:1135` | Code | Synchronous `HttpURLConnection`, no shared client, `getResponseCode()` called twice (double round-trip) | 3 | 3 | 2 | 24 |
+| F15 | `MainActivity.java:1066`; Manifest:28 | Security | Cleartext OTA + install APK from public Downloads → MITM/supply-chain vector | 3 | 5 | 3 | 24 |
+| D3 | `InstallationPlanner.java:22`; `DeployFragment.java:987` | Code/Config | Hardcoded mirror host, GitHub raw URL, pinned distro/proot versions scattered across files | 4 | 4 | 3 | 24 |
+| D9 | `DeployFragment.java:117,358` | Architecture | `static Aria2Manager` + `static isDownloadingRootfs` → download survives Fragment recreation, desyncs UI | 4 | 4 | 3 | 24 |
+| D11 | `DeployFragment.java:1204`; `TarExtractor.java:49` | Security | Extraction trusts archive entries (no `../` path-traversal guard); unquoted backup pipe | 4 | 4 | 3 | 24 |
+| D13 | `InstallationPlanner.java:107` | Code | Kiwix catalog built by regex-scraping an HTML listing; hardcoded GB constants drift → wrong storage gating | 4 | 4 | 3 | 24 |
+| D14 | `DeployFragment.java:1567` | Code | Hand-rolled YAML "parser" splits on `:` — breaks on nesting/quotes/comments | 3 | 3 | 2 | 24 |
+| D17 | `ApkServer.java:20,39` | Security | APK server over plain HTTP, no auth/host check; conflicting `Content-Length` on chunked response | 3 | 3 | 2 | 24 |
+| D19 | `PRootEngine.java:328` | Code | `killProcess` calls `destroy()` without `waitFor()`; orphaned proot children + lingering mounts; `currentProcess` not `volatile` | 3 | 3 | 2 | 24 |
+| S7 | `SyncFragment.java:83`; `RsyncManager.java:31` | Code | Hardcoded ports (8730/8080), user `iiab_peer`, module/URL path; no port-in-use fallback | 3 | 3 | 2 | 24 |
+| S8 | `SyncFragment.java:116,518`; `AdbPairingReceiver.java:25` | Code/Arch | Raw threads + per-call main-Handler; dialogs shown from background after `onDestroyView`; pairing ExecutorService never shut down | 4 | 4 | 3 | 24 |
+| S9 | `SyncFragment.java:280`; `RsyncManager.java:285` | Code | `catch(Exception ignored)` across IP discovery, reachability, stop, progress parsing — silent field failures | 3 | 3 | 2 | 24 |
+| S11 | `RsyncManager.java:64,125` | Security | Plaintext secrets written to cacheDir; client passfile leaks if killed; server secrets never deleted on stop | 3 | 3 | 2 | 24 |
+| S12 | `AdbPairingReceiver.java:35` | Security | Pairing host/port taken straight from intent extras; unvalidated beyond PIN length | 3 | 3 | 2 | 24 |
+| S13 | `TermuxCallbackReceiver` + Manifest | Code | Targeted by a `PendingIntent` but **never declared/registered** → callback path is dead/broken | 3 | 3 | 2 | 24 |
+| M10 | no `src/test`/`src/androidTest` | Test | Zero unit/instrumented tests despite declared deps; all pure logic unverified | 4 | 4 | 3 | 24 |
+| M11 | `.github/workflows/android-sanity-check.yml:34` | Infra | CI only `assembleDebug`; lint commented out + `abortOnError false` → no quality gate | 3 | 3 | 2 | 24 |
+
+## 4. Medium / lower-priority themes (Priority < 24)
+
+Rather than list ~30 more rows, the remaining findings cluster into recurring themes; full line references live in the per-cluster audit notes.
+
+**Concurrency & lifecycle (Prio 16–21):** dashboard spawns a new thread with N+1 blocking pings every 5 s (`M2`); deploy uses uncancelled handlers/threads guarded only by `isAdded()` (`D8`); a 7-flag implicit install state machine is race-prone (`D7`); `SyncFragment`/`RsyncManager` share unsynchronized process handles and start the daemon on the UI thread (`S10`); an unbounded `top -b -d 1` monitor thread never stops (`S17`).
+
+**God classes & duplication (Prio 9–18):** `MainActivity` (`F1`) and `DeployFragment` (`D1`) are the structural root; `SyncFragment` is a third (`S14`). Download/extract pipelines (`D4`), `PRootEngine` exec paths (`D10`), and view-tree navigation by `getChildAt`/`performClick()` (`D15`) are duplicated/fragile.
+
+**Hardcoding & magic values (Prio 12–20):** scattered URLs/ports/timeouts (`F10`), OTA version math (`F11`), inline hex colors (`S15`), undocumented `ppk_value` magic strings (`S16`).
+
+**Rendering & memory (Prio 18–20):** gauges force `LAYER_TYPE_SOFTWARE` and animate at 60 fps on the main thread (`M6`); per-session 5,000-line scrollback grows RAM (`F25`); `AppListActivity` loads all packages + icons on the main thread with no view recycling (`F21`, `F22`); QR built pixel-by-pixel (`F23`).
+
+**Build / infra / deprecation (Prio 7–20):** `abiFilters` contradicts the `splits` block (`M12`); build couples to network for native artifacts every `preBuild` (`M15`); `minifyEnabled false` on release; deprecated `onBackPressed`/`ListActivity` (`F20`); `DEBUG_ENABLED=true` shipped (`M19`); broad `MANAGE_EXTERNAL_STORAGE`/`SYSTEM_ALERT_WINDOW`/cleartext permissions (`M14`, `S18`).
+
+**Documentation & dead code (Prio 5–16):** residual Spanish comments violating the English-only standard (`F16`, `D20`); dead `ServiceReceiver` with a null-action NPE (`M13`); duplicate one-liner methods (`D18`); `cacheDir` vs `filesDir` proot_tmp mismatch (`D21`); missing runbook for the manual Firebase/signing deploy and the `targetSdk 28` rationale (`M20`).
+
+**Strategic (Prio 7, but blocking):** `targetSdk 28` (`M9`) keeps dangerous patterns "working" and blocks Play Store (requires 34+). High effort, but it gates the app's distribution future — track it as an epic, not a cleanup.
+
+## 5. Phased remediation roadmap
+
+The plan is designed to run **alongside feature work**, lowest-risk-first.
+
+**Phase 0 — Guardrails (1 sprint).** Add JVM unit tests for the pure functions that have no Android deps — `parseMemLine`, `getDebianArch`, `evaluateSystemState`, log `maintenance` rotation, `getFormattedSize`, `InstallationPlanner` size math, `SyncHandshakeHelper` JSON parse, the YAML parser. Turn the CI lint gate back on (`abortOnError true`, uncomment `lintDebug`) and add a `testDebugUnitTest` step. This is the net everything else depends on (`M10`, `M11`).
+
+**Phase 1 — Security hardening (1–2 sprints).** Close the injection and integrity holes that run as root: parameterize all shell invocations / validate-and-quote inputs (`D2`, `S1`, `S4`, `D11`); add mandatory SHA256 (and ideally signature) verification of every download before extract/exec, and fail closed if cacert is missing (`D6`); scope the log broadcast and remaining implicit broadcasts (`M4`); fix the ADB keystore key to sign/verify-only (`S3`); harden `ApkServer`/rsync secret handling (`D17`, `S11`); scope cleartext via a network-security-config instead of the global flag (`F15`, `S18`).
+
+**Phase 2 — Concurrency & lifecycle stabilization (2–3 sprints).** Introduce a single shared executor + lifecycle-scoped cancellation; replace raw threads and convert recurring `Handler` loops to be torn down in `onDestroy`/`onPause` (`F4`, `M1`, `M7`, `D8`, `S8`, `M2`); make shared process handles `volatile`/synchronized and add `waitFor()` after `destroy()` (`D9`, `D19`, `S10`); drain process pipes and stop swallowing exec errors (`D12`, `S9`); replace `MODE_MULTI_PROCESS` with a real IPC/state mechanism (`F12`).
+
+**Phase 3 — Architecture decomposition (ongoing, behind the net).** Extract config constants into a single `DeployConfig`/`Endpoints` class (`D3`, `F10`, `S7`). Introduce ViewModels + a thin repository layer so state leaves `MainActivity`'s public fields (`F8`, `M17`). Carve `DeployFragment` into download/extract/provision services and `MainActivity` into updater/terminal/server-controller collaborators (`D1`, `F1`, `S14`). De-duplicate the download and PRoot exec paths (`D4`, `D10`).
+
+**Phase 4 — Build, distribution & polish.** Plan the `targetSdk 28 → 34+` epic (`M9`, `M3`) once Phases 1–2 remove the patterns that depend on the SDK exemption. Remove `jcenter()` (`M8`), align `abiFilters`/`splits` (`M12`), decouple native-artifact fetch from every build (`M15`), enable `minifyEnabled`, translate residual Spanish comments (`F16`, `D20`), delete dead code (`M13`, `D18`), and write the deploy runbook (`M20`).
+
+## 6. Week-1 kickoff — start paying debt now
+
+Begin field work immediately with this batch — all low-effort, high-signal, and safe to ship piecemeal:
+
+1. **One-liners (a single PR):** scope `broadcastLog` with `setPackage()` (`M4`); add `removeCallbacks` in `DashboardFragment.onResume` (`M7`); delete both `jcenter()` lines (`M8`); add `onDestroy` removing the three `MainActivity` handlers (`F4`); wire `DEBUG_ENABLED` to `BuildConfig.DEBUG` (`M19`); add a `WAKE_LOCK` timeout (`M1`); declare or delete `TermuxCallbackReceiver` (`S13`); remove dead `ServiceReceiver` (`M13`).
+2. **Keystore fix:** drop encrypt/decrypt + padding flags from the ADB key spec → sign/verify only (`S3`).
+3. **CI gate:** uncomment `lintDebug`, set `abortOnError true`, add `testDebugUnitTest` (`M11`).
+4. **First tests:** unit-test the pure functions listed in Phase 0 to seed the safety net (`M10`).
+5. **Config extraction (start):** move scattered URLs/ports/versions into one constants class (`D3`, `S7`) — mechanical, unblocks later phases.
+
+After this batch lands, open the Phase 1 security epic with `D2`, `D6`, and `S1` as the first three tickets.
