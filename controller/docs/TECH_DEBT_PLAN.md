@@ -35,7 +35,12 @@ _Last updated: 2026-06-17. Tracks remediation work against the findings below. I
 - New pure domain rule `org.iiab.controller.sync.domain.SyncCredentialValidator` (strict user/host charsets, port range, control-char-free password, `isSafeConfigValue` for config lines). Unit-tested (`SyncCredentialValidatorTest`) plus three new malicious-payload cases in `SyncHandshakeHelperTest`.
 - Validation applied at the untrusted boundary (`SyncHandshakeHelper.parsePayload` -> `null` on invalid) and defensively in `RsyncManager` (server config + client URL paths), with a new `rsync_error_invalid_credentials` string (en + es). The validator is the reusable contract the remaining injection fixes (**S4**, **D2**) can build on.
 
-**Phase 1 — Security hardening: IN PROGRESS.** **S1** done (above); remaining Phase 1 targets: **D2**, **D6**, **S3**, **M4**, **D12**, **S4**.
+**M4 + S3 — Phase 1 security one-liners: DONE** (PR `fix/phase1-security-m4-s3`)
+- **M4** (`IIABWatchdog.broadcastLog`): the `ACTION_LOG_MESSAGE` broadcast carrying log text was implicit (no `setPackage`), leaking it to any installed app and crashing on API 34+. Now scoped to our own package, matching every other broadcast in the app.
+- **S3** (`IIABAdbManager` key spec): the ADB identity key was created with `ENCRYPT | DECRYPT` + non-randomized encryption padding on top of sign/verify. Verified no `Cipher` uses this alias, so the spec is now `SIGN | VERIFY` only (encryption paddings / `setRandomizedEncryptionRequired(false)` removed). Alias kept at `v3` (non-disruptive: hardens new key generation without forcing existing devices to re-pair ADB).
+- No new unit tests: both are framework-bound legacy line-fixes with no extractable pure logic; verified by inspection + compile + CI lint.
+
+**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4**, **S3**. Remaining: **D2**, **D6**, **D12**, **S4**, **D11**.
 
 ## 1. Executive summary
 

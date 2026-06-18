@@ -225,6 +225,10 @@ public class IIABWatchdog {
     private static void broadcastLog(Context context, String message) {
         Intent intent = new Intent(ACTION_LOG_MESSAGE);
         intent.putExtra(EXTRA_MESSAGE, message);
+        // M4: scope to our own package. An implicit broadcast would leak the log
+        // text to any installed app, and broadcasting to dynamic receivers without
+        // a package is rejected on API 34+ (would crash). Matches the other senders.
+        intent.setPackage(context.getPackageName());
         context.sendBroadcast(intent);
     }
 }

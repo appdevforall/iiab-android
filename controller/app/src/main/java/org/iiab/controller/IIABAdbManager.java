@@ -51,14 +51,16 @@ public class IIABAdbManager extends AbsAdbConnectionManager {
                 Log.i(TAG, "Generating new RSA V3 key pair in AndroidKeyStore...");
                 KeyPairGenerator kpg = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
 
+                // S3: the ADB identity key is only ever used to sign/verify the
+                // connection handshake (no Cipher uses this alias), so scope it to
+                // SIGN | VERIFY. The previous spec also granted ENCRYPT | DECRYPT
+                // with non-randomized encryption padding, which is unused attack
+                // surface and a crypto anti-pattern.
                 KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
                         KEY_ALIAS,
-                        KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY |
-                                KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
+                        KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
                         .setDigests(KeyProperties.DIGEST_NONE, KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                         .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
-                        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE, KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
-                        .setRandomizedEncryptionRequired(false)
                         .setKeySize(2048)
                         .setCertificateSubject(new X500Principal("CN=" + this.deviceName))
                         .setCertificateSerialNumber(BigInteger.ONE)
