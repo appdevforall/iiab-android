@@ -159,6 +159,21 @@ validation, allowing config-directive/URL injection.
   `RsyncManager` re-checks defensively before writing the daemon config / building
   the client URL. Reusable by the remaining injection fixes (S4, D2) as they migrate.
 
+**Slice (DONE) — deploy module-name allowlist (`org.iiab.controller.deploy.domain`)**
+Phase-1 security slice closing tech-debt **D2** (command injection). The install
+queue interpolates a module name into a `sed/echo/runrole` command run as root
+in the container; the name comes from the fixed `ModuleRegistry` catalog but
+round-trips through SharedPreferences.
+
+- `domain/` — `ModuleName` (pure JVM): `isAllowed(name, knownKeys)` = the name is
+  a known catalog key AND matches `[a-z0-9_-]` (no shell metacharacters).
+  Unit-tested (`deploy/domain/ModuleNameTest`).
+- `ModuleRegistry.validYamlKeys()` is the single allowlist source (derived from
+  `MASTER_ROSTER`).
+- **Legacy seam:** `DeployFragment.processNextInQueue()` validates the popped
+  module and fails closed (logs + skips) before building the command. The command
+  structure is unchanged for legitimate modules.
+
 **Legacy (NOT yet layered)** — most of `org.iiab.controller` is still flat:
 god classes `MainActivity` and `DeployFragment` (~2.7k LOC), shared mutable
 state on public/static fields, hand-rolled `HttpURLConnection` calls duplicated

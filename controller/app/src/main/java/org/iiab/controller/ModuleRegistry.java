@@ -10,7 +10,9 @@
 package org.iiab.controller;
 
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class ModuleRegistry {
 
@@ -41,4 +43,17 @@ public class ModuleRegistry {
             // so the system doesn't break if it gets added in the future.
             new IiabModule("dashboard", R.string.dash_system, false, "dashboard")
     );
+
+    /**
+     * The set of valid module YAML keys. This is the single allowlist for any
+     * value interpolated into a shell/Ansible command (see D2). Derived from
+     * {@link #MASTER_ROSTER} so the catalog stays the single source of truth.
+     */
+    public static Set<String> validYamlKeys() {
+        Set<String> keys = new HashSet<>();
+        for (IiabModule m : MASTER_ROSTER) {
+            keys.add(m.yamlBaseKey);
+        }
+        return keys;
+    }
 }

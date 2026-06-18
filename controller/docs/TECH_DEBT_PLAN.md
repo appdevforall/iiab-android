@@ -47,8 +47,12 @@ _Last updated: 2026-06-17. Tracks remediation work against the findings below. I
 - **Integrity**: `--check-integrity=true` makes aria2 verify the SHA-256 checksums published in the `.meta4` (confirmed present: file-level + per-piece) during download; on mismatch aria2 exits non-zero, `onError` fires and the archive is never extracted. Uses the server's published hash + verified TLS, so no redundant on-device re-hash of the ~1.2 GB file.
 - Follow-up (separate items): ZIM content integrity (Kiwix publishes no embedded hash today; needs `.sha256` sidecars) and the cleartext OTA APK path in `MainActivity` (**F15**).
 
-**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4**, **S3** (PR #10), **D6**. Remaining: **D2**, **D12**, **S4**, **D11**.
+**D2 — Module-name command injection (Phase 1 security): DONE** (PR `fix/phase1-security-d2-module-injection`)
+- Closes **D2**: `DeployFragment.processNextInQueue()` interpolated the module name into a `sed ... && echo ... && ./runrole NAME` command executed as root in the container. Names come from the fixed `ModuleRegistry` catalog but round-trip through SharedPreferences, so a tampered/unknown value with shell metacharacters could inject commands.
+- New pure domain rule `org.iiab.controller.deploy.domain.ModuleName.isAllowed(name, known)`: the name must be a known catalog key (allowlist) AND match `[a-z0-9_-]` (no quotes/`;`/`&&`/`$()`). `ModuleRegistry.validYamlKeys()` is the single allowlist source. Unit-tested (`ModuleNameTest`).
+- The guard fails closed: an unrecognized/unsafe module is logged and skipped before the command is built; the command structure is unchanged for legitimate modules. Lower-risk on-device `sh -c` pipes (extract/backup, app-internal paths) are a documented follow-up.
 
+**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4**, **S3** (PR #10), **D6** (PR #12), **D2**. Remaining: **D12**, **S4**, **D11**.
 ## 1. Executive summary
 
 The Controller is functional and shows real security intent (it SHA256-audits native binaries at build time, scrubs the keystore in CI, and scopes most broadcasts). But it carries debt on four fronts that scale badly toward the README's "millions of users" goal:

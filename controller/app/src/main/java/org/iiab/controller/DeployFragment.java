@@ -8,6 +8,7 @@
  */
 package org.iiab.controller;
 
+import org.iiab.controller.deploy.domain.ModuleName;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
@@ -18,6 +19,7 @@ import android.content.IntentFilter;
 import android.content.res.ColorStateList;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.util.Log;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Environment;
@@ -1393,6 +1395,19 @@ public class DeployFragment extends Fragment {
 
         String nextModule = installationQueue.remove(0);
         saveQueueToPrefs();
+
+        // D2: nextModule is interpolated into a command run as root inside the
+        // container (sed/echo/runrole). Only allow names from the known catalog
+        // with no shell metacharacters; fail closed and skip anything else.
+        if (!ModuleName.isAllowed(nextModule, ModuleRegistry.validYamlKeys())) {
+            Log.e(TAG, "Refusing to install unrecognized/unsafe module name: " + nextModule);
+            if (getActivity() instanceof MainActivity) {
+                ((MainActivity) getActivity()).addToLog("[Security] Skipped invalid module: " + nextModule);
+            }
+            processNextInQueue();
+            return;
+        }
+
         btnLaunchInstall.setEnabled(false);
         btnLaunchInstall.setText(getString(R.string.install_status_installing_module, nextModule));
 
