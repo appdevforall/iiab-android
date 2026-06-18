@@ -499,4 +499,5 @@
     <string name="sync_app_arch_label">App Arch: %1$d-bit</string>
     <string name="sync_msg_arch_compatible">Hardware compatible. Iniciando conexión...</string>
 
+    <string name="rsync_error_invalid_credentials">Credenciales de sincronización inválidas o no seguras. Escanea un código QR de sincronización IIAB válido.</string>
 </resources>

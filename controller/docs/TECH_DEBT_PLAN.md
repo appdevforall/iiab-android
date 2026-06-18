@@ -30,7 +30,12 @@ _Last updated: 2026-06-17. Tracks remediation work against the findings below. I
 - Bug: the dashboard "device architecture" field reported the *app's* ABI (via `nativeLibraryDir`), so a 32-bit build on a 64-bit device wrongly showed 32-bit (we install the 32-bit app on 64-bit hardware to test the 32-bit path).
 - Fix: new layered slice — `domain` (`DeviceAbiProvider` port + `GetDeviceArchUseCase`, prefer-64-bit rule, pure JVM) and `data` (`BuildDeviceAbiProvider` reading device-level `Build.SUPPORTED_*_ABIS`). `DashboardFragment` now shows the real device arch; `getTermuxArch()` stays for app/content arch (modules, termux, debian). Unit test `GetDeviceArchUseCaseTest` covers the 32-bit-app-on-64-bit-device case.
 
-**Phases 1–4: NOT STARTED.** Next: Phase 1 security — **D2**, **D6**, **S1**, **S3**, **M4**, **D12**.
+**S1 — Sync credential injection (Phase 1 security): DONE** (PR `feat/phase1-security-sync-credential-validation`)
+- Closes **S1**: QR-scanned sync credentials (host/port/user/pass) were interpolated into `rsyncd.conf` and the `rsync://` client URL unescaped, enabling config-directive and URL injection.
+- New pure domain rule `org.iiab.controller.sync.domain.SyncCredentialValidator` (strict user/host charsets, port range, control-char-free password, `isSafeConfigValue` for config lines). Unit-tested (`SyncCredentialValidatorTest`) plus three new malicious-payload cases in `SyncHandshakeHelperTest`.
+- Validation applied at the untrusted boundary (`SyncHandshakeHelper.parsePayload` -> `null` on invalid) and defensively in `RsyncManager` (server config + client URL paths), with a new `rsync_error_invalid_credentials` string (en + es). The validator is the reusable contract the remaining injection fixes (**S4**, **D2**) can build on.
+
+**Phase 1 — Security hardening: IN PROGRESS.** **S1** done (above); remaining Phase 1 targets: **D2**, **D6**, **S3**, **M4**, **D12**, **S4**.
 
 ## 1. Executive summary
 

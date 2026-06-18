@@ -14,6 +14,8 @@ import android.util.Log;
 
 import org.json.JSONObject;
 
+import org.iiab.controller.sync.domain.SyncCredentialValidator;
+
 import java.security.SecureRandom;
 
 import com.google.zxing.BarcodeFormat;
@@ -76,11 +78,26 @@ public class SyncHandshakeHelper {
                 Log.w(TAG, "Scanned QR is not an IIAB Sync code.");
                 return null;
             }
+            String ip = json.getString("ip");
+            int port = json.getInt("port");
+            String user = json.getString("user");
+            String pass = json.getString("pass");
+
+            // S1: the QR payload is untrusted input that is later interpolated
+            // into rsyncd.conf and a rsync:// URL. Reject anything that could
+            // inject config directives or break out of the URL.
+            SyncCredentialValidator.Result check =
+                    SyncCredentialValidator.validateCredentials(ip, port, user, pass);
+            if (!check.valid) {
+                Log.w(TAG, "Rejecting scanned credentials: " + check.reason);
+                return null;
+            }
+
             return new SyncCredentials(
-                    json.getString("ip"),
-                    json.getInt("port"),
-                    json.getString("user"),
-                    json.getString("pass"),
+                    ip,
+                    port,
+                    user,
+                    pass,
                     json.optBoolean("has_rootfs", true), // Default to true if missing for legacy compatibility
                     json.optInt("a", 0)
             );

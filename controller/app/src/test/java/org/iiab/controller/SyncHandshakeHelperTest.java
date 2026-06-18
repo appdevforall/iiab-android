@@ -79,4 +79,27 @@ public class SyncHandshakeHelperTest {
         assertTrue(creds.hasRootfs);
         assertEquals(0, creds.archBits);
     }
+    // --- S1: malicious payloads are rejected at the parse boundary ---
+
+    @Test
+    public void parsePayload_rejectsRsyncdConfInjectionInUsername() {
+        // A username carrying a newline + a new rsyncd.conf section.
+        String malicious = "{\"app\":\"iiab_sync\",\"ip\":\"10.0.0.1\",\"port\":8730,"
+                + "\"user\":\"iiab\\n[evil]\\npath = /\",\"pass\":\"p\"}";
+        assertNull(SyncHandshakeHelper.parsePayload(malicious));
+    }
+
+    @Test
+    public void parsePayload_rejectsUrlBreakoutInHost() {
+        String malicious = "{\"app\":\"iiab_sync\",\"ip\":\"10.0.0.1/evil\",\"port\":8730,"
+                + "\"user\":\"iiab_peer\",\"pass\":\"p\"}";
+        assertNull(SyncHandshakeHelper.parsePayload(malicious));
+    }
+
+    @Test
+    public void parsePayload_rejectsOutOfRangePort() {
+        String malicious = "{\"app\":\"iiab_sync\",\"ip\":\"10.0.0.1\",\"port\":70000,"
+                + "\"user\":\"iiab_peer\",\"pass\":\"p\"}";
+        assertNull(SyncHandshakeHelper.parsePayload(malicious));
+    }
 }

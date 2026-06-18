@@ -14,6 +14,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import org.iiab.controller.sync.domain.SyncCredentialValidator;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -41,6 +43,18 @@ public class RsyncManager {
     public boolean startServer(Context context, int port, String user, String pass, String dirToShare) {
         stop();
         isCancelled = false;
+
+        // S1 (defence in depth): never write attacker-controllable text into
+        // rsyncd.conf without validation. user/pass are app-generated and
+        // dirToShare is app-controlled, but a stray CR/LF here would let new
+        // config directives or module sections be injected.
+        if (!SyncCredentialValidator.isValidUsername(user)
+                || !SyncCredentialValidator.isValidPassword(pass)
+                || !SyncCredentialValidator.isValidPort(port)
+                || !SyncCredentialValidator.isSafeConfigValue(dirToShare)) {
+            Log.e(TAG, "Refusing to start rsync daemon: invalid credentials or share path");
+            return false;
+        }
 
         try {
             File nativeLibDir = new File(context.getApplicationInfo().nativeLibraryDir);
@@ -120,6 +134,13 @@ public class RsyncManager {
 
                 if (!rsyncBin.exists()) {
                     throw new Exception(context.getString(R.string.rsync_error_binary_missing));
+                }
+
+                // S1: reject credentials that could break out of the rsync:// URL.
+                if (!SyncCredentialValidator.validateCredentials(hostIp, port, user, pass).valid) {
+                    mainHandler.post(() -> listener.onError(
+                            context.getString(R.string.rsync_error_invalid_credentials)));
+                    return;
                 }
 
                 File passFile = new File(context.getCacheDir(), "rsync_client.pass");
@@ -219,6 +240,13 @@ public class RsyncManager {
 
                 if (!rsyncBin.exists())
                     throw new Exception(context.getString(R.string.rsync_error_binary_missing));
+
+                // S1: reject credentials that could break out of the rsync:// URL.
+                if (!SyncCredentialValidator.validateCredentials(hostIp, port, user, pass).valid) {
+                    mainHandler.post(() -> listener.onError(
+                            context.getString(R.string.rsync_error_invalid_credentials)));
+                    return;
+                }
 
                 File passFile = new File(context.getCacheDir(), "rsync_client.pass");
                 writeTextToFile(passFile, pass);

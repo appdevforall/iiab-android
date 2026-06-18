@@ -144,6 +144,21 @@ app's ABI, so a 32-bit app on a 64-bit phone reported 32-bit).
   use case; `getTermuxArch()` (app/content ABI) is unchanged for modules, termux
   and debian arch.
 
+**Slice (DONE) — sync credential validation (`org.iiab.controller.sync.domain`)**
+First Phase-1 *security* slice (refactor-by-feature while closing tech-debt **S1**).
+The peer-to-peer sync handshake carries host/port/user/pass in a scanned QR code;
+those values were interpolated into `rsyncd.conf` and a `rsync://` URL with no
+validation, allowing config-directive/URL injection.
+
+- `domain/` — `SyncCredentialValidator` (pure JVM, no Android): the single rule
+  for "what is a safe sync credential" — strict charsets for user/host, range
+  check for port, control-char-free password, and an `isSafeConfigValue` guard
+  for `rsyncd.conf` values. Unit-tested (`sync/domain/SyncCredentialValidatorTest`).
+- **Legacy seam:** `SyncHandshakeHelper.parsePayload()` now validates at the QR
+  parse boundary (returns `null` -> existing "invalid QR" toast), and
+  `RsyncManager` re-checks defensively before writing the daemon config / building
+  the client URL. Reusable by the remaining injection fixes (S4, D2) as they migrate.
+
 **Legacy (NOT yet layered)** — most of `org.iiab.controller` is still flat:
 god classes `MainActivity` and `DeployFragment` (~2.7k LOC), shared mutable
 state on public/static fields, hand-rolled `HttpURLConnection` calls duplicated
