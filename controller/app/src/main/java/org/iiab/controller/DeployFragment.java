@@ -48,6 +48,8 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 import com.google.android.material.snackbar.Snackbar;
 
+import org.iiab.controller.util.LocalVarsYamlParser;
+
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -1565,24 +1567,10 @@ public class DeployFragment extends Fragment {
     }
 
     private JSONObject parseYamlToJson(String yaml) {
-        JSONObject json = new JSONObject();
-        String[] lines = yaml.split("\n");
-        for (String line : lines) {
-            if (line.contains(":") && !line.trim().startsWith("#")) {
-                String[] parts = line.split(":", 2);
-                String key = parts[0].trim();
-                String val = parts[1].trim().toLowerCase();
-
-                if (key.endsWith("_install") || key.endsWith("_enabled")) {
-                    try {
-                        boolean isTrue = val.equals("true") || val.equals("yes") || val.equals("1");
-                        json.put(key, isTrue);
-                    } catch (Exception ignored) {
-                    }
-                }
-            }
-        }
-        return json;
+        // Delegates to the pure, unit-tested util (extracted from this god class).
+        // The naive split-on-':' behavior is unchanged; replacing it with a real
+        // YAML parser is still tracked as tech-debt D14.
+        return LocalVarsYamlParser.parseToJson(yaml);
     }
 
     private void verifyInstallationState(JSONObject jsonVars) {
