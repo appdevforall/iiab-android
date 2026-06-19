@@ -36,7 +36,7 @@
     <color name="dash_text_secondary">#5F6368</color>
     <color name="dash_text_inverted">#202124</color>
     <color name="dash_text_gauge_title">#5F6368</color>
-    <color name="dash_module_bg">#E8EAED</color>
+    <color name="dash_module_bg">#DEE1E6</color>
     <color name="dash_module_text">#202124</color>
     <color name="dash_divider">#E0E0E0</color>
     <color name="dash_warning">#E65100</color>
