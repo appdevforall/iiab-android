@@ -214,16 +214,16 @@ public class DeployFragment extends Fragment {
                     if ("256".equals(rawPpkValue) || "512".equals(rawPpkValue) || "1024".equals(rawPpkValue)) {
                         ledPpk.setBackgroundResource(R.drawable.led_on_green);
                     } else if ("error".equals(rawPpkValue) || rawPpkValue == null || rawPpkValue.isEmpty()) {
-                        ledPpk.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFC107")));
+                        ledPpk.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_pending)));
                     } else {
-                        ledPpk.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#2196F3")));
+                        ledPpk.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_info)));
                     }
 
                     if ("0".equals(cpValue) || "false".equals(cpValue)) {
                         ledDcpr.setBackgroundResource(R.drawable.led_on_green);
                         txtDcpr.setText(android.text.Html.fromHtml(getString(R.string.adb_cp_disabled_ok), android.text.Html.FROM_HTML_MODE_COMPACT));
                     } else if ("1".equals(cpValue) || "true".equals(cpValue) || "null".equals(cpValue) || cpValue == null) {
-                        ledDcpr.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
+                        ledDcpr.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_danger)));
                         txtDcpr.setText(android.text.Html.fromHtml(getString(R.string.adb_cp_enabled_limiting), android.text.Html.FROM_HTML_MODE_COMPACT));
                     } else {
                         txtDcpr.setText(android.text.Html.fromHtml(getString(R.string.adb_cp_unknown), android.text.Html.FROM_HTML_MODE_COMPACT));
@@ -236,9 +236,9 @@ public class DeployFragment extends Fragment {
                     if ("256".equals(rawPpkValue) || "512".equals(rawPpkValue) || "1024".equals(rawPpkValue)) {
                         ledPpk.setBackgroundResource(R.drawable.led_on_green);
                     } else if ("error".equals(rawPpkValue) || rawPpkValue == null || rawPpkValue.isEmpty()) {
-                        ledPpk.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
+                        ledPpk.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_danger)));
                     } else {
-                        ledPpk.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFC107")));
+                        ledPpk.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_pending)));
                     }
                 }
             }
@@ -315,7 +315,7 @@ public class DeployFragment extends Fragment {
         // Initial States
         btnLaunchInstall.setEnabled(false);
         btnLaunchInstall.setAlpha(0.5f);
-        btnKiwixSettings.setColorFilter(Color.parseColor("#555555"));
+        btnKiwixSettings.setColorFilter(ContextCompat.getColor(requireContext(), R.color.text_secondary));
         btnFastInstall.setAlpha(0.4f);
 
         // Handlers
@@ -426,7 +426,7 @@ public class DeployFragment extends Fragment {
             android.animation.ArgbEvaluator evaluator = new android.animation.ArgbEvaluator();
             android.animation.ObjectAnimator animator = android.animation.ObjectAnimator.ofObject(
                     txtAdvMonitoringTitle, "textColor", evaluator,
-                    Color.RED, ContextCompat.getColor(requireContext(), R.color.dash_text_primary)
+                    ContextCompat.getColor(requireContext(), R.color.status_danger), ContextCompat.getColor(requireContext(), R.color.dash_text_primary)
             );
             animator.setDuration(400);
             animator.setRepeatCount(5);
@@ -580,7 +580,7 @@ public class DeployFragment extends Fragment {
         if (btnRefreshModules != null) {
             btnRefreshModules.setEnabled(true);
             if (isServerRunning || !isProotInstalled) {
-                btnRefreshModules.setTextColor(Color.parseColor("#9E9E9E"));
+                btnRefreshModules.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_disabled));
                 btnRefreshModules.setAlpha(0.6f);
                 btnRefreshModules.setOnClickListener(v -> {
                     if (!isProotInstalled)
@@ -589,7 +589,7 @@ public class DeployFragment extends Fragment {
                         Snackbar.make(v, R.string.install_msg_server_running_lock, Snackbar.LENGTH_LONG).show();
                 });
             } else {
-                btnRefreshModules.setTextColor(Color.parseColor("#2196F3"));
+                btnRefreshModules.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_info));
                 btnRefreshModules.setAlpha(1.0f);
                 btnRefreshModules.setOnClickListener(v -> {
                     v.setAlpha(0.5f);
@@ -692,20 +692,20 @@ public class DeployFragment extends Fragment {
         rootfsViewModel.state().observe(getViewLifecycleOwner(), this::onRootfsSizeResolved);
 
         btnTierBasic.setAlpha(0.5f);
-        btnTierBasic.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#008000")));
+        btnTierBasic.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_success)));
         btnTierStandard.setAlpha(0.5f);
-        btnTierStandard.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
+        btnTierStandard.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_neutral)));
         btnTierFull.setAlpha(0.5f);
-        btnTierFull.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
+        btnTierFull.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_neutral)));
 
         View.OnClickListener tierClickListener = v -> {
             btnTierBasic.setAlpha(1.0f);
             btnTierStandard.setAlpha(1.0f);
             btnTierFull.setAlpha(1.0f);
-            btnTierBasic.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
-            btnTierStandard.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
-            btnTierFull.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#333333")));
-            v.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#008000")));
+            btnTierBasic.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_neutral)));
+            btnTierStandard.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_neutral)));
+            btnTierFull.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.btn_neutral)));
+            v.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_success)));
 
             if (v.getId() == R.id.btn_tier_basic) selectedTier = InstallationPlanner.Tier.BASIC;
             else if (v.getId() == R.id.btn_tier_standard)
@@ -823,7 +823,7 @@ public class DeployFragment extends Fragment {
                     // Normal logic for 64-bit
                     if (chkCompanionData.isChecked()) {
                         lblWiki.setText(getString(R.string.install_legend_wiki_lang, projection.resolvedLang.toUpperCase()));
-                        lblWiki.setTextColor(Color.parseColor("#2196F3"));
+                        lblWiki.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_info));
                     } else {
                         lblWiki.setText(getString(R.string.install_legend_wiki_plain));
                         lblWiki.setTextColor(ContextCompat.getColor(requireContext(), R.color.dash_text_secondary));
@@ -836,7 +836,7 @@ public class DeployFragment extends Fragment {
                         txtLegendFree.setTextColor(ContextCompat.getColor(requireContext(), R.color.dash_text_inverted));
                     } else {
                         txtLegendFree.setText("OVERLOAD");
-                        txtLegendFree.setTextColor(Color.parseColor("#F44336"));
+                        txtLegendFree.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_danger));
                     }
                 }
 
@@ -850,25 +850,25 @@ public class DeployFragment extends Fragment {
 
                     if (otherUsedPct > 0) {
                         float draw = Math.min(otherUsedPct, 100f - totalDrawn);
-                        segments.add(new MultiResourceGaugeView.Segment(draw, Color.WHITE));
+                        segments.add(new MultiResourceGaugeView.Segment(draw, ContextCompat.getColor(requireContext(), R.color.chart_track)));
                         totalDrawn += draw;
                     }
                     if (osPct > 0 && totalDrawn < 100f) {
                         float draw = Math.min(osPct, 100f - totalDrawn);
-                        segments.add(new MultiResourceGaugeView.Segment(draw, Color.parseColor("#00FFFF")));
+                        segments.add(new MultiResourceGaugeView.Segment(draw, ContextCompat.getColor(requireContext(), R.color.chart_os)));
                         totalDrawn += draw;
                     }
                     if (mapsPct > 0 && totalDrawn < 100f) {
                         float draw = Math.min(mapsPct, 100f - totalDrawn);
-                        segments.add(new MultiResourceGaugeView.Segment(draw, Color.parseColor("#FF9800")));
+                        segments.add(new MultiResourceGaugeView.Segment(draw, ContextCompat.getColor(requireContext(), R.color.chart_maps)));
                         totalDrawn += draw;
                     }
                     if (kiwixPct > 0 && totalDrawn < 100f) {
                         float draw = Math.min(kiwixPct, 100f - totalDrawn);
-                        segments.add(new MultiResourceGaugeView.Segment(draw, Color.parseColor("#008000")));
+                        segments.add(new MultiResourceGaugeView.Segment(draw, ContextCompat.getColor(requireContext(), R.color.chart_wiki)));
                     }
 
-                    int centerColor = (selectedTier == null || isStorageSafe) ? ContextCompat.getColor(requireContext(), R.color.dash_text_inverted) : Color.parseColor("#F44336");
+                    int centerColor = (selectedTier == null || isStorageSafe) ? ContextCompat.getColor(requireContext(), R.color.dash_text_inverted) : ContextCompat.getColor(requireContext(), R.color.status_danger);
                     storageGauge.updateData(segments, String.format(java.util.Locale.US, "%.1fG", pTotal), centerColor, "Projected", "Storage");
                 }
 
@@ -1721,14 +1721,14 @@ public class DeployFragment extends Fragment {
                                 card.setOnClickListener(v -> Snackbar.make(v, R.string.install_msg_confirmed, Snackbar.LENGTH_LONG).show());
                             } else {
                                 led.setBackgroundResource(R.drawable.led_on_green);
-                                led.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#9C27B0")));
+                                led.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.accent_secondary)));
                                 card.setOnClickListener(v -> Snackbar.make(v, R.string.install_msg_offline_trusted, Snackbar.LENGTH_LONG).show());
                             }
                         } else if (finalDiscrepancyFlag) {
                             checkBox.setVisibility(View.GONE);
                             led.setVisibility(View.VISIBLE);
                             led.setBackgroundResource(R.drawable.led_off);
-                            led.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#FFC107")));
+                            led.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_pending)));
                             card.setOnClickListener(v -> Snackbar.make(v, R.string.install_warning_discrepancy_msg, Snackbar.LENGTH_LONG).show());
                         } else {
                             led.setVisibility(View.GONE);
@@ -1742,7 +1742,7 @@ public class DeployFragment extends Fragment {
                             } else {
                                 checkBox.setEnabled(true);
                                 card.setAlpha(1.0f);
-                                checkBox.setButtonTintList(ColorStateList.valueOf(Color.WHITE));
+                                checkBox.setButtonTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.text_primary)));
                                 card.setOnClickListener(v -> checkBox.toggle());
                             }
 
@@ -1942,7 +1942,7 @@ public class DeployFragment extends Fragment {
             // 1. We load the native icon
             android.graphics.drawable.Drawable importIcon = ContextCompat.getDrawable(requireContext(), android.R.drawable.stat_sys_download);
             if (importIcon != null) {
-                importIcon.setTint(Color.parseColor("#66BB6A"));
+                importIcon.setTint(ContextCompat.getColor(requireContext(), R.color.status_success));
                 btnImportBackup.setCompoundDrawablesWithIntrinsicBounds(importIcon, null, null, null);
                 btnImportBackup.setCompoundDrawablePadding(24);
 
@@ -1979,7 +1979,7 @@ public class DeployFragment extends Fragment {
                 if (backups == null || backups.length == 0) {
                     TextView noBackups = new TextView(requireContext());
                     noBackups.setText(getString(R.string.install_msg_no_backups));
-                    noBackups.setTextColor(Color.parseColor("#FF5555"));
+                    noBackups.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_danger));
                     containerBackupList.addView(noBackups);
                 } else {
                     java.util.Arrays.sort(backups, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
@@ -2005,7 +2005,7 @@ public class DeployFragment extends Fragment {
 
                         // Apply subtle alternating background color
                         if (isEvenRow) {
-                            row.setBackgroundColor(Color.parseColor("#11ffffff")); // Slightly lighter
+                            row.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.surface_section)); // Slightly lighter
                         } else {
                             row.setBackgroundColor(Color.TRANSPARENT); // Normal dark
                         }
@@ -2044,7 +2044,7 @@ public class DeployFragment extends Fragment {
                         android.widget.ImageButton btnExport = new android.widget.ImageButton(requireContext());
                         btnExport.setImageResource(android.R.drawable.stat_sys_upload);
                         btnExport.setBackgroundColor(Color.TRANSPARENT);
-                        btnExport.setColorFilter(Color.parseColor("#66BB6A"));
+                        btnExport.setColorFilter(ContextCompat.getColor(requireContext(), R.color.status_success));
                         btnExport.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
 
                         btnExport.setOnClickListener(btn -> {
@@ -2060,7 +2060,7 @@ public class DeployFragment extends Fragment {
                         android.widget.ImageButton btnDelete = new android.widget.ImageButton(requireContext());
                         btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
                         btnDelete.setBackgroundColor(Color.TRANSPARENT);
-                        btnDelete.setColorFilter(Color.parseColor("#F44336"));
+                        btnDelete.setColorFilter(ContextCompat.getColor(requireContext(), R.color.status_danger));
                         btnDelete.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
 
                         btnDelete.setOnClickListener(btn -> {
@@ -2340,9 +2340,9 @@ public class DeployFragment extends Fragment {
         if (isConnected) {
             ledAdbStatus.setBackgroundResource(R.drawable.led_on_green);
             txtAdbLedLabel.setText(getString(R.string.adb_status_connected));
-            txtAdbLedLabel.setTextColor(Color.parseColor("#4CAF50"));
+            txtAdbLedLabel.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_success));
             btnAdbAction.setText(getString(R.string.adb_btn_disconnect));
-            btnAdbAction.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
+            btnAdbAction.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_danger)));
 
             txtDcpr.setText(android.text.Html.fromHtml(getString(R.string.adb_ui_checking_cp), android.text.Html.FROM_HTML_MODE_COMPACT));
             txtPpk.setText(android.text.Html.fromHtml(getString(R.string.adb_ui_checking_ppk), android.text.Html.FROM_HTML_MODE_COMPACT));
@@ -2355,7 +2355,7 @@ public class DeployFragment extends Fragment {
             txtAdbLedLabel.setText(getString(R.string.adb_status_offline));
             txtAdbLedLabel.setTextColor(ContextCompat.getColor(requireContext(), R.color.dash_text_secondary));
             btnAdbAction.setText(getString(R.string.adb_btn_connect));
-            btnAdbAction.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#2196F3")));
+            btnAdbAction.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_info)));
 
             txtDcpr.setText(getString(R.string.adb_ui_unknown_cp));
             txtPpk.setText(getString(R.string.adb_ui_unknown_ppk));
@@ -2596,7 +2596,7 @@ public class DeployFragment extends Fragment {
         XAxis xAxis = cpuChart.getXAxis();
         xAxis.setDrawLabels(false);
         xAxis.setDrawGridLines(true);
-        xAxis.setGridColor(Color.parseColor("#333333"));
+        xAxis.setGridColor(ContextCompat.getColor(requireContext(), R.color.divider_line));
         xAxis.setPosition(XAxis.XAxisPosition.BOTTOM);
 
         YAxis leftAxis = cpuChart.getAxisLeft();
@@ -2604,7 +2604,7 @@ public class DeployFragment extends Fragment {
         leftAxis.setAxisMaximum(100f);
         leftAxis.setAxisMinimum(0f);
         leftAxis.setDrawGridLines(true);
-        leftAxis.setGridColor(Color.parseColor("#333333"));
+        leftAxis.setGridColor(ContextCompat.getColor(requireContext(), R.color.divider_line));
 
         cpuChart.getAxisRight().setEnabled(false);
         cpuChart.setData(new LineData());
@@ -2618,13 +2618,13 @@ public class DeployFragment extends Fragment {
         if (set == null) {
             LineDataSet newSet = new LineDataSet(null, "CPU");
             newSet.setAxisDependency(YAxis.AxisDependency.LEFT);
-            newSet.setColor(Color.parseColor("#4CAF50"));
+            newSet.setColor(ContextCompat.getColor(requireContext(), R.color.accent));
             newSet.setLineWidth(2f);
             newSet.setDrawCircles(false);
             newSet.setDrawValues(false);
             newSet.setMode(LineDataSet.Mode.CUBIC_BEZIER);
             newSet.setDrawFilled(true);
-            newSet.setFillColor(Color.parseColor("#4CAF50"));
+            newSet.setFillColor(ContextCompat.getColor(requireContext(), R.color.accent));
             newSet.setFillAlpha(50);
             set = newSet;
             data.addDataSet(set);
@@ -2802,7 +2802,7 @@ public class DeployFragment extends Fragment {
                             ledInternet.setBackgroundTintList(null);
                         } else {
                             ledInternet.setBackgroundResource(R.drawable.led_off);
-                            ledInternet.setBackgroundTintList(ColorStateList.valueOf(Color.parseColor("#F44336")));
+                            ledInternet.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_danger)));
                         }
                     }
                 });

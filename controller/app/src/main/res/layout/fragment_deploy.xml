@@ -143,7 +143,7 @@
             android:layout_height="wrap_content"
             android:orientation="horizontal"
             android:background="@drawable/rounded_button"
-            android:backgroundTint="#FFF3E0"
+            android:backgroundTint="@color/surface_active_warning"
             android:padding="12dp"
             android:layout_marginBottom="16dp"
             android:gravity="center_vertical"
@@ -161,7 +161,7 @@
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
                 android:text="@string/install_warning_server_running"
-                android:textColor="#E65100"
+                android:textColor="@color/status_warning"
                 android:textSize="13sp"
                 android:gravity="center"
                 android:textStyle="bold" />
@@ -221,10 +221,10 @@
                         android:layout_height="60dp"
                         android:layout_weight="1"
                         android:text="@string/adb_btn_connect"
-                        android:textColor="#FFFFFF"
+                        android:textColor="@color/text_on_accent"
                         android:textStyle="bold"
                         android:background="@drawable/rounded_button"
-                        android:backgroundTint="#2196F3"
+                        android:backgroundTint="@color/status_info"
                         android:textAllCaps="false"
                         android:layout_marginEnd="16dp" />
 
@@ -348,9 +348,9 @@
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
                         android:text="@string/install_tier_basic"
-                        android:textColor="#FFFFFF"
+                        android:textColor="@color/text_on_accent"
                         android:background="@drawable/rounded_button"
-                        android:backgroundTint="#333333"
+                        android:backgroundTint="@color/btn_neutral"
                         android:textAllCaps="false"/>
 
                     <Button
@@ -359,9 +359,9 @@
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
                         android:text="@string/install_tier_standard"
-                        android:textColor="#FFFFFF"
+                        android:textColor="@color/text_on_accent"
                         android:background="@drawable/rounded_button"
-                        android:backgroundTint="#333333"
+                        android:backgroundTint="@color/btn_neutral"
                         android:layout_marginTop="8dp"
                         android:textAllCaps="false"/>
 
@@ -371,9 +371,9 @@
                         android:layout_height="wrap_content"
                         android:minHeight="48dp"
                         android:text="@string/install_tier_full"
-                        android:textColor="#FFFFFF"
+                        android:textColor="@color/text_on_accent"
                         android:background="@drawable/rounded_button"
-                        android:backgroundTint="#333333"
+                        android:backgroundTint="@color/btn_neutral"
                         android:layout_marginTop="8dp"
                         android:textAllCaps="false"/>
                 </LinearLayout>
@@ -399,7 +399,7 @@
                         android:text="@string/install_chk_companion"
                         android:textSize="12sp"
                         android:textColor="@color/dash_text_secondary"
-                        android:buttonTint="#008000" />
+                        android:buttonTint="@color/status_success" />
                 </LinearLayout>
 
                 <LinearLayout
@@ -413,7 +413,7 @@
                         android:layout_height="32dp"
                         android:src="@drawable/outline_dashboard_2_gear_24"
                         android:background="?attr/selectableItemBackgroundBorderless"
-                        app:tint="#555555" />
+                        app:tint="@color/text_secondary" />
                 </LinearLayout>
             </LinearLayout>
 
@@ -423,7 +423,7 @@
                 android:orientation="vertical"
                 android:layout_marginTop="12dp"
                 android:background="@drawable/rounded_button"
-                android:backgroundTint="#1Affffff"
+                android:backgroundTint="@color/surface_section"
                 android:padding="12dp">
 
                 <LinearLayout
@@ -438,8 +438,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:paddingEnd="12dp">
-                        <View android:id="@+id/dot_iiab" android:layout_width="10dp" android:layout_height="10dp" android:background="#00FFFF" android:layout_centerVertical="true"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_iiab" android:textSize="12sp" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_iiab" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
+                        <View android:id="@+id/dot_iiab" android:layout_width="10dp" android:layout_height="10dp" android:background="@color/chart_os" android:layout_centerVertical="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_iiab" android:textSize="12sp" android:textStyle="bold" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_iiab" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
                         <TextView android:id="@+id/txt_legend_iiab" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0G" android:textSize="12sp" android:textColor="@color/dash_text_inverted" android:fontFamily="@font/orbitron" android:layout_alignParentEnd="true" android:layout_centerVertical="true"/>
                     </RelativeLayout>
 
@@ -448,8 +448,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:paddingStart="12dp">
-                        <View android:id="@+id/dot_maps" android:layout_width="10dp" android:layout_height="10dp" android:background="#FF9800" android:layout_centerVertical="true"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_maps" android:textSize="12sp" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_maps" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
+                        <View android:id="@+id/dot_maps" android:layout_width="10dp" android:layout_height="10dp" android:background="@color/chart_maps" android:layout_centerVertical="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_maps" android:textSize="12sp" android:textStyle="bold" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_maps" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
                         <TextView android:id="@+id/txt_legend_maps" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0G" android:textSize="12sp" android:textColor="@color/dash_text_inverted" android:fontFamily="@font/orbitron" android:layout_alignParentEnd="true" android:layout_centerVertical="true"/>
                     </RelativeLayout>
                 </LinearLayout>
@@ -467,8 +467,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:paddingEnd="12dp">
-                        <View android:id="@+id/dot_kiwix" android:layout_width="10dp" android:layout_height="10dp" android:background="#008000" android:layout_centerVertical="true"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_kiwix" android:textSize="12sp" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_kiwix" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
+                        <View android:id="@+id/dot_kiwix" android:layout_width="10dp" android:layout_height="10dp" android:background="@color/chart_wiki" android:layout_centerVertical="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_kiwix" android:textSize="12sp" android:textStyle="bold" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_kiwix" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
                         <TextView android:id="@+id/txt_legend_kiwix" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0G" android:textSize="12sp" android:textColor="@color/dash_text_inverted" android:fontFamily="@font/orbitron" android:layout_alignParentEnd="true" android:layout_centerVertical="true"/>
                     </RelativeLayout>
 
@@ -477,8 +477,8 @@
                         android:layout_height="wrap_content"
                         android:layout_weight="1"
                         android:paddingStart="12dp">
-                        <View android:id="@+id/dot_free" android:layout_width="10dp" android:layout_height="10dp" android:background="#777777" android:layout_centerVertical="true"/>
-                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_free" android:textSize="12sp" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_free" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
+                        <View android:id="@+id/dot_free" android:layout_width="10dp" android:layout_height="10dp" android:background="@color/chart_track" android:layout_centerVertical="true"/>
+                        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/install_legend_free" android:textSize="12sp" android:textStyle="bold" android:textColor="@color/dash_text_secondary" android:layout_toEndOf="@id/dot_free" android:layout_marginStart="6dp" android:layout_centerVertical="true"/>
                         <TextView android:id="@+id/txt_legend_free" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="0.0G" android:textSize="12sp" android:textColor="@color/dash_text_inverted" android:fontFamily="@font/orbitron" android:layout_alignParentEnd="true" android:layout_centerVertical="true"/>
                     </RelativeLayout>
                 </LinearLayout>
@@ -508,10 +508,10 @@
                 android:layout_height="60dp"
                 android:layout_weight="1"
                 android:text="@string/install_btn_provision"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_on_accent"
                 android:textStyle="bold"
                 android:background="@drawable/rounded_button"
-                android:backgroundTint="#008000"
+                android:backgroundTint="@color/status_success"
                 android:layout_marginEnd="8dp"
                 android:textAllCaps="false" />
 
@@ -521,10 +521,10 @@
                 android:layout_height="60dp"
                 android:layout_weight="1"
                 android:text="@string/install_btn_delete"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_on_accent"
                 android:textStyle="bold"
                 android:background="@drawable/rounded_button"
-                android:backgroundTint="#FF0000"
+                android:backgroundTint="@color/status_danger"
                 android:layout_marginStart="8dp"
                 android:textAllCaps="false" />
         </LinearLayout>
@@ -597,7 +597,7 @@
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
                 android:background="@drawable/rounded_button"
-                android:backgroundTint="#44FF0000"
+                android:backgroundTint="@color/surface_active_danger"
                 android:padding="12dp"
                 android:layout_marginBottom="24dp"
                 android:visibility="gone">
@@ -606,7 +606,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:text="@string/install_warning_discrepancy_icon"
-                    android:textColor="#FF5555"
+                    android:textColor="@color/status_danger"
                     android:textSize="16sp"
                     android:layout_marginEnd="8dp" />
 
@@ -616,7 +616,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:text="@string/install_warning_discrepancy_msg"
-                    android:textColor="#FFCCCC"
+                    android:textColor="@color/text_secondary"
                     android:textSize="12sp" />
             </LinearLayout>
 
@@ -625,10 +625,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="60dp"
                 android:text="@string/install_btn_launch"
-                android:textColor="#FFFFFF"
+                android:textColor="@color/text_on_accent"
                 android:textStyle="bold"
                 android:background="@drawable/rounded_button"
-                android:backgroundTint="#008000"
+                android:backgroundTint="@color/status_success"
                 android:layout_marginBottom="32dp"
                 android:textAllCaps="false" />
         </LinearLayout>
@@ -683,10 +683,10 @@
                     android:layout_weight="1"
                     android:layout_marginEnd="4dp"
                     android:text="@string/install_btn_backup"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_on_accent"
                     android:textStyle="bold"
                     android:background="@drawable/rounded_button"
-                    android:backgroundTint="#2196F3"
+                    android:backgroundTint="@color/status_info"
                     android:textAllCaps="false" />
 
                 <Button
@@ -696,10 +696,10 @@
                     android:layout_weight="1"
                     android:layout_marginStart="4dp"
                     android:text="@string/install_btn_reset"
-                    android:textColor="#000000"
+                    android:textColor="@color/text_on_warning"
                     android:textStyle="bold"
                     android:background="@drawable/rounded_button"
-                    android:backgroundTint="#FFC107"
+                    android:backgroundTint="@color/status_pending"
                     android:textAllCaps="false" />
             </LinearLayout>
 
@@ -717,10 +717,10 @@
                     android:layout_weight="1"
                     android:layout_marginEnd="4dp"
                     android:text="@string/install_btn_restore"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_on_accent"
                     android:textStyle="bold"
                     android:background="@drawable/rounded_button"
-                    android:backgroundTint="#4CAF50"
+                    android:backgroundTint="@color/status_success"
                     android:textAllCaps="false" />
 
                 <Button
@@ -730,10 +730,10 @@
                     android:layout_weight="1"
                     android:layout_marginStart="4dp"
                     android:text="@string/install_btn_force_stop"
-                    android:textColor="#FFFFFF"
+                    android:textColor="@color/text_on_accent"
                     android:textStyle="bold"
                     android:background="@drawable/rounded_button"
-                    android:backgroundTint="#F44336"
+                    android:backgroundTint="@color/status_danger"
                     android:textAllCaps="false" />
             </LinearLayout>
 
@@ -748,7 +748,7 @@
                 android:textAllCaps="false"
                 android:background="?attr/selectableItemBackground"
                 app:icon="@android:drawable/stat_sys_download"
-                app:iconTint="#4CAF50"
+                app:iconTint="@color/status_success"
                 app:iconGravity="textStart" />
 
             <LinearLayout

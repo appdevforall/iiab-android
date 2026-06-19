@@ -60,10 +60,10 @@
             android:layout_weight="1"
             android:layout_marginEnd="8dp"
             android:text="@string/kiwix_dialog_wipe_cache"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_on_accent"
             android:textAllCaps="false"
             android:background="@drawable/rounded_button"
-            android:backgroundTint="#0000FF" />
+            android:backgroundTint="@color/status_info" />
 
         <Button
             android:id="@+id/btn_select_variant"
@@ -72,9 +72,9 @@
             android:layout_weight="1"
             android:layout_marginStart="8dp"
             android:text="@string/kiwix_dialog_select"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/text_on_accent"
             android:textAllCaps="false"
             android:background="@drawable/rounded_button"
-            android:backgroundTint="#008000" />
+            android:backgroundTint="@color/status_success" />
     </LinearLayout>
 </LinearLayout>
