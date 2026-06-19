@@ -57,6 +57,10 @@ _Last updated: 2026-06-17. Tracks remediation work against the findings below. I
 - New shared `util/ProcessRunner.run(cmd)`: `redirectErrorStream(true)` + full drain + returns `{exitCode, output}`, so a single read cannot deadlock and callers can log/handle failures.
 - Migrated the raw `exec().waitFor()` sites (backup, `chmod -R`, the three `rm -rf` wipes); empty catches now log. Left the extraction path (already drains stderr) and the `getprop` read (reads stdout) as-is. No new unit test (process glue, not pure logic — fragile to run a shell in unit tests on a Windows dev box); verified by inspection + CI compile.
 
+**M15 — Build coupled to network for native artifacts: FIXED** (PR `fix/m15-build-binary-sync-fallback`)
+- `:app:syncNativeArtifacts` (`preBuild` dependency) called the GitHub API **unauthenticated on every build**; since `jniLibs/*.so` are gitignored, CI always downloads and hit GitHub's 60/hr unauthenticated limit -> intermittent **HTTP 403** ("tag not found"), failing `assembleDebug` on unrelated PRs.
+- Fix: (1) **cache-first** — check the local tracker/binaries/manifest before any network call, so builds with artifacts present skip the API entirely; (2) **fallback auth** — fetch release metadata UNAUTHENTICATED first (so forks without a token still build), and only on failure retry with `GITHUB_TOKEN`/`GH_TOKEN` from the env; (3) clearer rate-limit error. CI passes `secrets.GITHUB_TOKEN` to the gradle steps (job-level env). No token is ever *required*.
+
 **Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4**, **S3** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12**. Remaining: **D11**, **S4**, **F15**.
 ## 1. Executive summary
 
