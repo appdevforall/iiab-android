@@ -87,6 +87,7 @@
     <color name="terminal_background">#0D0D0D</color>
     <color name="terminal_text">#33FF33</color>
     <color name="overlay_scrim">#CC000000</color>
+    <color name="toggle_selected">#FFFFFF</color>
 
     <!-- Fixed (NOT theme-dependent: a QR must stay black/white to scan,
          so these intentionally have no values-night override). -->
