@@ -30,7 +30,7 @@ import io.github.muntashirakon.adb.AbsAdbConnectionManager;
 public class IIABAdbManager extends AbsAdbConnectionManager {
 
     private static final String TAG = "IIABAdbManager";
-    private static final String KEY_ALIAS = "iiab_adb_key_v3";
+    private static final String KEY_ALIAS = "iiab_adb_key_v4";
 
     // --- SINGLETON PATTERN ---
     private static IIABAdbManager instance;
@@ -48,19 +48,27 @@ public class IIABAdbManager extends AbsAdbConnectionManager {
             keyStore.load(null);
 
             if (!keyStore.containsAlias(KEY_ALIAS)) {
-                Log.i(TAG, "Generating new RSA V3 key pair in AndroidKeyStore...");
+                Log.i(TAG, "Generating new RSA V4 key pair in AndroidKeyStore...");
                 KeyPairGenerator kpg = KeyPairGenerator.getInstance(KeyProperties.KEY_ALGORITHM_RSA, "AndroidKeyStore");
 
-                // S3: the ADB identity key is only ever used to sign/verify the
-                // connection handshake (no Cipher uses this alias), so scope it to
-                // SIGN | VERIFY. The previous spec also granted ENCRYPT | DECRYPT
-                // with non-randomized encryption padding, which is unused attack
-                // surface and a crypto anti-pattern.
+                // IMPORTANT: these capabilities are REQUIRED, do not narrow them.
+                // The ADB connection runs over TLS, and the libadb/conscrypt
+                // handshake signs with this key via a raw RSA operation
+                // (Cipher "RSA/ECB/NoPadding"). That needs PURPOSE_ENCRYPT plus
+                // ENCRYPTION_PADDING_NONE (and PKCS1) and setRandomizedEncryptionRequired(false).
+                // A prior change (tech-debt "S3") scoped this to SIGN|VERIFY only,
+                // which made the keystore reject the handshake op with
+                // INCOMPATIBLE_PADDING_MODE and broke every ADB connection on a
+                // freshly generated key. Reverted here; alias bumped to v4 so the
+                // broken v3 keys are regenerated.
                 KeyGenParameterSpec spec = new KeyGenParameterSpec.Builder(
                         KEY_ALIAS,
-                        KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY)
+                        KeyProperties.PURPOSE_SIGN | KeyProperties.PURPOSE_VERIFY
+                                | KeyProperties.PURPOSE_ENCRYPT | KeyProperties.PURPOSE_DECRYPT)
                         .setDigests(KeyProperties.DIGEST_NONE, KeyProperties.DIGEST_SHA256, KeyProperties.DIGEST_SHA512)
                         .setSignaturePaddings(KeyProperties.SIGNATURE_PADDING_RSA_PKCS1)
+                        .setEncryptionPaddings(KeyProperties.ENCRYPTION_PADDING_NONE, KeyProperties.ENCRYPTION_PADDING_RSA_PKCS1)
+                        .setRandomizedEncryptionRequired(false)
                         .setKeySize(2048)
                         .setCertificateSubject(new X500Principal("CN=" + this.deviceName))
                         .setCertificateSerialNumber(BigInteger.ONE)

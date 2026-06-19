@@ -61,7 +61,11 @@ _Last updated: 2026-06-17. Tracks remediation work against the findings below. I
 - `:app:syncNativeArtifacts` (`preBuild` dependency) called the GitHub API **unauthenticated on every build**; since `jniLibs/*.so` are gitignored, CI always downloads and hit GitHub's 60/hr unauthenticated limit -> intermittent **HTTP 403** ("tag not found"), failing `assembleDebug` on unrelated PRs.
 - Fix: (1) **cache-first** — check the local tracker/binaries/manifest before any network call, so builds with artifacts present skip the API entirely; (2) **fallback auth** — fetch release metadata UNAUTHENTICATED first (so forks without a token still build), and only on failure retry with `GITHUB_TOKEN`/`GH_TOKEN` from the env; (3) clearer rate-limit error. CI passes `secrets.GITHUB_TOKEN` to the gradle steps (job-level env). No token is ever *required*.
 
-**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4**, **S3** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12**. Remaining: **D11**, **S4**, **F15**.
+**S3 — ADB keystore scope: REVERTED / not real debt** (PR `fix/adb-keystore-revert-s3`)
+- S3 (PR #10) re-scoped the ADB identity key to `SIGN | VERIFY` only, assuming the `ENCRYPT|DECRYPT` + non-randomized PKCS1/NONE encryption paddings were unused attack surface. **That assumption was wrong.** The ADB connection runs over TLS and the libadb/conscrypt handshake signs with the key via a raw RSA op (`Cipher "RSA/ECB/NoPadding"`), which **requires** `PURPOSE_ENCRYPT` + `ENCRYPTION_PADDING_NONE/PKCS1` + `setRandomizedEncryptionRequired(false)`. On a freshly generated key the keystore rejected the op (`INCOMPATIBLE_PADDING_MODE`) and **every ADB connection broke** (confirmed via logcat).
+- Reverted: restored those capabilities and bumped the alias `iiab_adb_key_v3` -> `v4` so already-broken keys regenerate (one-time ADB re-pair). Added a comment marking the capabilities as required. **S3 is withdrawn from the register** (misdiagnosis, not debt).
+
+**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12** (PR #16). **S3 reverted** (see above). Remaining: **D11**, **S4**, **F15**.
 ## 1. Executive summary
 
 The Controller is functional and shows real security intent (it SHA256-audits native binaries at build time, scrubs the keystore in CI, and scopes most broadcasts). But it carries debt on four fronts that scale badly toward the README's "millions of users" goal:
