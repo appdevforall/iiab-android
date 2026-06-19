@@ -224,19 +224,10 @@ task syncNativeArtifacts {
             def targetTag = versionFile.text.trim()
             println "   -> Target tag pinned to: ${targetTag}"
 
-            // 2. Fetch the exact Release directly from GitHub API
-            def apiUrl = new URL("https://api.github.com/repos/${repoName}/releases/tags/${targetTag}")
-            def connection = (HttpURLConnection) apiUrl.openConnection()
-            connection.setRequestProperty("Accept", "application/vnd.github.v3+json")
-
-            if (connection.responseCode != 200) {
-                throw new GradleException(">> [IIAB Hook] GitHub API error: Tag ${targetTag} not found (HTTP ${connection.responseCode})")
-            }
-
+            // 2. Smart caching FIRST -- never touch the network if the pinned
+            //    binaries are already present and verified locally (M15: do not
+            //    couple every build to the GitHub API).
             def slurper = new JsonSlurper()
-            def targetRelease = slurper.parse(connection.inputStream)
-
-            // 3. Smart Caching: Skip if we already have this exact release and all files exist!
             def currentTag = tagTrackerFile.exists() ? tagTrackerFile.text.trim() : ""
 
             // List all critical binaries that must exist
@@ -257,12 +248,42 @@ task syncNativeArtifacts {
 
             // We also verify that the manifest exists in order to be able to audit.
             def manifestFile = new File(assetsDir, "ninja_manifest.json")
-            def isCached = (currentTag == targetRelease.tag_name && allBinariesExist && manifestFile.exists())
+            def isCached = (currentTag == targetTag && allBinariesExist && manifestFile.exists())
 
             if (isCached) {
-                println "   -> [CACHED] Artifacts are up to date (${currentTag}) and physically present. Skipping download."
+                println "   -> [CACHED] Artifacts are up to date (${currentTag}) and physically present. Skipping API + download."
             } else {
                 println "   -> Cache miss, missing physical files, or missing manifest. Proceeding with download..."
+
+                // 3. Fetch release metadata. Try UNAUTHENTICATED first so a fork
+                //    without a token still builds; only if that fails (e.g. HTTP 403
+                //    rate-limit) retry WITH a token when one is available in the
+                //    environment. Independent builds never need to define a token.
+                def openReleaseConn = { String authToken ->
+                    def relUrl = new URL("https://api.github.com/repos/${repoName}/releases/tags/${targetTag}")
+                    def c = (HttpURLConnection) relUrl.openConnection()
+                    c.setRequestProperty("Accept", "application/vnd.github.v3+json")
+                    c.setRequestProperty("User-Agent", "iiab-android-build")
+                    if (authToken?.trim()) c.setRequestProperty("Authorization", "Bearer ${authToken.trim()}")
+                    return c
+                }
+
+                def connection = openReleaseConn(null) // attempt 1: unauthenticated
+                int code = connection.responseCode
+                if (code != 200) {
+                    def envToken = System.getenv("GITHUB_TOKEN") ?: System.getenv("GH_TOKEN")
+                    if (envToken?.trim()) {
+                        println "   -> Unauthenticated API call returned HTTP ${code}; retrying with token (first attempt likely rate-limited)..."
+                        connection = openReleaseConn(envToken) // attempt 2: authenticated fallback
+                        code = connection.responseCode
+                    }
+                }
+                if (code != 200) {
+                    throw new GradleException(">> [IIAB Hook] GitHub API error for tag ${targetTag}: HTTP ${code}. " +
+                            "This is usually GitHub API rate-limiting; set GITHUB_TOKEN (CI provides one automatically) to raise the limit.")
+                }
+
+                def targetRelease = slurper.parse(connection.inputStream)
 
                 // 4. Find the zip asset URL in the targeted release
                 def zipAsset = targetRelease.assets.find { it.name == 'termux-binaries-latest.zip' }

@@ -20,6 +20,12 @@ jobs:
     name: Lint & Compile Check
     runs-on: ubuntu-latest
 
+    # M15: expose a token to the gradle steps so the native-artifact sync can fall
+    # back to an authenticated GitHub API call when the unauthenticated one is
+    # rate-limited (HTTP 403). secrets.GITHUB_TOKEN is provided automatically.
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
     defaults:
       run:
         working-directory: ./controller
