@@ -61,13 +61,19 @@ _Last updated: 2026-06-17. Tracks remediation work against the findings below. I
 - `:app:syncNativeArtifacts` (`preBuild` dependency) called the GitHub API **unauthenticated on every build**; since `jniLibs/*.so` are gitignored, CI always downloads and hit GitHub's 60/hr unauthenticated limit -> intermittent **HTTP 403** ("tag not found"), failing `assembleDebug` on unrelated PRs.
 - Fix: (1) **cache-first** — check the local tracker/binaries/manifest before any network call, so builds with artifacts present skip the API entirely; (2) **fallback auth** — fetch release metadata UNAUTHENTICATED first (so forks without a token still build), and only on failure retry with `GITHUB_TOKEN`/`GH_TOKEN` from the env; (3) clearer rate-limit error. CI passes `secrets.GITHUB_TOKEN` to the gradle steps (job-level env). No token is ever *required*.
 
+**S3 — ADB keystore scope: REVERTED / not real debt** (PR `fix/adb-keystore-revert-s3`)
+- S3 (PR #10) re-scoped the ADB identity key to `SIGN | VERIFY` only, assuming the `ENCRYPT|DECRYPT` + non-randomized PKCS1/NONE encryption paddings were unused attack surface. **That assumption was wrong.** The ADB connection runs over TLS and the libadb/conscrypt handshake signs with the key via a raw RSA op (`Cipher "RSA/ECB/NoPadding"`), which **requires** `PURPOSE_ENCRYPT` + `ENCRYPTION_PADDING_NONE/PKCS1` + `setRandomizedEncryptionRequired(false)`. On a freshly generated key the keystore rejected the op (`INCOMPATIBLE_PADDING_MODE`) and **every ADB connection broke** (confirmed via logcat).
+- Reverted: restored those capabilities and bumped the alias `iiab_adb_key_v3` -> `v4` so already-broken keys regenerate (one-time ADB re-pair). Added a comment marking the capabilities as required. **S3 is withdrawn from the register** (misdiagnosis, not debt).
+
 **D11 — Archive path-traversal on extraction (Phase 1 security): DONE** (PR `fix/phase1-security-d11-archive-traversal`)
 - Closes **D11**: `TarExtractor` extracted with `tar -xf -C destDir` without validating member names. An **imported/restored backup is untrusted** (`Import backup` accepts any file and `restore` extracts it into `filesDir/rootfs`), so a crafted `.tar.gz` using `../` or absolute members could escape the destination and overwrite app files.
 - New pure domain rule `org.iiab.controller.deploy.domain.ArchiveEntry.escapesRoot(name)` (rejects absolute paths and `..` that climb above the root; allows benign `./` and internal `a/../b`). Unit-tested (`ArchiveEntryTest`).
 - `TarExtractor` now **pre-lists** entries (`tar -t`, gzip decompressed in Java) and **fails closed** if any member escapes — for *every* extraction (the verified rootfs install included, defense in depth). Also single-quoted the paths in the backup-creation `sh -c` pipe (the "unquoted backup pipe" half of D11).
 - Verify on a real install/restore that legitimate rootfs/backup members are relative (they are by convention) so the guard does not false-positive.
 
-**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4**, **S3** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12** (PR #16), **D11**. Remaining: **S4**, **F15**.## 1. Executive summary
+**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12** (PR #16), **D11** (PR #15). **S3 reverted** (see above). Remaining: **S4**, **F15**.
+
+## 1. Executive summary
 
 The Controller is functional and shows real security intent (it SHA256-audits native binaries at build time, scrubs the keystore in CI, and scopes most broadcasts). But it carries debt on four fronts that scale badly toward the README's "millions of users" goal:
 
