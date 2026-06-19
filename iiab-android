@@ -165,6 +165,63 @@ extra-index-url=https://iiab.switnet.org/simple
 EOF
 }
 
+# -------------------------
+# Make the generic IIAB installer proot-safe
+# -------------------------
+# The native installer (/usr/sbin/iiab) and several Ansible roles use
+# chroot/container detection that is UNRELIABLE under proot. On a device it
+# usually resolves "chroot/proot" so things work; but in headless / async
+# builds (e.g. building the rootfs on a SBC or via GitHub Actions, or as a
+# server maintenance routine) the same checks can resolve the opposite, so IIAB
+# attempts systemd / reboot actions that don't exist under proot and the build
+# breaks. We make the proot environment DETERMINISTIC for all consumers:
+ensure_proot_safe_env() {
+  log "Ensuring proot-safe environment for the IIAB installer."
+
+  # (1) 'ansible_facts.is_chroot' gates systemd-only tasks, e.g.
+  #     roles/0-init/tasks/hostname.yml -> 'hostnamectl' has
+  #     'when: not ansible_facts.is_chroot'. That fact honors the env var
+  #     'debian_chroot'. install.txt runs the installer via 'sudo', whose
+  #     default env_reset would strip it, so we (1) export it, (2) persist it in
+  #     /etc/environment (pam_env), and (3) keep it across sudo.
+  export debian_chroot="${debian_chroot:-iiab}"
+  grep -q '^debian_chroot=' /etc/environment 2>/dev/null \
+    || echo "debian_chroot=${debian_chroot}" >> /etc/environment
+  mkdir -p /etc/sudoers.d
+  echo 'Defaults env_keep += "debian_chroot"' > /etc/sudoers.d/99-iiab-proot-chroot
+  chmod 440 /etc/sudoers.d/99-iiab-proot-chroot
+
+  # (2) /usr/sbin/iiab decides whether to reboot using its own bash
+  #     detection ('ischroot -t || systemd-detect-virt --container -q'). Under
+  #     proot that can be false -> it runs 'reboot' (absent here), aborting this
+  #     wrapper before the Android tail below. Provide a proot-correct ischroot
+  #     and a no-op reboot in /usr/local/sbin (first in PATH incl. sudo
+  #     secure_path). These are also CORRECT to keep in the rootfs: under proot
+  #     we are chroot-like and must never drive the host init.
+  mkdir -p /usr/local/sbin
+  cat > /usr/local/sbin/ischroot << 'EOS'
+#!/bin/sh
+exit 0   # under proot we are chroot-like; report chroot so installers skip host-only actions
+EOS
+  chmod +x /usr/local/sbin/ischroot
+
+  cat > /usr/local/sbin/reboot << 'EOS'
+#!/bin/sh
+echo "[iiab-android] reboot suppressed (running under proot)"
+exit 0
+EOS
+  chmod +x /usr/local/sbin/reboot
+
+  # (3) Safety net: hostnamectl shim (writes /etc/hostname) in case the
+  #     is_chroot gate is ever bypassed; systemd-hostnamed is absent under proot.
+  cat > /usr/local/sbin/hostnamectl << 'EOS'
+#!/bin/sh
+[ "$1" = "set-hostname" ] && [ -n "$2" ] && printf '%s\n' "$2" > /etc/hostname
+exit 0
+EOS
+  chmod +x /usr/local/sbin/hostnamectl
+}
+
 disable_role_32bits() {
   local role="$1" file="$2"
   local comment="#32bits;pending support."
@@ -468,6 +525,11 @@ install_update_repo
 #-----------------------------
 # kiwix
 disable_role_32bits kiwix "$LOCAL_VARS_DEST"
+
+#-----------------------------
+# Make the generic IIAB installer proot-safe before running it
+#-----------------------------
+ensure_proot_safe_env
 
 #-----------------------------
 # Fetch install.txt with fallback and run it
