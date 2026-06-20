@@ -604,7 +604,8 @@ run_in_proot() {
       warn "proot does not support $f -> skipping it (use the release/APK proot for fidelity)"
     fi
   done
-  "$PROOT" \
+  # PROOT_TMP_DIR on the HOST side: the OUTER proot writes its temp here (writable).
+  PROOT_TMP_DIR="${PROOT_TMP}" "$PROOT" \
     "${opts[@]}" \
     -r "$ROOTFS" \
     -b /dev -b /proc -b /sys \
@@ -613,7 +614,7 @@ run_in_proot() {
     -w /root \
     /usr/bin/env -i \
       PREFIX="${WORKDIR}/usr" \
-      PROOT_TMP_DIR="${PROOT_TMP}" \
+      PROOT_TMP_DIR=/tmp \
       HOME=/root USER=root LOGNAME=root \
       TMPDIR=/tmp TERM=xterm-256color LANG=C.UTF-8 \
       PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin \
