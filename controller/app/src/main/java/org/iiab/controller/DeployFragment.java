@@ -1096,6 +1096,24 @@ public class DeployFragment extends Fragment {
                                     }
                                 }
 
+                                // Inject DNS + hosts so the freshly fast-installed rootfs can
+                                // resolve names (proot has no resolver daemon, and companion-data
+                                // steps below need network). The build artifact ships WITHOUT
+                                // resolv.conf on purpose; the app owns runtime network config.
+                                try {
+                                    File resolvConf = new File(debianRootfs, "etc/resolv.conf");
+                                    if (resolvConf.exists()) resolvConf.delete();
+                                    try (java.io.FileOutputStream fos = new java.io.FileOutputStream(resolvConf)) {
+                                        fos.write("nameserver 1.1.1.1\nnameserver 8.8.8.8\n".getBytes());
+                                    }
+                                    File hostsFile = new File(debianRootfs, "etc/hosts");
+                                    try (java.io.FileOutputStream fosH = new java.io.FileOutputStream(hostsFile)) {
+                                        fosH.write("127.0.0.1 localhost\n".getBytes());
+                                    }
+                                } catch (Exception e) {
+                                    Log.w(TAG, "Failed to write resolv.conf/hosts after fast-install", e);
+                                }
+
                                 if (chkCompanionData.isChecked()) {
                                     editLocalVarsForMaps(debianRootfs, safeTier);
                                     android.content.SharedPreferences prefs = requireContext().getSharedPreferences(getString(R.string.pref_file_internal), Context.MODE_PRIVATE);
