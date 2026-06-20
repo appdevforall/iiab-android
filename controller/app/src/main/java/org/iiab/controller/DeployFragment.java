@@ -1100,6 +1100,8 @@ public class DeployFragment extends Fragment {
                                 // resolve names (proot has no resolver daemon, and companion-data
                                 // steps below need network). The build artifact ships WITHOUT
                                 // resolv.conf on purpose; the app owns runtime network config.
+                                // TODO [tech-debt]: quick imperative add inside DeployFragment (god-object).
+                                // Not Clean Architecture; fold into the rootfs domain/data slice on refactor.
                                 try {
                                     File resolvConf = new File(debianRootfs, "etc/resolv.conf");
                                     if (resolvConf.exists()) resolvConf.delete();
