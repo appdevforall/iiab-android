@@ -64,6 +64,8 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
     private EditText dns_primary, dns_secondary;
     private Button dns_accept;
     private TextView dns_result;
+    private TextView dns_settings_label;
+    private LinearLayout dns_settings_section;
     private DnsSettingsViewModel dnsViewModel;
     private boolean suppressDnsToggle = false;
 
@@ -98,6 +100,10 @@ public class UsageFragment extends Fragment implements View.OnClickListener {
         dns_secondary = view.findViewById(R.id.dns_secondary);
         dns_accept = view.findViewById(R.id.dns_accept);
         dns_result = view.findViewById(R.id.dns_result);
+        dns_settings_label = view.findViewById(R.id.dns_settings_label);
+        dns_settings_section = view.findViewById(R.id.dns_settings_section);
+        dns_settings_label.setText(String.format(getString(R.string.label_separator_up), getString(R.string.network_advanced_label)));
+        dns_settings_label.setOnClickListener(v -> toggleVisibility(dns_settings_section, dns_settings_label, getString(R.string.network_advanced_label)));
         dnsViewModel = new ViewModelProvider(this, new DnsSettingsViewModelFactory(requireContext()))
                 .get(DnsSettingsViewModel.class);
         dnsViewModel.state().observe(getViewLifecycleOwner(), this::renderDnsState);
