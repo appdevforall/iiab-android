@@ -1096,6 +1096,10 @@ public class DeployFragment extends Fragment {
                                     }
                                 }
 
+                                // Freshly fast-installed rootfs ships without resolv.conf; give it
+                                // DNS before the companion-data (maps/kiwix) steps that need network.
+                                ensureRuntimeNetworkConfig(debianRootfs);
+
                                 if (chkCompanionData.isChecked()) {
                                     editLocalVarsForMaps(debianRootfs, safeTier);
                                     android.content.SharedPreferences prefs = requireContext().getSharedPreferences(getString(R.string.pref_file_internal), Context.MODE_PRIVATE);
@@ -2143,6 +2147,8 @@ public class DeployFragment extends Fragment {
                 tarExtractor.startExtraction(requireContext(), backupFile.getAbsolutePath(), iiabRootDir.getAbsolutePath(), new TarExtractor.ExtractionListener() {
                     @Override
                     public void onComplete(String destDir) {
+                        // Restored artifact ships without resolv.conf; the app owns runtime DNS.
+                        ensureRuntimeNetworkConfig(new File(iiabRootDir, "installed-rootfs/iiab"));
                         mainAct.runOnUiThread(() -> {
                             isRestoring = false;
                             disableSystemProtection();
@@ -2166,6 +2172,33 @@ public class DeployFragment extends Fragment {
                     }
                 });
             });
+        }
+    }
+
+    // Runtime network config for the proot guest: proot has no resolver daemon, and our build
+    // artifact ships WITHOUT /etc/resolv.conf on purpose (the app is the single owner of runtime
+    // network state). Mirrors the reset path. Called from fast-install and restore.
+    // TODO [tech-debt]: imperative side-effect inside DeployFragment (god-object); not Clean
+    // Architecture. Fold into the rootfs domain/data slice during the strangler refactor.
+    private void ensureRuntimeNetworkConfig(File debianRootfs) {
+        try {
+            File etc = new File(debianRootfs, "etc");
+            if (!etc.isDirectory()) {
+                Log.w(TAG, "ensureRuntimeNetworkConfig: missing " + etc.getAbsolutePath() + " - skipping DNS write");
+                return;
+            }
+            File resolvConf = new File(etc, "resolv.conf");
+            if (resolvConf.exists()) resolvConf.delete();
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(resolvConf)) {
+                fos.write("nameserver 1.1.1.1\nnameserver 8.8.8.8\n".getBytes());
+            }
+            File hostsFile = new File(etc, "hosts");
+            try (java.io.FileOutputStream fosH = new java.io.FileOutputStream(hostsFile)) {
+                fosH.write("127.0.0.1 localhost\n".getBytes());
+            }
+            Log.i(TAG, "ensureRuntimeNetworkConfig: wrote resolv.conf + hosts under " + etc.getAbsolutePath());
+        } catch (Exception e) {
+            Log.w(TAG, "ensureRuntimeNetworkConfig failed", e);
         }
     }
 
