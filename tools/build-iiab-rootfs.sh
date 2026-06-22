@@ -454,8 +454,9 @@ setup_proot_from_dir() {
   [[ -f "$d/libproot.so" ]] || die "No libproot.so in $d"
   chmod +x "$d"/lib*.so 2>/dev/null || true
   PROOT="$d/libproot.so"
-  [[ -f "$d/libproot-loader.so"   ]] && export PROOT_LOADER="$d/libproot-loader.so"
-  [[ -f "$d/libproot-loader32.so" ]] && export PROOT_LOADER_32="$d/libproot-loader32.so"
+  if [[ -f "$d/libproot-loader.so"   ]]; then export PROOT_LOADER="$d/libproot-loader.so"; fi
+  if [[ -f "$d/libproot-loader32.so" ]]; then export PROOT_LOADER_32="$d/libproot-loader32.so"; fi
+  return 0
 }
 
 if [[ -n "$PROOT_BIN" ]]; then
