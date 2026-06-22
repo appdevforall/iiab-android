@@ -183,33 +183,69 @@
                 android:textColor="@color/text_on_accent"
                 android:textAllCaps="false" />
 
-            <TextView
+            <CheckBox
+                android:id="@+id/setup_dns_check"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="@string/dns_ipv4"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="11sp" />
+                android:layout_marginTop="8dp"
+                android:text="@string/setup_dns" />
 
-            <EditText
-                android:id="@+id/dns_ipv4"
+            <LinearLayout
+                android:id="@+id/dns_setup_fields"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:singleLine="true"
-                android:textColor="?android:attr/textColorPrimary" />
+                android:orientation="vertical"
+                android:visibility="gone">
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="@string/dns_ipv6"
-                android:textColor="?android:attr/textColorSecondary"
-                android:textSize="11sp" />
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dns_primary"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="11sp" />
 
-            <EditText
-                android:id="@+id/dns_ipv6"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:singleLine="true"
-                android:textColor="?android:attr/textColorPrimary" />
+                <EditText
+                    android:id="@+id/dns_primary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:inputType="text"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/dns_secondary"
+                    android:textColor="?android:attr/textColorSecondary"
+                    android:textSize="11sp" />
+
+                <EditText
+                    android:id="@+id/dns_secondary"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:singleLine="true"
+                    android:inputType="text"
+                    android:textColor="?android:attr/textColorPrimary" />
+
+                <Button
+                    android:id="@+id/dns_accept"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="8dp"
+                    android:text="@string/dns_accept"
+                    android:background="@drawable/rounded_button"
+                    android:backgroundTint="@color/accent_secondary"
+                    android:textColor="@color/text_on_accent"
+                    android:textAllCaps="false" />
+
+                <TextView
+                    android:id="@+id/dns_result"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="6dp"
+                    android:textSize="12sp"
+                    android:visibility="gone" />
+            </LinearLayout>
 
             <CheckBox
                 android:id="@+id/checkbox_maintenance"
