@@ -2280,7 +2280,11 @@ public class DeployFragment extends Fragment {
                 org.iiab.controller.deploy.data.RootfsArchiveValidator.Result vr =
                         org.iiab.controller.deploy.data.RootfsArchiveValidator
                                 .validate(requireContext(), destFile.getAbsolutePath());
-                if (vr != org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.OK) {
+                boolean okValidated =
+                        vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.OK;
+                boolean okNoManifest =
+                        vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.OK_NO_MANIFEST;
+                if (!okValidated && !okNoManifest) {
                     if (destFile.exists()) destFile.delete();
                     final int errMsg = (vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.WRONG_ARCH)
                             ? R.string.install_error_wrong_arch
@@ -2295,6 +2299,12 @@ public class DeployFragment extends Fragment {
                         });
                     }
                     return;
+                }
+                // Soft phase: no identity manifest -> import is allowed, but warn the
+                // user (a future version will validate silently). See docs/ROOTFS_MANIFEST.md.
+                if (okNoManifest && getActivity() != null) {
+                    getActivity().runOnUiThread(() ->
+                            Snackbar.make(getView(), R.string.install_warn_manifest_missing, Snackbar.LENGTH_LONG).show());
                 }
 
                 if (getActivity() != null) {

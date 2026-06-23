@@ -47,7 +47,7 @@ public final class RootfsArchiveValidator {
 
     private static final String TAG = "IIAB-RootfsValidator";
 
-    public enum Result { OK, NOT_A_ROOTFS, WRONG_ARCH, UNREADABLE }
+    public enum Result { OK, OK_NO_MANIFEST, NOT_A_ROOTFS, WRONG_ARCH, UNREADABLE }
 
     private RootfsArchiveValidator() {
         // Static utility; not instantiable.
@@ -76,20 +76,38 @@ public final class RootfsArchiveValidator {
     public static Result validateWithEntries(Context context, String archivePath,
                                              boolean isGzip, String tarBinary, List<String> entries) {
         try {
+            // Authoritative path: the build/app embeds an identity manifest
+            // (installed-rootfs/iiab/.iiab-rootfs.json, packed first). See
+            // docs/ROOTFS_MANIFEST.md. When present it decides kind + arch.
+            RootfsManifest.Identity id = RootfsManifest.read(archivePath);
+            if (id.present) {
+                if (!"iiab-rootfs".equals(id.kind)) {
+                    return Result.NOT_A_ROOTFS;
+                }
+                if (id.arch != null && !id.arch.isEmpty()
+                        && !id.arch.equals(RootfsManifest.appAbiId())) {
+                    return Result.WRONG_ARCH;
+                }
+                return Result.OK; // manifest-validated; no need to probe ELF
+            }
+
+            // Soft fallback (no manifest): legacy ELF/structure heuristic. We
+            // return OK_NO_MANIFEST so the caller can surface a "manifest not
+            // found" alert (non-blocking) for this first version.
             if (!RootfsArchive.looksLikeRootfs(entries)) {
                 return Result.NOT_A_ROOTFS;
             }
             String probe = RootfsArchive.pickBinaryEntry(entries);
             if (probe == null) {
-                return Result.OK; // structurally a rootfs; cannot probe arch -> don't hard-block
+                return Result.OK_NO_MANIFEST; // structurally a rootfs; cannot probe arch
             }
             byte[] header = readMemberHeader(tarBinary, archivePath, isGzip, probe, 8);
             int cls = ElfClass.of(header);
             if (cls == ElfClass.UNKNOWN) {
-                return Result.OK; // probed member wasn't a plain ELF -> arch undetermined
+                return Result.OK_NO_MANIFEST; // probed member wasn't a plain ELF -> arch undetermined
             }
             int want = android.os.Process.is64Bit() ? ElfClass.BITS_64 : ElfClass.BITS_32;
-            return (cls == want) ? Result.OK : Result.WRONG_ARCH;
+            return (cls == want) ? Result.OK_NO_MANIFEST : Result.WRONG_ARCH;
         } catch (Exception e) {
             Log.e(TAG, "Validation (with entries) error", e);
             return Result.UNREADABLE;
