@@ -2164,6 +2164,20 @@ public class DeployFragment extends Fragment {
         }
     }
 
+    /** Best-effort original filename from a SAF content:// URI (DISPLAY_NAME), or null. */
+    private String queryDisplayName(Uri uri) {
+        try (android.database.Cursor c = requireContext().getContentResolver()
+                .query(uri, new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (c != null && c.moveToFirst()) {
+                int idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
+                if (idx >= 0) return c.getString(idx);
+            }
+        } catch (Exception e) {
+            Log.w(TAG, "queryDisplayName failed: " + e.getMessage());
+        }
+        return null;
+    }
+
     private void importBackupSafely(Uri sourceUri) {
         isImporting = true;
         updateDynamicButtons();
@@ -2177,7 +2191,14 @@ public class DeployFragment extends Fragment {
                 File backupsDir = new File(requireContext().getFilesDir(), "rootfs/backups");
                 if (!backupsDir.exists()) backupsDir.mkdirs();
 
-                String fileName = "imported_backup_" + System.currentTimeMillis() + ".tar.gz";
+                // Keep the imported file's EXACT name; disambiguate with -1/-2/... on collision.
+                String desiredName = queryDisplayName(sourceUri);
+                java.util.Set<String> existingNames = new java.util.HashSet<>();
+                File[] existingFiles = backupsDir.listFiles();
+                if (existingFiles != null) {
+                    for (File f : existingFiles) existingNames.add(f.getName());
+                }
+                String fileName = org.iiab.controller.backup.domain.BackupNameResolver.resolve(desiredName, existingNames);
                 File destFile = new File(backupsDir, fileName);
 
                 InputStream is = requireContext().getContentResolver().openInputStream(sourceUri);
