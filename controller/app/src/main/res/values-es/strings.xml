@@ -514,4 +514,6 @@
     <string name="ota_btn_install">Instalar</string>
     <string name="ota_btn_cancel">Cancelar</string>
     <string name="restore_log_label">Registro de extracción</string>
+    <string name="install_error_not_rootfs">Este archivo no es un backup de rootfs IIAB válido, así que no se usó.</string>
+    <string name="install_error_wrong_arch">Este backup es para otra arquitectura de CPU (32-bit vs 64-bit) y no puede usarse en esta app.</string>
 </resources>

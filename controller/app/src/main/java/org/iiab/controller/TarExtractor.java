@@ -40,6 +40,14 @@ public class TarExtractor {
     }
 
     public void startExtraction(Context context, String archivePath, String destDir, ExtractionListener listener) {
+        startExtraction(context, archivePath, destDir, false, listener);
+    }
+
+    /**
+     * @param validateRootfs when true (untrusted import/restore), also require the
+     *        archive to look like a rootfs of THIS app's architecture before extracting.
+     */
+    public void startExtraction(Context context, String archivePath, String destDir, boolean validateRootfs, ExtractionListener listener) {
         if (isExtracting) return;
 
         new Thread(() -> {
@@ -60,9 +68,25 @@ public class TarExtractor {
                 // bail out (without extracting anything) if any member is absolute
                 // or climbs out of destDir via "..". An imported/restored backup is
                 // untrusted, so this runs for every extraction.
-                for (String entry : listEntries(tarBinary, archivePath, isGzip)) {
+                List<String> entries = listEntries(tarBinary, archivePath, isGzip);
+                for (String entry : entries) {
                     if (ArchiveEntry.escapesRoot(entry)) {
                         throw new Exception("Unsafe archive entry (path traversal): " + entry);
+                    }
+                }
+
+                // For untrusted imports/restores: it must be a valid rootfs of THIS
+                // app's architecture (ABI policy: 32<->32, 64<->64). Reuses the
+                // listing above. Fail closed before extracting.
+                if (validateRootfs) {
+                    org.iiab.controller.deploy.data.RootfsArchiveValidator.Result vr =
+                            org.iiab.controller.deploy.data.RootfsArchiveValidator
+                                    .validateWithEntries(context, archivePath, isGzip, tarBinary, entries);
+                    if (vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.NOT_A_ROOTFS) {
+                        throw new Exception(context.getString(R.string.install_error_not_rootfs));
+                    }
+                    if (vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.WRONG_ARCH) {
+                        throw new Exception(context.getString(R.string.install_error_wrong_arch));
                     }
                 }
 

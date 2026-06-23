@@ -2162,7 +2162,7 @@ public class DeployFragment extends Fragment {
                 TarExtractor tarExtractor = new TarExtractor();
 
                 enableSystemProtection();
-                tarExtractor.startExtraction(requireContext(), backupFile.getAbsolutePath(), iiabRootDir.getAbsolutePath(), new TarExtractor.ExtractionListener() {
+                tarExtractor.startExtraction(requireContext(), backupFile.getAbsolutePath(), iiabRootDir.getAbsolutePath(), true, new TarExtractor.ExtractionListener() {
                     @Override
                     public void onComplete(String destDir) {
                         mainAct.runOnUiThread(() -> {
@@ -2274,6 +2274,28 @@ public class DeployFragment extends Fragment {
                 os.flush();
                 os.close();
                 is.close();
+
+                // Gate the import: must be a valid rootfs of THIS app's architecture
+                // (ABI policy). Reject and delete otherwise.
+                org.iiab.controller.deploy.data.RootfsArchiveValidator.Result vr =
+                        org.iiab.controller.deploy.data.RootfsArchiveValidator
+                                .validate(requireContext(), destFile.getAbsolutePath());
+                if (vr != org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.OK) {
+                    if (destFile.exists()) destFile.delete();
+                    final int errMsg = (vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.WRONG_ARCH)
+                            ? R.string.install_error_wrong_arch
+                            : R.string.install_error_not_rootfs;
+                    if (getActivity() != null) {
+                        getActivity().runOnUiThread(() -> {
+                            isImporting = false;
+                            updateDynamicButtons();
+                            btnImportBackup.setEnabled(true);
+                            btnImportBackup.setText(getString(R.string.install_btn_import_backup));
+                            Snackbar.make(getView(), errMsg, Snackbar.LENGTH_LONG).show();
+                        });
+                    }
+                    return;
+                }
 
                 if (getActivity() != null) {
                     getActivity().runOnUiThread(() -> {

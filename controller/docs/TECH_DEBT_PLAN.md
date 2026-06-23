@@ -89,8 +89,14 @@ _Last updated: 2026-06-23. Tracks remediation work against the findings below. I
   - `MainActivity` seam: stage the APK in the app's **private** external dir (not public Downloads); only install when `DownloadManager` status is SUCCESSFUL; **verify signature before install**; handle the API 26+ "install unknown apps" permission; register the receiver **NOT_EXPORTED**.
 - Follow-ups: **PR B** (presentation: `UpdateViewModel` + in-app download-progress UX) and a separate `network-security-config` to scope cleartext to the local box hosts (**S18**; deferred to avoid risking box connectivity).
 
-**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12** (PR #16), **D11** (PR #15), **S4** (PR #28). **S3 reverted** (see above). Remaining: **F15** (PR A in review).
-## 1. Executive summary
+**Backup import/restore validation (ABI separation + rootfs sanity): DONE** (PR `feat/rootfs-import-restore-validation`)
+- The import flow accepted **any** file as a backup, with no check that it is a rootfs or the right architecture. Per the ABI-separation policy (ARM64↔ARM64, 32↔32), a 32-bit rootfs must not be importable/restorable into a 64-bit app (and vice-versa), and a non-rootfs (e.g. a ZIM) must not be treated as one.
+- New pure domain: `deploy/domain/ElfClass` (read 32/64 from an ELF header) + `RootfsArchive` (structural "looks like a rootfs" + pick a probe binary). Unit-tested.
+- `deploy/data/RootfsArchiveValidator` lists the archive, runs the structural check, and probes one internal binary's ELF class vs the app's ABI (`Process.is64Bit()`). **Two gates, hard-block, fail-closed:** at **import** (reject + delete) and at **restore** (`TarExtractor` gains a `validateRootfs` overload that reuses its D11 listing). A *definite* wrong-arch is blocked; if arch can't be determined we don't block on arch (the structural check still applies).
+- **Identity manifest (soft):** also reads the build's `installed-rootfs/iiab/.iiab-rootfs.json` (per `docs/ROOTFS_MANIFEST.md`) — when present it authoritatively gates `kind` + `arch`; when **absent** it shows a non-blocking "manifest not found" alert and falls back to the ELF/structure heuristic. (Integrity `iiab-tree-sha256-v1` / `Result.CORRUPT` is the next PR.)
+- **Pending (documented):** the **integrity** treehash verification (Java ustar/pax reader mirroring `tools/iiab_tree_hash.py`), the in-app backup-writer emitting both members, and the arbitrary-file attack-vector analysis. Verify on a real device with a 32-bit and a 64-bit backup.
+
+**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12** (PR #16), **D11** (PR #15), **S4** (PR #28). **S3 reverted** (see above). Remaining: **F15** (PR A in review).## 1. Executive summary
 
 The Controller is functional and shows real security intent (it SHA256-audits native binaries at build time, scrubs the keystore in CI, and scopes most broadcasts). But it carries debt on four fronts that scale badly toward the README's "millions of users" goal:
 
