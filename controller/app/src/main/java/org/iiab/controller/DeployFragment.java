@@ -91,7 +91,7 @@ public class DeployFragment extends Fragment {
     private ProgressButton btnAdvancedBackup, btnAdvancedRestore;
     private LinearLayout restoreLogPanel;
     private TextView restoreLogText, restoreLogResult;
-    private android.widget.ScrollView restoreLogScroll;
+    private androidx.core.widget.NestedScrollView restoreLogScroll;
 
     // Backup Menu UI
     private TextView txtSelectBackupTitle, txtBackupStatus;
@@ -293,6 +293,10 @@ public class DeployFragment extends Fragment {
         restoreLogText = view.findViewById(R.id.restore_log_text);
         restoreLogResult = view.findViewById(R.id.restore_log_result);
         restoreLogScroll = view.findViewById(R.id.restore_log_scroll);
+        View restoreLogClose = view.findViewById(R.id.restore_log_close);
+        if (restoreLogClose != null) {
+            restoreLogClose.setOnClickListener(vv -> { if (restoreLogPanel != null) restoreLogPanel.setVisibility(View.GONE); });
+        }
         txtSelectBackupTitle = view.findViewById(R.id.txt_select_backup_title);
         containerBackupList = view.findViewById(R.id.container_backup_list);
         txtBackupStatus = view.findViewById(R.id.txt_backup_status);
