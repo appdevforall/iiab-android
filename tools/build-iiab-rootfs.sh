@@ -77,6 +77,7 @@
 # Run as root on the host (proot and the bind mounts want it).
 # =============================================================================
 set -euo pipefail
+SELF="$(readlink -f "$0" 2>/dev/null || echo "$0")"   # absolute path to this script (for --all-* self-dispatch)
 
 # ----------------------------- Colors / log ----------------------------------
 RED="\033[31m"; YEL="\033[33m"; GRN="\033[32m"; BLU="\033[34m"; RST="\033[0m"; BOLD="\033[1m"
@@ -230,7 +231,7 @@ if [[ "$ALL_ARCH" -eq 1 || "$ALL_TIER" -eq 1 ]]; then
   for _arch in "${build_archs[@]}"; do
     for _tier in "${build_tiers[@]}"; do
       log "==================== BUILD  tier=${_tier}  arch=${_arch} ===================="
-      if "$0" "${PASS[@]}" --arch "$_arch" --tier "$_tier"; then
+      if bash "$SELF" "${PASS[@]}" --arch "$_arch" --tier "$_tier"; then
         ok "build OK: ${_tier}/${_arch}"
       else
         warn "build FAILED: ${_tier}/${_arch} (continuing with the rest)"; MULTI_RC=1
