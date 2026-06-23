@@ -366,6 +366,24 @@ ensure_mkmetalink() {
 
 HOST_ARCH="$(uname -m)"
 log "Host arch: ${HOST_ARCH} | Target: ${ARCH} (${DEB_ARCH})"
+
+# 32-bit guest on a 64-bit host: glibc's 32-bit pthread_mutex_t aborts when the
+# process PID > 65535 ("only supports pids <= 65535"). The PID counter climbs with
+# uptime, so this fails intermittently. Cap pid_max so new PIDs stay in range.
+# System-wide + resets on reboot; we restore the previous value on exit.
+if [[ "$DEB_ARCH" == "arm" && "$HOST_ARCH" == "aarch64" ]]; then
+  if [[ -w /proc/sys/kernel/pid_max ]]; then
+    _PID_MAX_OLD="$(cat /proc/sys/kernel/pid_max)"
+    if [[ "${_PID_MAX_OLD:-0}" -gt 65536 ]]; then
+      warn "32-bit guest on 64-bit host: lowering kernel.pid_max ${_PID_MAX_OLD} -> 65536 (glibc 32-bit needs PID<=65535; resets on reboot)."
+      echo 65536 > /proc/sys/kernel/pid_max \
+        && trap 'echo "${_PID_MAX_OLD}" > /proc/sys/kernel/pid_max 2>/dev/null || true' EXIT \
+        || warn "Could not lower pid_max; the 32-bit build may abort (pthread_mutex PID error)."
+    fi
+  else
+    warn "Cannot write /proc/sys/kernel/pid_max (need root / host caps); 32-bit build may abort with pid>65535."
+  fi
+fi
 # --------- Native first, probe, fall back to QEMU only if the CPU refuses ------
 # Do NOT assume a 64-bit host can't run 32-bit guests (many can). We try NATIVE
 # first and probe the actual target binary; only if the CPU rejects it (ENOEXEC)
@@ -691,6 +709,23 @@ META4="latest_${TIER_NAME}_${ARCH}.meta4"
 
 # ----------------------------- 4) Package (top-level installed-rootfs/iiab/) ----
 log "[4/5] Packaging ${ARTIFACT} ..."
+
+# proot --link2symlink turns hardlinks into ABSOLUTE symlinks pointing at
+# .l2s.<name>NNNN files under the BUILD path (this host). Those break when the
+# rootfs is restored at a different path on the device -> e.g. node_modules'
+# better_sqlite3.node becomes a dangling link and the dashboard can't start.
+# Materialize every .l2s symlink into a real file NOW (the targets still resolve
+# on this host), so the packaged rootfs is fully relocatable.
+log "Flattening proot link2symlink (.l2s) artifacts for relocatability..."
+_l2s_n=0
+while IFS= read -r -d '' _lnk; do
+  _tgt="$(readlink -f "$_lnk" 2>/dev/null)" || continue
+  if [[ -n "$_tgt" && -f "$_tgt" ]]; then
+    cp -f --remove-destination "$_tgt" "$_lnk" && _l2s_n=$((_l2s_n+1))
+  fi
+done < <(find "$ROOTFS" -type l -lname '*/.l2s.*' -print0 2>/dev/null)
+find "$ROOTFS" -type f -name '.l2s.*' -delete 2>/dev/null || true
+log "Materialized ${_l2s_n} link2symlink (.l2s) entries into real files."
 rm -f "$ROOTFS/etc/resolv.conf" 2>/dev/null || true            # ephemeral; the APK injects it at runtime
 # Remove the interim build shims so the rootfs does not diverge from the APK
 rm -f "$ROOTFS/usr/local/sbin/hostnamectl" \
