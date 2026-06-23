@@ -184,6 +184,15 @@ backup is untrusted; `TarExtractor` extracted without validating member names.
   before extracting if any member escapes; the backup-creation `sh -c` pipe was
   single-quoted. Applies to all extractions.
 
+**Slice (DONE) — ADB command guard (`org.iiab.controller.adb.domain`)**
+Phase-1 security slice closing tech-debt **S4** (arbitrary on-device shell via ADB).
+
+- `domain/` — `AdbShellCommand.isSafe(command)` (pure JVM): rejects shell
+  metacharacters / control chars so only a single self-contained command runs.
+  Unit-tested (`AdbShellCommandTest`).
+- **Legacy seam:** `IIABAdbManager.executeCommand` validates and fails closed
+  before opening the `shell:` stream.
+
 **Legacy (NOT yet layered)** — most of `org.iiab.controller` is still flat:
 god classes `MainActivity` and `DeployFragment` (~2.7k LOC), shared mutable
 state on public/static fields, hand-rolled `HttpURLConnection` calls duplicated
