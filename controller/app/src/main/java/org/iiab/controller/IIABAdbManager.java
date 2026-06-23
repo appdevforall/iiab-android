@@ -9,6 +9,8 @@
 
 package org.iiab.controller;
 
+import org.iiab.controller.adb.domain.AdbShellCommand;
+
 import android.content.Context;
 import android.os.Build;
 import android.security.keystore.KeyGenParameterSpec;
@@ -199,6 +201,12 @@ public class IIABAdbManager extends AbsAdbConnectionManager {
 
     // Execute shell commands seamlessly
     public void executeCommand(String command) {
+        // S4: this runs as an on-device shell over ADB. Reject anything that
+        // could chain/substitute extra commands; fail closed without executing.
+        if (!AdbShellCommand.isSafe(command)) {
+            Log.e(TAG, "Refusing to run unsafe ADB shell command: " + command);
+            return;
+        }
         new Thread(() -> {
             try (io.github.muntashirakon.adb.AdbStream stream = this.openStream("shell:" + command)) {
                 java.io.InputStream is = stream.openInputStream();

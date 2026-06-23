@@ -71,7 +71,12 @@ _Last updated: 2026-06-17. Tracks remediation work against the findings below. I
 - `TarExtractor` now **pre-lists** entries (`tar -t`, gzip decompressed in Java) and **fails closed** if any member escapes — for *every* extraction (the verified rootfs install included, defense in depth). Also single-quoted the paths in the backup-creation `sh -c` pipe (the "unquoted backup pipe" half of D11).
 - Verify on a real install/restore that legitimate rootfs/backup members are relative (they are by convention) so the guard does not false-positive.
 
-**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12** (PR #16), **D11** (PR #15). **S3 reverted** (see above). Remaining: **S4**, **F15**.
+**S4 — Arbitrary ADB shell command (Phase 1 security): DONE** (PR `fix/phase1-security-s4-adb-command`)
+- Closes **S4**: `IIABAdbManager.executeCommand` ran `openStream("shell:" + command)` — an on-device shell over ADB — with no validation. Callers pass fixed commands today, but a value with shell metacharacters could chain/substitute extra commands run with ADB privileges.
+- New pure domain rule `org.iiab.controller.adb.domain.AdbShellCommand.isSafe(command)` (rejects `; | & $ \` ( ) < > ' " \\`, CR/LF and control chars). Unit-tested (`AdbShellCommandTest`).
+- `executeCommand` now fails closed (logs + does not open the stream) on an unsafe command; the two legitimate `settings put` / `device_config put` calls are unaffected.
+
+**Phase 1 — Security hardening: IN PROGRESS.** Done so far: **S1** (PR #9), **M4** (PR #10), **D6** (PR #12), **D2** (PR #13), **D12** (PR #16), **D11** (PR #15). **S3 reverted** (see above), **S4**. Remaining: **F15**.
 
 ## 1. Executive summary
 
