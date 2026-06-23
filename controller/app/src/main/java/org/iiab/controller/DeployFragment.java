@@ -2212,7 +2212,7 @@ public class DeployFragment extends Fragment {
             @Override public void run() {
                 if (btnImportBackup != null) {
                     String f = IMPORT_SPINNER[importSpinnerFrame++ % IMPORT_SPINNER.length];
-                    btnImportBackup.setText(f + "  " + getString(R.string.install_msg_importing));
+                    btnImportBackup.setText(getString(R.string.install_msg_importing) + "  " + f);
                 }
                 if (importSpinnerHandler != null) importSpinnerHandler.postDelayed(this, 90);
             }
