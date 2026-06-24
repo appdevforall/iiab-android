@@ -40,7 +40,7 @@
     <color name="chart_os">#26C6DA</color>
     <color name="chart_maps">#FF9800</color>
     <color name="chart_wiki">#66BB6A</color>
-    <color name="chart_track">#333333</color>
+    <color name="chart_track">#E8EAED</color>
     <!-- Round 2 (Usage/Install/Share migration) — twins of values/colors.xml -->
     <color name="surface_active_success">#173317</color>
     <color name="surface_active_info">#17263A</color>
