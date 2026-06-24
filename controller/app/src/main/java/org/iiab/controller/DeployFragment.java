@@ -74,7 +74,10 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
-public class DeployFragment extends Fragment {
+public class DeployFragment extends Fragment implements org.iiab.controller.backup.presentation.BackupHost {
+
+    private final org.iiab.controller.backup.presentation.BackupController backupController =
+            new org.iiab.controller.backup.presentation.BackupController(this, this);
 
     // =========================================================================================
     // REGION 1: VARIABLES & STATE
@@ -96,7 +99,6 @@ public class DeployFragment extends Fragment {
     // Backup Menu UI
     private TextView txtSelectBackupTitle, txtBackupStatus;
     private LinearLayout containerBackupList;
-    private String selectedBackupFile = null;
 
     // Advanced Monitoring UI
     private TextView txtAdvMonitoringTitle;
@@ -117,8 +119,6 @@ public class DeployFragment extends Fragment {
     // SAF & Backup Controls
     private Button btnImportBackup;
     private boolean isBackupInProgress = false;
-    private ActivityResultLauncher<String[]> importBackupLauncher;
-    private ActivityResultLauncher<String> exportBackupLauncher;
 
     // State Variables
     private final List<CheckBox> newInstallCheckboxes = new ArrayList<>();
@@ -142,9 +142,6 @@ public class DeployFragment extends Fragment {
     private boolean isRestoring = false;
     private boolean isDeleting = false;
     private boolean isImporting = false;
-    private static final String[] IMPORT_SPINNER = {"\u28BF", "\u28FB", "\u28FD", "\u28FE", "\u28F7", "\u28EF", "\u28DF", "\u287F"};
-    private android.os.Handler importSpinnerHandler;
-    private int importSpinnerFrame = 0;
     private PRootEngine prootEngine;
 
     // Background Handlers
@@ -319,7 +316,7 @@ public class DeployFragment extends Fragment {
         sharedStateDir = new File(Environment.getExternalStorageDirectory(), ".iiab_state");
 
         // Initialization Logic
-        setupSafLaunchers();
+        backupController.registerLaunchers();
         setupAdbNetworking();
         setupAdvancedMonitoringMenu(view);
         setupCpuChart();
@@ -566,7 +563,7 @@ public class DeployFragment extends Fragment {
         }
     }
 
-    private void updateDynamicButtons() {
+    public void updateDynamicButtons() {
         MainActivity mainAct = (MainActivity) getActivity();
         if (mainAct == null || !isAdded()) return;
 
@@ -634,10 +631,11 @@ public class DeployFragment extends Fragment {
         // 1. ALWAYS link the buttons so Listeners can intercept and drop the Snackbar
         bindInstallButtonLogic(mainAct, debianRootfs, iiabRootDir);
         bindDeleteButtonLogic(mainAct, debianRootfs);
-        bindBackupButtonLogic(mainAct, backupsDir, iiabRootDir);
+        backupController.bind(mainAct, backupsDir, iiabRootDir,
+                btnImportBackup, btnAdvancedBackup, btnAdvancedRestore,
+                txtSelectBackupTitle, txtBackupStatus, containerBackupList,
+                restoreLogPanel, restoreLogText, restoreLogResult, restoreLogScroll);
         bindResetButtonLogic(mainAct, debianRootfs);
-        bindBackupMenuLogic(backupsDir);
-        refreshRestoreButtonLogic();
 
         if (isServerRunning || isBusy) {
             // LOCK MODE: Server On or System Busy
@@ -1830,602 +1828,6 @@ public class DeployFragment extends Fragment {
     // REGION 6: BACKUP & RESTORE SAF
     // =========================================================================================
 
-    private void setupSafLaunchers() {
-        importBackupLauncher = registerForActivityResult(new ActivityResultContracts.OpenDocument(), uri -> {
-            if (uri != null) importBackupSafely(uri);
-        });
-
-        exportBackupLauncher = registerForActivityResult(new ActivityResultContracts.CreateDocument("application/gzip"), uri -> {
-            if (uri != null && selectedBackupFile != null)
-                exportBackupSafely(uri, selectedBackupFile);
-        });
-    }
-
-    private void bindBackupButtonLogic(MainActivity mainAct, File backupsDir, File iiabRootDir) {
-        if (btnAdvancedBackup == null) return;
-        btnAdvancedBackup.setOnClickListener(v -> {
-            if (mainAct.isServerAlive) {
-                Snackbar.make(v, R.string.install_msg_server_running_lock, Snackbar.LENGTH_LONG).show();
-                return;
-            }
-            if (isSystemBusy() && !isBackupInProgress) {
-                Snackbar.make(v, getSystemBusyMessage(), Snackbar.LENGTH_LONG).show();
-                return;
-            }
-            if (isBackupInProgress) {
-                new android.app.AlertDialog.Builder(requireContext())
-                        .setTitle(getString(R.string.install_msg_backup_in_progress_title))
-                        .setMessage(getString(R.string.install_msg_backup_in_progress_body))
-                        .setPositiveButton(getString(R.string.install_btn_force_stop_process), (dialog, which) -> {
-                            isBackupInProgress = false;
-                            btnAdvancedBackup.setText(getString(R.string.install_btn_backup)); btnAdvancedBackup.stopProgress();
-                            Snackbar.make(getView(), getString(R.string.install_msg_backup_aborted), Snackbar.LENGTH_SHORT).show();
-                        })
-                        .setNegativeButton(getString(R.string.install_btn_let_finish), null)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
-                return;
-            }
-
-            isBackupInProgress = true;
-            btnAdvancedBackup.setText(getString(R.string.install_msg_compressing));
-            btnAdvancedBackup.startProgress();
-            Snackbar.make(v, getString(R.string.install_msg_creating_backup), Snackbar.LENGTH_LONG).show();
-
-            new Thread(() -> {
-                enableSystemProtection();
-                try {
-                    // Format: iiab-oa_rootfs_$year.$day_of_year_3_digits_$id_$arch.tar.gz
-                    java.util.Calendar calendar = java.util.Calendar.getInstance();
-                    int year = calendar.get(java.util.Calendar.YEAR);
-                    int dayOfYear = calendar.get(java.util.Calendar.DAY_OF_YEAR);
-                    String arch = getTermuxArch();
-
-                    // --- AUTO-INCREMENTAL ID LOGIC ---
-                    android.content.SharedPreferences prefs = requireContext().getSharedPreferences(getString(R.string.pref_file_internal), Context.MODE_PRIVATE);
-
-                    // We check if we continue on the same day. If it is a new day, we reset the ID to 1
-                    int lastSavedDay = prefs.getInt("backup_last_day", -1);
-                    int currentId;
-
-                    if (lastSavedDay == dayOfYear) {
-                        // Same day, we increase the ID
-                        currentId = prefs.getInt("backup_daily_id", 0) + 1;
-                    } else {
-                        // New day, we start from 1
-                        currentId = 1;
-                        prefs.edit().putInt("backup_last_day", dayOfYear).apply();
-                    }
-
-                    // We save the new ID in preferences for next time
-                    prefs.edit().putInt("backup_daily_id", currentId).apply();
-
-                    // We construct the final name with the ID
-                    String fileName = String.format(java.util.Locale.US, "iiab-oa_%04d.%03d_%d_%s.tar.gz", year, dayOfYear, currentId, arch);
-                    File backupFile = new File(backupsDir, fileName);
-
-                    File staticTar = new File(requireContext().getApplicationInfo().nativeLibraryDir, "libtar.so");
-                    File staticGzip = new File(requireContext().getApplicationInfo().nativeLibraryDir, "libgzip.so");
-                    String tarBin = staticTar.exists() ? staticTar.getAbsolutePath() : "tar";
-                    String gzipBin = staticGzip.exists() ? staticGzip.getAbsolutePath() : "gzip";
-
-                    // Stamp an identity manifest into the backup so a re-import is
-                    // recognized (kind/arch) AND explicitly declares it carries NO
-                    // integrity checksum (origin=device-backup) — we do NOT turn the
-                    // phone into a builder. It is staged in a temp tree and packed
-                    // FIRST (a second `-C`) so RootfsArchiveValidator reads it from
-                    // the first tar header without decompressing the whole archive.
-                    // See docs/ROOTFS_MANIFEST.md.
-                    String manifestArg = null;
-                    File mfStageRoot = new File(requireContext().getCacheDir(), "mfstage");
-                    try {
-                        if (mfStageRoot.exists()) {
-                            ProcessRunner.run(new String[]{"rm", "-rf", mfStageRoot.getAbsolutePath()});
-                        }
-                        File iiabStage = new File(mfStageRoot, "installed-rootfs/iiab");
-                        if (iiabStage.mkdirs()) {
-                            String appAbi = org.iiab.controller.deploy.data.RootfsManifest.appAbiId();
-                            String debArch = appAbi.contains("64") ? "arm64" : "armhf";
-                            String built = String.format(java.util.Locale.US, "%04d.%03d", year, dayOfYear);
-                            String identityJson = "{\"schema\":1,\"kind\":\"iiab-rootfs\",\"arch\":\""
-                                    + appAbi + "\",\"deb_arch\":\"" + debArch + "\",\"built\":\""
-                                    + built + "\",\"builder\":\"knowledgetogo-app\",\"origin\":\"device-backup\"}";
-                            java.io.FileOutputStream mfo =
-                                    new java.io.FileOutputStream(new File(iiabStage, ".iiab-rootfs.json"));
-                            mfo.write(identityJson.getBytes("UTF-8"));
-                            mfo.close();
-                            manifestArg = "-C '" + mfStageRoot.getAbsolutePath()
-                                    + "' 'installed-rootfs/iiab/.iiab-rootfs.json' ";
-                        }
-                    } catch (Exception mfe) {
-                        Log.w(TAG, "Could not stage identity manifest for backup: " + mfe.getMessage());
-                        manifestArg = null;
-                    }
-
-                    // D11: single-quote the interpolated paths so the backup pipe is robust
-                    // even if a path ever contains spaces/metacharacters (app-internal today).
-                    String cmd = "'" + tarBin + "' -cf - "
-                            + (manifestArg != null ? manifestArg : "")
-                            + "-C '" + iiabRootDir.getAbsolutePath()
-                            + "' installed-rootfs | '" + gzipBin + "' > '" + backupFile.getAbsolutePath() + "'";
-                    // D12: ProcessRunner drains stderr so a large backup with tar warnings
-                    // cannot deadlock on a full pipe buffer.
-                    ProcessRunner.Result backupResult = ProcessRunner.run(new String[]{"/system/bin/sh", "-c", cmd});
-                    int exitCode = backupResult.exitCode;
-                    if (exitCode != 0) {
-                        Log.w(TAG, "Backup pipe failed (exit " + exitCode + "): " + backupResult.output);
-                    }
-
-                    mainAct.runOnUiThread(() -> {
-                        if (isBackupInProgress) {
-                            if (exitCode == 0) {
-                                Snackbar.make(getView(), getString(R.string.install_msg_backup_complete, backupFile.getName()), Snackbar.LENGTH_LONG).show();
-                                selectedBackupFile = backupFile.getName();
-                            } else {
-                                Snackbar.make(getView(), getString(R.string.install_msg_backup_failed, exitCode), Snackbar.LENGTH_LONG).show();
-                                if (backupFile.exists()) backupFile.delete();
-
-                                // If it fails, we revert the ID so as not to waste numbers
-                                prefs.edit().putInt("backup_daily_id", currentId - 1).apply();
-                            }
-                        } else {
-                            if (backupFile.exists()) backupFile.delete();
-                            prefs.edit().putInt("backup_daily_id", currentId - 1).apply();
-                        }
-                        isBackupInProgress = false;
-                        btnAdvancedBackup.setText(getString(R.string.install_btn_backup)); btnAdvancedBackup.stopProgress();
-                        updateDynamicButtons();
-                        disableSystemProtection();
-                    });
-                } catch (Exception e) {
-                    mainAct.runOnUiThread(() -> {
-                        isBackupInProgress = false;
-                        btnAdvancedBackup.setText(getString(R.string.install_btn_backup)); btnAdvancedBackup.stopProgress();
-                        Snackbar.make(getView(), getString(R.string.install_msg_backup_error, e.getMessage()), Snackbar.LENGTH_LONG).show();
-                        updateDynamicButtons();
-                        disableSystemProtection();
-                    });
-                }
-            }).start();
-        });
-
-        if (btnImportBackup != null) {
-            // 1. We load the native icon
-            android.graphics.drawable.Drawable importIcon = ContextCompat.getDrawable(requireContext(), android.R.drawable.stat_sys_download);
-            if (importIcon != null) {
-                importIcon.setTint(ContextCompat.getColor(requireContext(), R.color.status_success));
-                btnImportBackup.setCompoundDrawablesWithIntrinsicBounds(importIcon, null, null, null);
-                btnImportBackup.setCompoundDrawablePadding(24);
-
-                // 2. We center the content internally
-                btnImportBackup.setGravity(android.view.Gravity.CENTER);
-                btnImportBackup.setPadding(0, 0, 0, 0);
-
-                // 3. We change the width to wrap_content and center the button in its container
-                if (btnImportBackup.getLayoutParams() instanceof LinearLayout.LayoutParams) {
-                    LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) btnImportBackup.getLayoutParams();
-                    params.width = ViewGroup.LayoutParams.WRAP_CONTENT;
-                    params.gravity = android.view.Gravity.CENTER_HORIZONTAL;
-                    btnImportBackup.setLayoutParams(params);
-                }
-            }
-
-            btnImportBackup.setOnClickListener(v -> {
-                importBackupLauncher.launch(new String[]{"application/gzip", "application/x-gzip", "*/*"});
-            });
-        }
-    }
-
-    private void bindBackupMenuLogic(File backupsDir) {
-        if (txtSelectBackupTitle == null) return;
-        txtSelectBackupTitle.setOnClickListener(v -> {
-            boolean isCollapsed = containerBackupList.getVisibility() == View.GONE;
-            if (isCollapsed) {
-                containerBackupList.setVisibility(View.VISIBLE);
-                txtSelectBackupTitle.setText(getString(R.string.install_adv_select_backup_open));
-                containerBackupList.removeAllViews();
-                selectedBackupFile = null;
-
-                File[] backups = backupsDir.listFiles((dir, name) -> name.endsWith(".tar.gz") || name.endsWith(".tar.xz"));
-                if (backups == null || backups.length == 0) {
-                    TextView noBackups = new TextView(requireContext());
-                    noBackups.setText(getString(R.string.install_msg_no_backups));
-                    noBackups.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_danger));
-                    containerBackupList.addView(noBackups);
-                } else {
-                    java.util.Arrays.sort(backups, (f1, f2) -> Long.compare(f2.lastModified(), f1.lastModified()));
-
-                    LinearLayout listContainer = new LinearLayout(requireContext());
-                    listContainer.setOrientation(LinearLayout.VERTICAL);
-
-                    List<android.widget.RadioButton> radioButtons = new ArrayList<>();
-                    int iconPadding = (int) (12 * getResources().getDisplayMetrics().density);
-
-                    // Variable to alternate colors (Zebra Effect)
-                    boolean isEvenRow = true;
-
-                    for (File b : backups) {
-                        String filename = b.getName();
-                        String size = String.format(java.util.Locale.US, "%.2f MB", b.length() / (1024.0 * 1024.0));
-                        String date = new java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.US).format(new java.util.Date(b.lastModified()));
-
-                        // MAIN ROW
-                        LinearLayout row = new LinearLayout(requireContext());
-                        row.setOrientation(LinearLayout.HORIZONTAL);
-                        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
-
-                        // Apply subtle alternating background color
-                        if (isEvenRow) {
-                            row.setBackgroundColor(ContextCompat.getColor(requireContext(), R.color.surface_section)); // Slightly lighter
-                        } else {
-                            row.setBackgroundColor(Color.TRANSPARENT); // Normal dark
-                        }
-                        isEvenRow = !isEvenRow; // Alternar para la siguiente fila
-
-                        LinearLayout.LayoutParams rowParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-                        rowParams.setMargins(0, 0, 0, 8); // Separation between cards
-                        row.setLayoutParams(rowParams);
-                        row.setPadding(8, 8, 8, 8);
-
-                        // RADIO BUTTON AND TEXT
-                        android.widget.RadioButton rb = new android.widget.RadioButton(requireContext());
-                        rb.setText(getString(R.string.install_msg_backup_details, filename, size, date));
-                        rb.setTextColor(ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
-                        rb.setPadding(0, 8, 0, 8);
-                        rb.setTag(filename);
-
-                        LinearLayout.LayoutParams rbParams = new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f);
-                        rb.setLayoutParams(rbParams);
-                        radioButtons.add(rb);
-
-                        // Selection logic (Applied to the ENTIRE row, not just the radio button)
-                        View.OnClickListener selectRowListener = rowView -> {
-                            for (android.widget.RadioButton other : radioButtons) {
-                                other.setChecked(other == rb);
-                            }
-                            selectedBackupFile = rb.isChecked() ? filename : null;
-                            refreshRestoreButtonLogic();
-                        };
-
-                        // We assign the click to both the RadioButton and the parent Layout
-                        rb.setOnClickListener(selectRowListener);
-                        row.setOnClickListener(selectRowListener);
-
-                        // EXPORT BUTTON
-                        android.widget.ImageButton btnExport = new android.widget.ImageButton(requireContext());
-                        btnExport.setImageResource(android.R.drawable.stat_sys_upload);
-                        btnExport.setBackgroundColor(Color.TRANSPARENT);
-                        btnExport.setColorFilter(ContextCompat.getColor(requireContext(), R.color.status_success));
-                        btnExport.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
-
-                        btnExport.setOnClickListener(btn -> {
-                            selectedBackupFile = filename;
-                            for (android.widget.RadioButton other : radioButtons) {
-                                other.setChecked(other == rb);
-                            }
-                            refreshRestoreButtonLogic();
-                            exportBackupLauncher.launch(selectedBackupFile);
-                        });
-
-                        // DELETE BUTTON
-                        android.widget.ImageButton btnDelete = new android.widget.ImageButton(requireContext());
-                        btnDelete.setImageResource(android.R.drawable.ic_menu_close_clear_cancel);
-                        btnDelete.setBackgroundColor(Color.TRANSPARENT);
-                        btnDelete.setColorFilter(ContextCompat.getColor(requireContext(), R.color.status_danger));
-                        btnDelete.setPadding(iconPadding, iconPadding, iconPadding, iconPadding);
-
-                        btnDelete.setOnClickListener(btn -> {
-                            new android.app.AlertDialog.Builder(requireContext())
-                                    .setTitle(R.string.install_dialog_delete_backup_title)
-                                    .setMessage(getString(R.string.install_dialog_delete_backup_msg, filename))
-                                    .setPositiveButton(R.string.install_btn_delete_confirm, (dialog, which) -> {
-                                        File toDelete = new File(backupsDir, filename);
-                                        if (toDelete.delete()) {
-                                            if (filename.equals(selectedBackupFile)) selectedBackupFile = null;
-                                            txtSelectBackupTitle.performClick();
-                                            txtSelectBackupTitle.performClick();
-                                            Snackbar.make(getView(), R.string.install_msg_backup_deleted, Snackbar.LENGTH_SHORT).show();
-                                        }
-                                    })
-                                    .setNegativeButton(R.string.cancel, null)
-                                    .show();
-                        });
-
-                        row.addView(rb);
-                        row.addView(btnExport);
-                        row.addView(btnDelete);
-
-                        listContainer.addView(row);
-                    }
-                    containerBackupList.addView(listContainer);
-                }
-                refreshRestoreButtonLogic();
-            } else {
-                containerBackupList.setVisibility(View.GONE);
-                txtSelectBackupTitle.setText(getString(R.string.install_adv_select_backup));
-            }
-        });
-    }
-
-    private void refreshRestoreButtonLogic() {
-        MainActivity mainAct = (MainActivity) getActivity();
-        if (mainAct == null || btnAdvancedRestore == null) return;
-
-        if (mainAct.isServerAlive) {
-            btnAdvancedRestore.setAlpha(0.5f);
-            btnAdvancedRestore.setOnClickListener(v -> Snackbar.make(v, R.string.install_msg_server_running_lock, Snackbar.LENGTH_LONG).show());
-            return;
-        }
-
-        if (selectedBackupFile == null) {
-            btnAdvancedRestore.setAlpha(0.5f);
-            btnAdvancedRestore.setOnClickListener(v -> Snackbar.make(v, R.string.install_msg_select_backup_first, Snackbar.LENGTH_LONG).show());
-        } else {
-            btnAdvancedRestore.setAlpha(1.0f);
-            btnAdvancedRestore.setOnClickListener(v -> {
-                if (mainAct.isServerAlive) {
-                    Snackbar.make(v, R.string.install_msg_server_running_lock, Snackbar.LENGTH_LONG).show();
-                    return;
-                }
-                if (isSystemBusy()) {
-                    Snackbar.make(v, getSystemBusyMessage(), Snackbar.LENGTH_LONG).show();
-                    return;
-                }
-
-                isRestoring = true;
-                updateDynamicButtons();
-                Snackbar.make(v, getString(R.string.install_msg_restore_starting, selectedBackupFile), Snackbar.LENGTH_SHORT).show();
-                mainAct.invalidateModuleStateTrust();
-
-                File backupFile = new File(new File(requireContext().getFilesDir(), "rootfs/backups"), selectedBackupFile);
-                if (!backupFile.exists()) {
-                    isRestoring = false;
-                    updateDynamicButtons();
-                    Snackbar.make(v, R.string.install_error_backup_missing, Snackbar.LENGTH_SHORT).show();
-                    return;
-                }
-
-                btnAdvancedRestore.setEnabled(false);
-                btnAdvancedRestore.setText(getString(R.string.install_status_restoring));
-                btnAdvancedRestore.startProgress();
-                if (restoreLogPanel != null) {
-                    restoreLogPanel.setVisibility(View.VISIBLE);
-                    if (restoreLogText != null) restoreLogText.setText("");
-                    if (restoreLogResult != null) restoreLogResult.setText("");
-                }
-                File iiabRootDir = new File(requireContext().getFilesDir(), "rootfs");
-                TarExtractor tarExtractor = new TarExtractor();
-
-                enableSystemProtection();
-                tarExtractor.startExtraction(requireContext(), backupFile.getAbsolutePath(), iiabRootDir.getAbsolutePath(), true, new TarExtractor.ExtractionListener() {
-                    @Override
-                    public void onComplete(String destDir) {
-                        mainAct.runOnUiThread(() -> {
-                            isRestoring = false;
-                            disableSystemProtection();
-                            btnAdvancedRestore.setEnabled(true);
-                            btnAdvancedRestore.setText(getString(R.string.install_btn_restore));
-                            Snackbar.make(getView(), R.string.install_success_restore, Snackbar.LENGTH_LONG).show();
-                            if (restoreLogResult != null) { restoreLogResult.setText("\u2713"); restoreLogResult.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_success)); }
-                            btnAdvancedRestore.stopProgress();
-                            updateDynamicButtons();
-                        });
-                    }
-
-                    @Override
-                    public void onError(String error) {
-                        mainAct.runOnUiThread(() -> {
-                            isRestoring = false;
-                            disableSystemProtection();
-                            btnAdvancedRestore.setEnabled(true);
-                            btnAdvancedRestore.setText(getString(R.string.install_btn_restore));
-                            Snackbar.make(getView(), getString(R.string.install_msg_restore_failed) + " " + error, Snackbar.LENGTH_LONG).show();
-                            if (restoreLogResult != null) { restoreLogResult.setText("\u2717"); restoreLogResult.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_warning)); }
-                            btnAdvancedRestore.stopProgress();
-                            updateDynamicButtons();
-                        });
-                    }
-
-                    @Override
-                    public void onProgress(String line) {
-                        if (restoreLogText == null) return;
-                        restoreLogText.append(line + "\n");
-                        if (restoreLogScroll != null) {
-                            restoreLogScroll.post(() -> restoreLogScroll.fullScroll(View.FOCUS_DOWN));
-                        }
-                    }
-                });
-            });
-        }
-    }
-
-    private void startImportSpinner() {
-        stopImportSpinner();
-        importSpinnerFrame = 0;
-        importSpinnerHandler = new android.os.Handler(android.os.Looper.getMainLooper());
-        final Runnable r = new Runnable() {
-            @Override public void run() {
-                if (btnImportBackup != null) {
-                    String f = IMPORT_SPINNER[importSpinnerFrame++ % IMPORT_SPINNER.length];
-                    btnImportBackup.setText(getString(R.string.install_msg_importing) + "  " + f);
-                }
-                if (importSpinnerHandler != null) importSpinnerHandler.postDelayed(this, 90);
-            }
-        };
-        importSpinnerHandler.post(r);
-    }
-
-    private void stopImportSpinner() {
-        if (importSpinnerHandler != null) {
-            importSpinnerHandler.removeCallbacksAndMessages(null);
-            importSpinnerHandler = null;
-        }
-    }
-
-    /** Best-effort original filename from a SAF content:// URI (DISPLAY_NAME), or null. */
-    private String queryDisplayName(Uri uri) {
-        try (android.database.Cursor c = requireContext().getContentResolver()
-                .query(uri, new String[]{android.provider.OpenableColumns.DISPLAY_NAME}, null, null, null)) {
-            if (c != null && c.moveToFirst()) {
-                int idx = c.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME);
-                if (idx >= 0) return c.getString(idx);
-            }
-        } catch (Exception e) {
-            Log.w(TAG, "queryDisplayName failed: " + e.getMessage());
-        }
-        return null;
-    }
-
-    /** Show a Snackbar whose visible time scales with the message length (reading time). */
-    private void showImportSnackbar(CharSequence text) {
-        View v = getView();
-        if (v != null) {
-            Snackbar.make(v, text,
-                    org.iiab.controller.util.SnackbarDuration.millisForText(text.toString())).show();
-        }
-    }
-
-    private void importBackupSafely(Uri sourceUri) {
-        isImporting = true;
-        updateDynamicButtons();
-        btnImportBackup.setEnabled(false);
-        startImportSpinner();
-        Snackbar.make(getView(), getString(R.string.install_msg_importing), Snackbar.LENGTH_LONG).show();
-
-        new Thread(() -> {
-            enableSystemProtection();
-            try {
-                File backupsDir = new File(requireContext().getFilesDir(), "rootfs/backups");
-                if (!backupsDir.exists()) backupsDir.mkdirs();
-
-                // Keep the imported file's EXACT name; disambiguate with -1/-2/... on collision.
-                String desiredName = queryDisplayName(sourceUri);
-                java.util.Set<String> existingNames = new java.util.HashSet<>();
-                File[] existingFiles = backupsDir.listFiles();
-                if (existingFiles != null) {
-                    for (File f : existingFiles) existingNames.add(f.getName());
-                }
-                String fileName = org.iiab.controller.backup.domain.BackupNameResolver.resolve(desiredName, existingNames);
-                File destFile = new File(backupsDir, fileName);
-
-                InputStream is = requireContext().getContentResolver().openInputStream(sourceUri);
-                OutputStream os = new java.io.FileOutputStream(destFile);
-                byte[] buffer = new byte[8192];
-                int length;
-                while ((length = is.read(buffer)) > 0) {
-                    os.write(buffer, 0, length);
-                }
-                os.flush();
-                os.close();
-                is.close();
-
-                // Gate the import: must be a valid rootfs of THIS app's architecture
-                // (ABI policy). Reject and delete otherwise.
-                org.iiab.controller.deploy.data.RootfsArchiveValidator.Result vr =
-                        org.iiab.controller.deploy.data.RootfsArchiveValidator
-                                .validate(requireContext(), destFile.getAbsolutePath());
-                boolean okValidated =
-                        vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.OK;
-                boolean okNoManifest =
-                        vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.OK_NO_MANIFEST;
-                boolean okNoChecksum =
-                        vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.OK_NO_CHECKSUM;
-                if (!okValidated && !okNoManifest && !okNoChecksum) {
-                    if (destFile.exists()) destFile.delete();
-                    final int errMsg;
-                    if (vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.WRONG_ARCH) {
-                        errMsg = R.string.install_error_wrong_arch;
-                    } else if (vr == org.iiab.controller.deploy.data.RootfsArchiveValidator.Result.CORRUPT) {
-                        errMsg = R.string.install_error_corrupt;
-                    } else {
-                        errMsg = R.string.install_error_not_rootfs;
-                    }
-                    if (getActivity() != null) {
-                        getActivity().runOnUiThread(() -> {
-                            isImporting = false;
-                            stopImportSpinner(); // stop the braille spinner; rejection ends the import
-                            updateDynamicButtons();
-                            btnImportBackup.setEnabled(true);
-                            btnImportBackup.setText(getString(R.string.install_btn_import_backup));
-                            showImportSnackbar(getString(errMsg));
-                        });
-                    }
-                    return;
-                }
-                // Soft phase: no identity manifest -> import is allowed, but warn the
-                // user (a future version will validate silently). See docs/ROOTFS_MANIFEST.md.
-                if (okNoManifest && getActivity() != null) {
-                    getActivity().runOnUiThread(() ->
-                            showImportSnackbar(getString(R.string.install_warn_manifest_missing)));
-                }
-                // Transparency: an app-made (device) backup carries no integrity checksum.
-                if (okNoChecksum && getActivity() != null) {
-                    getActivity().runOnUiThread(() ->
-                            showImportSnackbar(getString(R.string.install_warn_no_checksum)));
-                }
-
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        isImporting = false;
-                        stopImportSpinner();
-                        btnImportBackup.setEnabled(true);
-                        btnImportBackup.setText(getString(R.string.install_btn_import_backup));
-                        selectedBackupFile = fileName;
-                        updateDynamicButtons();
-                        showImportSnackbar(getString(R.string.install_msg_import_success));
-                    });
-                }
-            } catch (Exception e) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        isImporting = false;
-                        stopImportSpinner();
-                        updateDynamicButtons();
-                        btnImportBackup.setEnabled(true);
-                        btnImportBackup.setText(getString(R.string.install_btn_import_backup));
-                        showImportSnackbar(getString(R.string.install_msg_import_failed, e.getMessage()));
-                    });
-                }
-            } finally {
-                disableSystemProtection();
-            }
-        }).start();
-    }
-
-    private void exportBackupSafely(Uri destUri, String backupFileName) {
-        Snackbar.make(getView(), getString(R.string.install_msg_exporting, backupFileName), Snackbar.LENGTH_LONG).show();
-
-        new Thread(() -> {
-            enableSystemProtection();
-            try {
-                File sourceFile = new File(new File(requireContext().getFilesDir(), "rootfs/backups"), backupFileName);
-                InputStream is = new java.io.FileInputStream(sourceFile);
-                OutputStream os = requireContext().getContentResolver().openOutputStream(destUri);
-                byte[] buffer = new byte[8192];
-                int length;
-                while ((length = is.read(buffer)) > 0) {
-                    os.write(buffer, 0, length);
-                }
-                os.flush();
-                os.close();
-                is.close();
-
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        Snackbar.make(getView(), getString(R.string.install_msg_export_success), Snackbar.LENGTH_LONG).show();
-                    });
-                }
-            } catch (Exception e) {
-                if (getActivity() != null) {
-                    getActivity().runOnUiThread(() -> {
-                        Snackbar.make(getView(), getString(R.string.install_msg_export_failed, e.getMessage()), Snackbar.LENGTH_LONG).show();
-                    });
-                }
-            } finally {
-                disableSystemProtection();
-            }
-        }).start();
-    }
 
 
     // =========================================================================================
@@ -2812,11 +2214,11 @@ public class DeployFragment extends Fragment {
     // REGION 8: UTILITIES
     // =========================================================================================
 
-    private boolean isSystemBusy() {
+    public boolean isSystemBusy() {
         return isDownloadingRootfs || isBatchInstalling || isBackupInProgress || isRestoring || isDeleting || isImporting;
     }
 
-    private String getSystemBusyMessage() {
+    public String getSystemBusyMessage() {
         if (isDownloadingRootfs) return getString(R.string.install_busy_provisioning);
         if (isBatchInstalling) return getString(R.string.install_busy_modules);
         if (isBackupInProgress) return getString(R.string.install_busy_backup);
@@ -2826,7 +2228,7 @@ public class DeployFragment extends Fragment {
         return getString(R.string.install_busy_generic);
     }
 
-    private void enableSystemProtection() {
+    public void enableSystemProtection() {
         // SAFE CHECK
         if (!isAdded() || getContext() == null) return;
 
@@ -2842,7 +2244,7 @@ public class DeployFragment extends Fragment {
         }
     }
 
-    private void disableSystemProtection() {
+    public void disableSystemProtection() {
         // SAFE CHECK
         if (!isAdded() || getContext() == null) return;
 
@@ -2900,7 +2302,7 @@ public class DeployFragment extends Fragment {
         return "127.0.0.1";
     }
 
-    private String getTermuxArch() {
+    public String getTermuxArch() {
         try {
             android.content.pm.ApplicationInfo info = requireContext().getApplicationInfo();
             String nativeLibDir = info.nativeLibraryDir;
@@ -3030,4 +2432,10 @@ public class DeployFragment extends Fragment {
     private void requestFreshLocalVarsSilently() {
         fetchLocalVarsFromPRoot();
     }
+
+    // --- BackupHost seam (backup/restore logic lives in BackupController) ---
+    @Override public void setImporting(boolean importing) { this.isImporting = importing; }
+    @Override public void setRestoring(boolean restoring) { this.isRestoring = restoring; }
+    @Override public void setBackupInProgress(boolean inProgress) { this.isBackupInProgress = inProgress; }
+    @Override public boolean isBackupInProgress() { return this.isBackupInProgress; }
 }
