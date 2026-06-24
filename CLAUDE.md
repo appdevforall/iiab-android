@@ -204,6 +204,22 @@ Phase-1 security + functional redesign of the in-app updater (tech-debt **F15**)
 - **Legacy seam:** `MainActivity` stages the APK privately, checks the download
   status, verifies the signature, handles the install permission, and registers
   the completion receiver NOT_EXPORTED. (PR A.) Presentation/progress UX = PR B.
+**Slice (DONE) — backup import/restore validation (`org.iiab.controller.deploy`)**
+Enforces the ABI-separation policy + rootfs sanity at the two untrusted gates.
+
+- `domain/` — `ElfClass` (32/64 from an ELF header) + `RootfsArchive`
+  (structural rootfs check + probe-binary picker). Pure, unit-tested.
+- `data/RootfsArchiveValidator` — lists the tar, checks structure, probes one
+  internal binary's ELF class vs the app ABI (`Process.is64Bit()`).
+- **Seams:** import (`DeployFragment.importBackupSafely` rejects + deletes) and
+  restore (`TarExtractor.startExtraction(..., validateRootfs=true, ...)` reusing
+  the D11 listing). Hard-block on a definite wrong arch / non-rootfs.
+- Identity manifest (soft): reads `installed-rootfs/iiab/.iiab-rootfs.json`
+  (`docs/ROOTFS_MANIFEST.md`) when present (authoritative `kind`+`arch`); when
+  absent, a non-blocking "manifest not found" alert + the ELF/structure fallback.
+- Pending: the integrity `iiab-tree-sha256-v1` check (`Result.CORRUPT`, mirrors
+  `tools/iiab_tree_hash.py`), the in-app backup-writer emitting both members, and
+  the arbitrary-file attack-vector analysis.
 
 **Legacy (NOT yet layered)** — most of `org.iiab.controller` is still flat:
 god classes `MainActivity` and `DeployFragment` (~2.7k LOC), shared mutable
