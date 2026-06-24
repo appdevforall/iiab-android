@@ -111,6 +111,15 @@ android {
         // the build — en/es are primary and translations land incrementally. Still
         // reported as a warning so they stay visible.
         warning 'MissingTranslation'
+
+        // Workaround: androidx.fragment's UnsafeFragmentLifecycleObserverDetector
+        // walks the call graph recursively per Fragment method; on our oversized
+        // Fragment/Activity methods (DeployFragment/MainActivity) this degrades to
+        // near-exponential cost and HANGS :app:lintDebug for hours (CI ~50 min -> 3 h).
+        // Disable its 3 issue IDs (the only ones that detector emits) so lint finishes
+        // in minutes; the other 450+ checks stay on. Re-enable after the god classes
+        // are split (see controller/docs/TECH_DEBT_PLAN.md).
+        disable 'FragmentBackPressedCallback', 'FragmentLiveDataObserve', 'FragmentAddMenuProvider'
     }
 
     testOptions {

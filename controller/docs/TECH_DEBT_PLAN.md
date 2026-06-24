@@ -4,7 +4,12 @@
 
 ## Progress log
 
-_Last updated: 2026-06-17. Tracks remediation work against the findings below. IDs map to the register in this file (F/D/S/M) and to `FORK_DELTA_ANALYSIS.md` (K)._
+_Last updated: 2026-06-23. Tracks remediation work against the findings below. IDs map to the register in this file (F/D/S/M) and to `FORK_DELTA_ANALYSIS.md` (K)._
+
+**Lint — `androidx.fragment` lifecycle detector disabled (ACTIVE DEBT)** (PR `fix/lint-fragment-detector-hang`)
+- `androidx.fragment`'s `UnsafeFragmentLifecycleObserverDetector` **hangs** `:app:lintDebug` for hours — its recursive call-graph walk degrades to near-exponential cost on the oversized `DeployFragment`/`MainActivity` methods (CI lint ~50 min, up to ~3 h on heavy branches).
+- **Workaround:** `lintOptions` disables that detector's 3 issue IDs — `FragmentBackPressedCallback`, `FragmentLiveDataObserve`, `FragmentAddMenuProvider` (the only IDs it emits). All other 450+ checks (and `abortOnError true` + baseline) stay active.
+- **Re-enable condition:** once `DeployFragment`/`MainActivity` are carved into smaller collaborators (Phase 3 — `D1`/`F1`/`S14`), remove the `disable` and confirm lint completes. This is the trigger to retire the workaround.
 
 **Phase 0 — Guardrails: DONE** (PR `chore/phase0-guardrails`, merged as #4)
 - Extracted `SystemStatsUtil` and added the first JVM unit tests (`SystemStatsUtilTest`, `SyncHandshakeHelperTest`); added unit-test infra (`returnDefaultValues` + real `org.json`). Addresses **M10**.
@@ -165,7 +170,7 @@ The plan is designed to run **alongside feature work**, lowest-risk-first.
 
 **Phase 2 — Concurrency & lifecycle stabilization (2–3 sprints).** Introduce a single shared executor + lifecycle-scoped cancellation; replace raw threads and convert recurring `Handler` loops to be torn down in `onDestroy`/`onPause` (`F4`, `M1`, `M7`, `D8`, `S8`, `M2`); make shared process handles `volatile`/synchronized and add `waitFor()` after `destroy()` (`D9`, `D19`, `S10`); drain process pipes and stop swallowing exec errors (`D12`, `S9`); replace `MODE_MULTI_PROCESS` with a real IPC/state mechanism (`F12`).
 
-**Phase 3 — Architecture decomposition (ongoing, behind the net).** Extract config constants into a single `DeployConfig`/`Endpoints` class (`D3`, `F10`, `S7`). Introduce ViewModels + a thin repository layer so state leaves `MainActivity`'s public fields (`F8`, `M17`). Carve `DeployFragment` into download/extract/provision services and `MainActivity` into updater/terminal/server-controller collaborators (`D1`, `F1`, `S14`). De-duplicate the download and PRoot exec paths (`D4`, `D10`).
+**Phase 3 — Architecture decomposition (ongoing, behind the net).** Extract config constants into a single `DeployConfig`/`Endpoints` class (`D3`, `F10`, `S7`). Introduce ViewModels + a thin repository layer so state leaves `MainActivity`'s public fields (`F8`, `M17`). Carve `DeployFragment` into download/extract/provision services and `MainActivity` into updater/terminal/server-controller collaborators (`D1`, `F1`, `S14`). Once these methods shrink, **remove the `lintOptions` disable of the `Fragment*` checks** (see Progress log). De-duplicate the download and PRoot exec paths (`D4`, `D10`).
 
 **Phase 4 — Build, distribution & polish.** Plan the `targetSdk 28 → 34+` epic (`M9`, `M3`) once Phases 1–2 remove the patterns that depend on the SDK exemption. Remove `jcenter()` (`M8`), align `abiFilters`/`splits` (`M12`), decouple native-artifact fetch from every build (`M15`), enable `minifyEnabled`, translate residual Spanish comments (`F16`, `D20`), delete dead code (`M13`, `D18`), and write the deploy runbook (`M20`).
 
