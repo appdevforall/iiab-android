@@ -1,10 +1,10 @@
-# IIAB-oA Controller
+# Knowledge To Go (K2Go)
 
 > **Note:** This project is currently a **Proof of Concept (PoC)**. It demonstrates the feasibility of running, managing, and routing a localized "Internet in a Box" (IIAB) environment directly on an Android device.
 
 ## Overview
 
-IIAB-oA (Internet in a Box on Android) Controller acts as the **Frontend system manager** for the educational ecosystem. It works in tandem with a **Termux backend**, bridging the gap between the native Android OS and the Linux subsystem where the actual IIAB services and modules reside. 
+Knowledge To Go (K2Go) acts as the **Frontend system manager** for the educational ecosystem. It works in tandem with a **Termux backend**, bridging the gap between the native Android OS and the Linux subsystem where the actual IIAB services and modules reside. 
 
 Instead of requiring users to type commands in a terminal, this app provides a clean, user-friendly graphical interface to deploy, monitor, and control the entire localized server stack.
 
@@ -24,7 +24,7 @@ Because this project relies on external native C/C++ libraries via Git Submodule
 To clone the repository and automatically fetch all required submodules, use:
 
 ```
-git clone --recurse-submodules https://github.com/iiab/iiab-android
+git clone --recurse-submodules https://github.com/appdevforall/KnowledgeToGo
 ```
 
 If you already cloned the repository without the --recurse-submodules flag and your build is failing, you can fetch the missing submodules by running the following command inside the project root:
@@ -38,7 +38,7 @@ After cloning, simply open the project in your IDE and sync the Gradle files. Th
 
 This project is a heavily customized spin-off of **SocksTun**, created by [heiher](https://github.com/heiher).
 
-All credit for the core native C/C++ tunneling engine goes to the original author. To ensure we receive upstream security patches and updates, the core engine (hev-socks5-tunnel) is linked directly as a Git submodule. The wrapper has been re-architected, stripped down, and integrated with a custom UI to meet the specific implementation needs of the IIAB-oA project on Android.
+All credit for the core native C/C++ tunneling engine goes to the original author. To ensure we receive upstream security patches and updates, the core engine (hev-socks5-tunnel) is linked directly as a Git submodule. The wrapper has been re-architected, stripped down, and integrated with a custom UI to meet the specific implementation needs of the Knowledge To Go project on Android.
 
 ## Disclaimer
 
