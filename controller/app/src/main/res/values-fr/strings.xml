@@ -238,6 +238,7 @@
     <string name="install_warning_discrepancy_msg">Veuillez vérifier l\'installation manuellement, il semble y avoir une divergence entre ce qui est enregistré et ce qui est détecté.</string>
     <string name="install_msg_confirmed">Installation du module confirmée avec succès, une seule réinstallation est autorisée.</string>
     <string name="install_msg_finished">Toutes les installations sont terminées !</string>
+    <string name="install_msg_failed">Échec de l\'installation : %1$s</string>
     <string name="install_modules_disclaimer">L\'installation des modules peut prendre plusieurs minutes en fonction de votre vitesse Internet et des performances de votre appareil.</string>
 
     <string name="install_dialog_reset_title">Réinitialisation complète (Scratch Reset)</string>
