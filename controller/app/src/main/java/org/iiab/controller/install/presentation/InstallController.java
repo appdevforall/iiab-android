@@ -312,8 +312,12 @@ public final class InstallController {
 
     // ADFA-4435: modules whose runrole failed in the current batch (surfaced when the queue drains).
     private final List<String> failedModules = new ArrayList<>();
+    // ADFA-4458: true while a module install is running; blocks re-entry of processNextInQueue
+    // (e.g. onResume re-posting it) so a resume cannot finish the already-dequeued module.
+    private boolean installInFlight = false;
 
     public void processNextInQueue() {
+        if (installInFlight) return; // ADFA-4458: a module install is in flight; ignore re-entry
         if (host.installationQueue().isEmpty()) {
             host.setBatchInstalling(false);
             saveQueueToPrefs();
@@ -364,6 +368,7 @@ public final class InstallController {
         // /dev/shm multiprocessing crash), so watch the output as well as the exit code.
         // The verdict lives in a pure, unit-tested domain object.
         final AnsibleRunOutcome outcome = new AnsibleRunOutcome();
+        installInFlight = true; // ADFA-4458: block re-entry while this install runs
         host.prootEngine().executeInContainer(fragment.requireContext(), rootfsDir.getAbsolutePath(), installCmd, new PRootEngine.OutputListener() {
             @Override
             public void onOutputLine(String line) {
@@ -374,6 +379,7 @@ public final class InstallController {
 
             @Override
             public void onProcessExit(int exitCode) {
+                installInFlight = false; // ADFA-4458: this module's install finished
                 if (fragment.getActivity() == null) return;
                 // ADFA-4435: was 'continue regardless of outcome'. A non-zero exit OR an Ansible
                 // error in the output means FAILED: roll back the speculative local_vars edit so
@@ -395,6 +401,7 @@ public final class InstallController {
 
             @Override
             public void onError(String error) {
+                installInFlight = false; // ADFA-4458
                 if (fragment.getActivity() != null) {
                     fragment.getActivity().runOnUiThread(() -> {
                         host.setBatchInstalling(false);
