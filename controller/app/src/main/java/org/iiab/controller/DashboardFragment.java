@@ -26,18 +26,21 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
+import androidx.lifecycle.ViewModelProvider;
 
 import org.iiab.controller.deviceinfo.data.BuildDeviceAbiProvider;
 import org.iiab.controller.deviceinfo.domain.GetDeviceArchUseCase;
+import org.iiab.controller.dashboard.presentation.DashboardStatus;
+import org.iiab.controller.dashboard.presentation.DashboardStatusViewModel;
+import org.iiab.controller.dashboard.presentation.DashboardStatusViewModelFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.net.HttpURLConnection;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
@@ -66,6 +69,7 @@ public class DashboardFragment extends Fragment {
 
     private final Handler refreshHandler = new Handler(Looper.getMainLooper());
     private Runnable refreshRunnable;
+    private DashboardStatusViewModel statusViewModel;
 
     // --- MODULE CONFIGURATION TARGETING SCALABILITY ---
     private static class IiabModule {
@@ -190,21 +194,28 @@ public class DashboardFragment extends Fragment {
         // Generate module views dynamically
         createModuleViews();
 
-        // Configure refresh timer (every 5 seconds)
+        // Configure refresh timer (every 5 seconds) -- local device stats only;
+        // network server/module status is polled off the main thread by the VM below.
         refreshRunnable = new Runnable() {
             @Override
             public void run() {
                 updateSystemStats();
-                checkServerAndModules();
                 refreshHandler.postDelayed(this, 5000);
             }
         };
+
+        // Network status: polled off the main thread on the shared scheduler and
+        // observed here (ADFA-4457). Replaces the per-tick `new Thread()` ping.
+        statusViewModel = new ViewModelProvider(this, new DashboardStatusViewModelFactory())
+                .get(DashboardStatusViewModel.class);
+        statusViewModel.state().observe(getViewLifecycleOwner(), this::renderStatus);
     }
 
     @Override
     public void onResume() {
         super.onResume();
         refreshHandler.post(refreshRunnable);
+        statusViewModel.start(collectModuleEndpoints());
         // TRIGGER ANIMATION WHEN ENTERING TAB
         new Handler(Looper.getMainLooper()).postDelayed(this::triggerVisibleGaugesAnimation, 100);
     }
@@ -213,6 +224,7 @@ public class DashboardFragment extends Fragment {
     public void onPause() {
         super.onPause();
         refreshHandler.removeCallbacks(refreshRunnable);
+        statusViewModel.stop();
     }
 
     private void updateSystemStats() {
@@ -458,119 +470,92 @@ public class DashboardFragment extends Fragment {
         }
     }
 
-    private void checkServerAndModules() {
-        new Thread(() -> {
-            // 1. Ping the network once
-            boolean isMainServerAlive = pingUrl("http://localhost:8085/home");
+    /** Renders the latest network status snapshot (main thread, from the ViewModel). */
+    private void renderStatus(DashboardStatus status) {
+        if (!isAdded() || getActivity() == null) return;
 
-            if (!isAdded() || getActivity() == null) return;
+        boolean isMainServerAlive = status.serverAlive();
+        currentSystemState = evaluateSystemState(isMainServerAlive);
 
-            // 2. Ask the State Machine for the definitive truth
-            currentSystemState = evaluateSystemState(isMainServerAlive);
+        if (getActivity() instanceof MainActivity) {
+            ((MainActivity) getActivity()).currentSystemState = currentSystemState;
+            ((MainActivity) getActivity()).updateUIColorsAndVisibility();
+        }
 
-            // 3. Push the state to MainActivity
-            if (getActivity() instanceof MainActivity) {
-                ((MainActivity) getActivity()).currentSystemState = currentSystemState;
-                getActivity().runOnUiThread(() -> {
-                    if (getActivity() instanceof MainActivity) {
-                        ((MainActivity) getActivity()).updateUIColorsAndVisibility();
-                    }
-                });
+        if (archContainer != null) {
+            if (isArchCalculated && currentSystemState != SystemState.NONE) {
+                archContainer.setVisibility(View.VISIBLE);
+                txtTermuxArch.setText(cachedTermuxArch);
+                txtDebianArch.setText(cachedDebianArch);
+            } else {
+                archContainer.setVisibility(View.GONE);
             }
+        }
 
-            // --- CHECKPOINT 2 ---
-            if (!isAdded() || getActivity() == null) return;
+        if (currentSystemState == SystemState.ONLINE) {
+            badgeStatus.setText(R.string.dash_online);
+            badgeStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_status_online)));
+        } else {
+            badgeStatus.setText(R.string.dash_offline);
+            badgeStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
+                    androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_secondary)));
+        }
 
-            // 4. Update the UI on the main thread
-            getActivity().runOnUiThread(() -> {
-                if (archContainer != null) {
-                    if (isArchCalculated && currentSystemState != SystemState.NONE) {
-                        archContainer.setVisibility(View.VISIBLE);
-                        txtTermuxArch.setText(cachedTermuxArch);
-                        txtDebianArch.setText(cachedDebianArch);
-                    } else {
-                        archContainer.setVisibility(View.GONE);
-                    }
-                }
+        switch (currentSystemState) {
+            case ONLINE:
+                ledTermuxState.setBackgroundResource(R.drawable.led_on_green);
+                txtTermuxState.setText(getString(R.string.dash_state_online));
+                txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
+                break;
+            case OFFLINE:
+                ledTermuxState.setBackgroundResource(R.drawable.led_off);
+                txtTermuxState.setText(getString(R.string.dash_state_offline));
+                txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_secondary));
+                break;
+            case DEBIAN_ONLY:
+                ledTermuxState.setBackgroundResource(R.drawable.led_off);
+                txtTermuxState.setText(getString(R.string.dash_state_debian_only));
+                txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
+                break;
+            case INSTALLER:
+                ledTermuxState.setBackgroundResource(R.drawable.led_off);
+                txtTermuxState.setText(getString(R.string.dash_state_installer));
+                txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
+                break;
+            case TERMUX_ONLY:  // Fallthrough intended; no longer used
+            case NONE:
+                ledTermuxState.setBackgroundResource(R.drawable.led_off);
+                txtTermuxState.setText(getString(R.string.dash_state_none));
+                txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_warning));
+                break;
+        }
 
-                // Configure the Top Traffic Light (Server Status)
-                if (currentSystemState == SystemState.ONLINE) {
-                    badgeStatus.setText(R.string.dash_online);
-                    badgeStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
-                            androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_status_online)));
-                } else {
-                    badgeStatus.setText(R.string.dash_offline);
-                    badgeStatus.setBackgroundTintList(android.content.res.ColorStateList.valueOf(
-                            androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_secondary)));
-                }
-
-                // Configure the Bottom LED and Suggestion Message
-                switch (currentSystemState) {
-                    case ONLINE:
-                        ledTermuxState.setBackgroundResource(R.drawable.led_on_green);
-                        txtTermuxState.setText(getString(R.string.dash_state_online));
-                        txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
-                        break;
-                    case OFFLINE:
-                        ledTermuxState.setBackgroundResource(R.drawable.led_off);
-                        txtTermuxState.setText(getString(R.string.dash_state_offline));
-                        txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_secondary));
-                        break;
-                    case DEBIAN_ONLY:
-                        ledTermuxState.setBackgroundResource(R.drawable.led_off);
-                        txtTermuxState.setText(getString(R.string.dash_state_debian_only));
-                        txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
-                        break;
-                    case INSTALLER:
-                        ledTermuxState.setBackgroundResource(R.drawable.led_off);
-                        txtTermuxState.setText(getString(R.string.dash_state_installer));
-                        txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_text_primary));
-                        break;
-                    case TERMUX_ONLY:  // Fallthrough intended; no longer used
-                    case NONE:
-                        ledTermuxState.setBackgroundResource(R.drawable.led_off);
-                        txtTermuxState.setText(getString(R.string.dash_state_none));
-                        txtTermuxState.setTextColor(androidx.core.content.ContextCompat.getColor(requireContext(), R.color.dash_warning));
-                        break;
-                }
-            });
-
-            // 5. Scan individual modules (Only if the system is ONLINE)
-            for (int r = 0; r < modulesContainer.getChildCount(); r++) {
-                LinearLayout row = (LinearLayout) modulesContainer.getChildAt(r);
-
-                for (int c = 0; c < row.getChildCount(); c++) {
-                    LinearLayout card = (LinearLayout) row.getChildAt(c);
-                    String endpoint = (String) card.getTag();
-                    if (endpoint == null) continue;
-
-                    View led = card.getChildAt(0);
-
-                    // Module ON = (System is ONLINE) AND (URL responds)
-                    boolean isModuleAlive = (currentSystemState == SystemState.ONLINE) && pingUrl("http://localhost:8085/" + endpoint);
-
-                    if (!isAdded() || getActivity() == null) return;
-
-                    getActivity().runOnUiThread(() -> {
-                        led.setBackgroundResource(isModuleAlive ? R.drawable.led_on_green : R.drawable.led_off);
-                    });
-                }
+        for (int r = 0; r < modulesContainer.getChildCount(); r++) {
+            LinearLayout row = (LinearLayout) modulesContainer.getChildAt(r);
+            for (int c = 0; c < row.getChildCount(); c++) {
+                LinearLayout card = (LinearLayout) row.getChildAt(c);
+                String endpoint = (String) card.getTag();
+                if (endpoint == null) continue;
+                View led = card.getChildAt(0);
+                boolean isModuleAlive = Boolean.TRUE.equals(status.moduleAlive().get(endpoint));
+                led.setBackgroundResource(isModuleAlive ? R.drawable.led_on_green : R.drawable.led_off);
             }
-        }).start();
+        }
     }
 
-    private boolean pingUrl(String urlStr) {
-        try {
-            URL url = new URL(urlStr);
-            HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-            conn.setUseCaches(false);
-            conn.setConnectTimeout(1500);
-            conn.setReadTimeout(1500);
-            conn.setRequestMethod("GET");
-            return (conn.getResponseCode() >= 200 && conn.getResponseCode() < 400);
-        } catch (Exception e) {
-            return false;
+    /** Endpoints of the currently-visible module cards (tags set in createModuleViews). */
+    private List<String> collectModuleEndpoints() {
+        List<String> endpoints = new ArrayList<>();
+        if (modulesContainer == null) return endpoints;
+        for (int r = 0; r < modulesContainer.getChildCount(); r++) {
+            LinearLayout row = (LinearLayout) modulesContainer.getChildAt(r);
+            for (int c = 0; c < row.getChildCount(); c++) {
+                Object tag = row.getChildAt(c).getTag();
+                if (tag instanceof String) endpoints.add((String) tag);
+            }
         }
+        return endpoints;
     }
 
     // Extracts the numbers (in kB) from the lines of /proc/meminfo
