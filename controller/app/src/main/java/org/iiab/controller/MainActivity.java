@@ -1751,7 +1751,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 // Reusable login function (Purified with env PATH, explicit fake sysdata, and dynamic mounts)
                 cliStr.append("do_login() {\n");
-                cliStr.append("    echo -e '\\033[32mPreparing IIAB Debian Environment...\\033[0m'\n");
+                cliStr.append("    echo -e '\\033[32mPreparing Debian Environment...\\033[0m'\n");
 
 //                // --- SECURITY CHECK FOR SDCARD ---
 //                cliStr.append("    if [ \"$MOUNT_SDCARD\" = true ]; then\n");
@@ -1849,7 +1849,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 cliStr.append("      echo 'Knowledge To Go CLI'\n");
                 cliStr.append("      echo 'Usage: iiab [COMMAND] [OPTIONS]'\n");
                 cliStr.append("      echo 'Commands:'\n");
-                cliStr.append("      echo '  -l, --login        Enter the IIAB Debian Environment (Default)'\n");
+                cliStr.append("      echo '  -l, --login        Enter the Debian environment'\n");
                 cliStr.append("      echo '  --reset            Wipe system and reinstall Debian base'\n");
                 cliStr.append("      echo '  --backup-rootfs    Trigger a system backup'\n");
                 cliStr.append("      echo '  --restore-rootfs   Trigger a system restore'\n");
@@ -1867,7 +1867,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
                 // Execute based on ACTION
                 cliStr.append("if [ \"$ACTION\" = \"reset\" ]; then\n");
-                cliStr.append("    echo -e '\\033[31m[WARNING] This will DESTROY the current IIAB Debian installation!\\033[0m'\n");
+                cliStr.append("    echo -e '\\033[31m[WARNING] This will DESTROY the current Debian installation!\\033[0m'\n");
                 cliStr.append("    echo -n 'Are you sure you want to reset the system? [y/N]: '\n");
                 cliStr.append("    read ans\n");
                 cliStr.append("    if [ \"$ans\" != \"y\" ] && [ \"$ans\" != \"Y\" ]; then echo 'Aborted.'; exit 0; fi\n\n");
@@ -1888,7 +1888,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 cliStr.append("    fi\n\n");
                 cliStr.append("    echo -e '\\033[36m[3/4] Extracting Debian (This may take a minute)...\\033[0m'\n");
                 cliStr.append("    tar --exclude='*/dev/*' --strip-components=1 -xJf \"$DL_DIR/$TARBALL\" -C \"$ROOTFS_DIR\" || true\n\n");
-                cliStr.append("    echo -e '\\033[36m[4/4] Bootstrapping IIAB environment via PRoot...\\033[0m'\n");
+                cliStr.append("    echo -e '\\033[36m[4/4] Bootstrapping environment via PRoot...\\033[0m'\n");
                 cliStr.append("    rm -f \"$ROOTFS_DIR/etc/resolv.conf\" 2>/dev/null || true\n");
                 cliStr.append("    echo 'nameserver 1.1.1.1' > \"$ROOTFS_DIR/etc/resolv.conf\"\n");
                 cliStr.append("    echo 'nameserver 8.8.8.8' >> \"$ROOTFS_DIR/etc/resolv.conf\"\n");
@@ -1915,7 +1915,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 cliStr.append("    am broadcast -a org.iiab.ACTION_RESTORE_ROOTFS -p org.iiab.controller >/dev/null 2>&1\n");
                 cliStr.append("else\n");
                 cliStr.append("    if [ ! -f \"$ROOTFS_DIR/usr/bin/env\" ]; then\n");
-                cliStr.append("        echo -e \"\\033[1;31m[ERROR]\\033[0m IIAB-Debian is not installed or rootfs is missing!\"\n");
+                cliStr.append("        echo -e \"\\033[1;31m[ERROR]\\033[0m Debian is not installed or rootfs is missing!\"\n");
                 cliStr.append("        exit 1\n");
                 cliStr.append("    fi\n");
                 cliStr.append("    do_login\n");
@@ -1940,43 +1940,44 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 // 1. Header (ASCII Art)
                 profile.append("clear\n");
                 profile.append("echo -e \"\\033[1;36m\"\n");
-                profile.append("echo \"  ___ ___   _   ___             _    \"\n");
-                profile.append("echo \" |_ _|_ _| /_\\ | _ )  ___ ___  /_\\   \"\n");
-                profile.append("echo \"  | | | | / _ \\| _ \\ |___/ _ \\/ _ \\  \"\n");
-                profile.append("echo \" |___|___/_/ \\_\\___/     \\___/_/ \\_\\ \"\n");
+                profile.append("echo \" _  ______   ____ \"\n");
+                profile.append("echo \"| |/ /___ \\ / ___| ___ \"\n");
+                profile.append("echo \"| ' /  __) | |  _ / _ \\ \"\n");
+                profile.append("echo \"| . \\ / __/| |_| | (_) | \"\n");
+                profile.append("echo \"|_|\\_\\_____|\\____|\\___/ \"\n");
                 profile.append("echo -e \"\\033[0m\"\n");
-                profile.append("echo -e \"\\033[1;32m  C O N T R O L L E R   T E R M I N A L\\033[0m\\n\"\n");
+                profile.append("echo -e \"\\033[1;32m  T E R M I N A L\\033[0m\\n\"\n");
 
                 // 2. The Mission / Welcome
-                profile.append("echo -e \"Welcome to the native \\033[1;36mIIAB on Android Host Shell\\033[0m.\"\n");
+                profile.append("echo -e \"Welcome to the native \\033[1;36mK2Go Host Shell\\033[0m.\"\n");
                 profile.append("echo \"\"\n");
-                profile.append("echo -e \"\\033[1mInternet-in-a-Box (IIAB) on Android\\033[0m will allow\"\n");
-                profile.append("echo \"millions of people worldwide to build their own\"\n");
-                profile.append("echo \"family libraries, inside their own phones!\"\n");
+                profile.append("echo -e \"\\033[1mKnowledge To Go\\033[0m will allow millions of\"\n");
+                profile.append("echo \"people worldwide to build their own family\"\n");
+                profile.append("echo \"libraries, inside their own phones!\"\n");
                 profile.append("echo \"\"\n");
                 profile.append("echo \"This terminal helps you build and transform\"\n");
                 profile.append("echo \"your Android device as an Offline Learning\"\n");
-                profile.append("echo \"Environment (Internet-in-a-Box).\"\n");
+                profile.append("echo \"Environment powered by Internet-in-a-Box.\"\n");
                 profile.append("echo \"\"\n");
 
                 // 3. Context & Warnings
-                profile.append("echo -e \"\\033[1;33mNOTE:\\033[0m You are currently OUTSIDE the IIAB-Debian\"\n");
+                profile.append("echo -e \"\\033[1;33mNOTE:\\033[0m You are currently OUTSIDE the Debian\"\n");
                 profile.append("echo \"environment.\"\n");
                 profile.append("echo \"Package managers (apt/pkg) are NOT available here.\"\n");
                 profile.append("echo \"To install packages and manage the server, login\"\n");
-                profile.append("echo \"to IIAB-Debian using the command below:\"\n");
+                profile.append("echo \"to Debian using the command below:\"\n");
                 profile.append("echo \"\"\n");
 
                 // 4. Helpful Commands
-                profile.append("echo -e \"  \\033[1;32miiab --login\\033[0m  Login to IIAB-Debian PRoot (Default)\"\n");
+                profile.append("echo -e \"  \\033[1;32miiab --login\\033[0m  Login to Debian PRoot (Default)\"\n");
                 profile.append("echo -e \"  \\033[1;32miiab --help\\033[0m   Show orchestrator commands\"\n");
                 profile.append("echo \"\"\n");
 
                 // 5. Links and Resources
                 profile.append("echo \"Online resources:\"\n");
-                profile.append("echo -e \"\\033[1;33m*\\033[0m 🔗: \\033[1mhttps://internet-in-a-box.org\\033[0m\"\n");
+                profile.append("echo -e \"\\033[1;33m*\\033[0m 🌐: \\033[1mhttps://appdevforall.org\\033[0m\"\n");
                 profile.append("echo -e \"\\033[1;33m*\\033[0m 📖: \\033[1mhttps://github.com/appdevforall/KnowledgeToGo\\033[0m\"\n");
-                profile.append("echo -e \"\\033[1;33m*\\033[0m 🐛: \\033[1mhttps://github.com/appdevforall/KnowledgeToGo/issues\\033[0m\"\n");
+                profile.append("echo -e \"\\033[1;33m*\\033[0m 🔗: \\033[1mhttps://internet-in-a-box.org\\033[0m\"\n");
                 profile.append("echo \"\"\n");
 
                 // 6. Custom Prompt (PS1)
