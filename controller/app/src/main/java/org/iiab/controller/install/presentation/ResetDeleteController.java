@@ -115,7 +115,7 @@ public final class ResetDeleteController {
                                         if (fragment.isAdded() && fragment.getActivity() != null) {
                                             fragment.getActivity().runOnUiThread(() -> {
                                                 // We keep it visible that you can cancel
-                                                btnAdvancedReset.setText(fragment.getString(R.string.install_status_debian_download, percentage, speed) + " (Tap to Cancel)");
+                                                btnAdvancedReset.setText(fragment.getString(R.string.install_status_debian_download, percentage, speed) + "\n(Tap to Cancel)");
                                             });
                                         }
                                     }

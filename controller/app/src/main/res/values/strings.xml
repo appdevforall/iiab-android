@@ -8,7 +8,7 @@
     <string name="save">Save</string>
 
     <string name="advanced_settings_label">Tunnel Settings</string>
-    <string name="connection_log_label">IIAB Server Log</string>
+    <string name="connection_log_label">Server Log</string>
     <string name="label_separator_down">▼ %s</string>
     <string name="label_separator_up">▶ %s</string>
     <string name="settings_label">SETTINGS</string>
@@ -43,7 +43,7 @@
     <string name="dash_server_status">Server Status:</string>
     <string name="dash_offline">Offline</string>
     <string name="dash_online">Online</string>
-    <string name="dash_iiab_system">IIAB-oA System</string>
+    <string name="dash_iiab_system">K2Go System</string>
     <string name="dash_android_version_label">Android base:</string>
     <string name="dash_host_arch_label">Device Arch:</string>
     <string name="dash_android_version_value">%1$s (API %2$s)</string>
@@ -51,8 +51,8 @@
     <string name="dash_state_debian_only">Base OS installed. Proceed to install IIAB.</string>
     <string name="dash_state_installer">Installer found, open the installation tab for more info.</string>
     <string name="dash_state_none">No component identified.</string>
-    <string name="dash_state_offline">IIAB-oA seems offline, try launching it.</string>
-    <string name="dash_state_online">IIAB-oA is online.</string>
+    <string name="dash_state_offline">IIAB seems offline, try launching it.</string>
+    <string name="dash_state_online">IIAB is online.</string>
     <string name="dash_termux_searching">Searching for installation...</string>
     <string name="dash_architectures_title">Architectures</string>
     <string name="dash_arch_termux">"App: "</string>
@@ -62,7 +62,7 @@
     <string name="dash_books">Books</string>
     <string name="dash_kiwix">Kiwix</string>
     <string name="dash_kolibri">Kolibri</string>
-    <string name="dash_maps">Maps</string>
+    <string name="dash_maps">IIAB Maps</string>
     <string name="dash_matomo">Matomo</string>
     <string name="dash_system">System</string>
     <string name="dash_code">Code</string>
@@ -89,7 +89,7 @@
     <string name="launch_server">🚀 Launch Server</string>
     <string name="stop_server">🛑 Stop Server</string>
 
-    <string name="server_not_installed_warning">The IIAB-oA system does not seem to be (fully) installed. Please check the Status or Installation tab for more info.</string>
+    <string name="server_not_installed_warning">The server does not seem to be (fully) installed. Please check the Status or Installation tab for more info.</string>
     <string name="server_booting">Booting...</string>
     <string name="server_shutting_down">Shutting down...</string>
     <string name="server_timeout_warning">Warning: Server state transition timed out.</string>
@@ -132,8 +132,8 @@
 
 
     <string name="watchdog_channel_desc">Ensures services remain active when screen is off.</string>
-    <string name="watchdog_channel_name">IIAB Watchdog Service</string>
-    <string name="watchdog_notif_title">IIAB Watchdog Active</string>
+    <string name="watchdog_channel_name">K2Go Watchdog Service</string>
+    <string name="watchdog_notif_title">K2Go Watchdog Active</string>
 
     <string name="watchdog_started">Watchdog Started</string>
     <string name="watchdog_stopped">Watchdog Stopped</string>
@@ -265,7 +265,7 @@
     <string name="install_dialog_delete_backup_msg">Are you sure you want to permanently delete %1$s?\n\nThis action cannot be undone.</string>
     <string name="install_msg_backup_deleted">Backup deleted successfully.</string>
 
-    <string name="adb_notif_title">IIAB Wireless Debugging</string>
+    <string name="adb_notif_title">K2Go Wireless Debugging</string>
     <string name="adb_notif_desc">ADB ports found! Tap \'Enter PIN\' below.</string>
     <string name="adb_notif_action_pin">Enter PIN</string>
     <string name="adb_notif_input_hint">Enter 6-digit PIN</string>
@@ -359,8 +359,8 @@
     <string name="install_status_preparing_kiwix">Preparing Kiwix...</string>
     <string name="install_status_zim_download">ZIM: %1$d%% | %2$s/s</string>
     <string name="install_status_indexing_zim">Indexing ZIM...</string>
-    <string name="install_status_maps_provisioned">Maps already provisioned...</string>
-    <string name="install_status_maps_configuring">Configuring Maps...</string>
+    <string name="install_status_maps_provisioned">IIAB Maps already provisioned...</string>
+    <string name="install_status_maps_configuring">Configuring IIAB Maps...</string>
     <string name="install_success_deployment">System Deployment Successful!</string>
 
     <string name="install_status_wiping_old">Wiping old system...</string>
@@ -368,7 +368,7 @@
     <string name="install_status_downloading_debian">Downloading Debian...</string>
     <string name="install_status_debian_download">Debian: %1$d%% | %2$s/s</string>
     <string name="install_status_extracting_base">Extracting Base...</string>
-    <string name="install_status_bootstrapping">Bootstrapping IIAB...</string>
+    <string name="install_status_bootstrapping">Bootstrapping Debian...</string>
     <string name="install_success_vanilla">Vanilla Base System successfully bootstrapped!</string>
     <string name="install_error_bootstrap">Bootstrap Error: %1$s</string>
     <string name="install_error_extract_bootstrap">Extraction/Bootstrap Failed: %1$s</string>
@@ -399,7 +399,7 @@
     <string name="install_tier_standard">Standard</string>
     <string name="install_tier_full">Full</string>
     <string name="install_chk_companion">Pull companion data for this edition</string>
-    <string name="install_legend_iiab">IIAB</string>
+    <string name="install_legend_iiab">Server</string>
     <string name="install_legend_maps">IIAB Maps</string>
     <string name="install_legend_kiwix">Wikipedia</string>
     <string name="install_legend_free">Free</string>
@@ -447,12 +447,12 @@
     <string name="sync_dialog_conn_failed_title">Connection Failed</string>
     <string name="sync_dialog_conn_failed_msg">Cannot reach Host at %1$s.\nAre you sure you are connected to the same Wi-Fi network or Hotspot?</string>
 
-    <string name="sync_card_title_system">Send IIAB + Content</string>
-    <string name="sync_card_desc_system">When both devices have the IIAB-oA Controller app, you can share the IIAB platform and all its content (from a few hundreds of MB to several GB).</string>
-    <string name="sync_card_title_apk">Share IIAB-oA Controller app</string>
-    <string name="sync_card_desc_apk">In order to use IIAB on Android, the other device needs the app first. This feature allows you to share it locally. No Internet required!</string>
-    <string name="sync_card_title_receive">Receive IIAB + Content</string>
-    <string name="sync_card_desc_receive">Scan the QR code displayed on the Host device to start receiving the IIAB platform and selected content.</string>
+    <string name="sync_card_title_system">Send System + Content</string>
+    <string name="sync_card_desc_system">When both devices have the K2Go app, you can share the system and all its content (from a few hundreds of MB to several GB).</string>
+    <string name="sync_card_title_apk">Share K2Go app</string>
+    <string name="sync_card_desc_apk">In order to use K2Go, the other device needs the app first. This feature allows you to share it locally. No Internet required!</string>
+    <string name="sync_card_title_receive">Receive System + Content</string>
+    <string name="sync_card_desc_receive">Scan the QR code displayed on the Host device to start receiving the system and selected content.</string>
 
     <string name="sync_share_status_wifi">"1. Ensure the other device is on the same Wi-Fi.\n2. Scan this QR on the other device."</string>
     <string name="sync_share_status_hotspot">1. Ask the other device to connect to your Hotspot.\n2. Scan this QR on the other device."</string>
@@ -481,7 +481,7 @@
     <string name="log_critical_binary_missing">CRITICAL: %1$s is missing from native libs!</string>
 
     <string name="setup_back_blocked_msg">Please complete the setup to continue.</string>
-    <string name="sync_scanner_prompt">Scan the IIAB Host QR Code</string>
+    <string name="sync_scanner_prompt">Scan the K2Go Host QR Code</string>
 
     <string name="kiwix_dialog_lang_label">Kiwix Language</string>
     <string name="kiwix_dialog_variants_label">Available ZIM Variants</string>
@@ -494,8 +494,8 @@
     <string name="sync_share_status_init">Starting server...</string>
 
     <string name="tutorial_share_title">Transfer vs. Access</string>
-    <string name="tutorial_share_heavy">Welcome to the Share section! Here you can clone the ENTIRE IIAB system (up to several GBs) to another device. This process can take hours, which is not the same as just Share Access that is instant.</string>
-    <string name="tutorial_share_light">Looking for instant access? ☝️\nIf you just want others to read Wikipedia or use Maps instantly, start the server and share the QR code up here!</string>
+    <string name="tutorial_share_heavy">Welcome to the Share section! Here you can clone the ENTIRE system (up to several GBs) to another device. This process can take hours, which is not the same as just Share Access that is instant.</string>
+    <string name="tutorial_share_light">Looking for instant access? ☝️\nIf you just want others to read Wikipedia or use IIAB Maps instantly, start the server and share the QR code up here!</string>
     <string name="tutorial_share_dont_show">Do not show again</string>
     <string name="tutorial_share_got_it">Got it!</string>
 
@@ -514,7 +514,7 @@
     <string name="sync_app_arch_label">App Arch: %1$d-bit</string>
     <string name="sync_msg_arch_compatible">Hardware compatible. Starting connection...</string>
 
-    <string name="rsync_error_invalid_credentials">Invalid or unsafe sync credentials. Please scan a valid IIAB sync QR code.</string>
+    <string name="rsync_error_invalid_credentials">Invalid or unsafe sync credentials. Please scan a valid K2Go sync QR code.</string>
     <string name="ota_error_verify_failed">The update could not be verified and was not installed. Please try again.</string>
     <string name="ota_error_download_failed">The update download failed. Please try again.</string>
     <string name="ota_msg_enable_unknown_sources">Allow installing updates from this app, then tap update again.</string>
@@ -529,9 +529,9 @@
     <string name="ota_btn_install">Install</string>
     <string name="ota_btn_cancel">Cancel</string>
     <string name="restore_log_label">Extraction log</string>
-    <string name="install_error_not_rootfs">This file is not a valid IIAB rootfs backup, so it was not used.</string>
+    <string name="install_error_not_rootfs">This file is not a valid rootfs backup, so it was not used.</string>
     <string name="install_error_wrong_arch">This backup is for a different CPU architecture (32-bit vs 64-bit) and cannot be used by this app.</string>
-    <string name="install_warn_manifest_missing">Imported, but this backup has no IIAB manifest, so it could not be fully verified.</string>
+    <string name="install_warn_manifest_missing">Imported, but this backup has no embedded rootfs manifest, so it could not be fully verified.</string>
     <string name="install_error_corrupt">This backup failed its integrity check (it may be corrupted or altered), so it was not used.</string>
     <string name="install_warn_no_checksum">Imported. This backup has no integrity checksum because it was created on a mobile device.</string>
 </resources>

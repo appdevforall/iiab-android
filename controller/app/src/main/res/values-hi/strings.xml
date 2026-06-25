@@ -42,7 +42,7 @@
     <string name="dash_server_status">सर्वर स्थिति:</string>
     <string name="dash_offline">ऑफ़लाइन</string>
     <string name="dash_online">ऑनलाइन</string>
-    <string name="dash_iiab_system">IIAB-oA सिस्टम</string>
+    <string name="dash_iiab_system">K2Go सिस्टम</string>
     <string name="dash_android_version_label">बेस Android:</string>
     <string name="dash_host_arch_label">आर्किटेक्चर:</string>
     <string name="dash_android_version_value">%1$s (API %2$s)</string>
@@ -50,8 +50,8 @@
     <string name="dash_state_debian_only">बेस OS इंस्टॉल है। IIAB इंस्टॉल करने के लिए आगे बढ़ें।</string>
     <string name="dash_state_installer">इंस्टॉलर मिला, अधिक जानकारी के लिए इंस्टालेशन टैब खोलें।</string>
     <string name="dash_state_none">कोई घटक नहीं पहचाना गया।</string>
-    <string name="dash_state_offline">IIAB-oA ऑफ़लाइन लग रहा है, इसे लॉन्च करने का प्रयास करें।</string>
-    <string name="dash_state_online">IIAB-oA ऑनलाइन है।</string>
+    <string name="dash_state_offline">IIAB ऑफ़लाइन लग रहा है, इसे लॉन्च करने का प्रयास करें।</string>
+    <string name="dash_state_online">IIAB ऑनलाइन है।</string>
     <string name="dash_termux_searching">इंस्टालेशन खोज रहा है...</string>
     <string name="dash_architectures_title">आर्किटेक्चर</string>
     <string name="dash_arch_termux">"ऐप: "</string>
@@ -61,7 +61,7 @@
     <string name="dash_books">पुस्तकें</string>
     <string name="dash_kiwix">Kiwix</string>
     <string name="dash_kolibri">Kolibri</string>
-    <string name="dash_maps">मानचित्र</string>
+    <string name="dash_maps">IIAB मानचित्र</string>
     <string name="dash_matomo">Matomo</string>
     <string name="dash_system">सिस्टम</string>
     <string name="dash_code">कोड</string>
@@ -88,7 +88,7 @@
     <string name="launch_server">🚀 सर्वर प्रारंभ करें</string>
     <string name="stop_server">🛑 सर्वर बंद करें</string>
 
-    <string name="server_not_installed_warning">IIAB-oA सिस्टम (पूरी तरह से) इंस्टॉल नहीं लग रहा है। कृपया अधिक जानकारी के लिए स्थिति या इंस्टालेशन टैब जांचें।</string>
+    <string name="server_not_installed_warning">सर्वर (पूरी तरह से) इंस्टॉल नहीं लग रहा है। कृपया अधिक जानकारी के लिए स्थिति या इंस्टालेशन टैब जांचें।</string>
     <string name="server_booting">बूट हो रहा है...</string>
     <string name="server_shutting_down">बंद हो रहा है...</string>
     <string name="server_timeout_warning">चेतावनी: सर्वर स्थिति संक्रमण का समय समाप्त हो गया।</string>
@@ -129,8 +129,8 @@
     <string name="vpn_stopping">VPN बंद हो रहा है...</string>
 
     <string name="watchdog_channel_desc">यह सुनिश्चित करता है कि स्क्रीन बंद होने पर सेवाएं सक्रिय रहें।</string>
-    <string name="watchdog_channel_name">IIAB वॉचडॉग सेवा</string>
-    <string name="watchdog_notif_title">IIAB वॉचडॉग सक्रिय</string>
+    <string name="watchdog_channel_name">K2Go वॉचडॉग सेवा</string>
+    <string name="watchdog_notif_title">K2Go वॉचडॉग सक्रिय</string>
     <string name="watchdog_started">वॉचडॉग शुरू</string>
     <string name="watchdog_stopped">वॉचडॉग बंद</string>
 
@@ -227,7 +227,7 @@
     <string name="install_tier_standard">स्टैंडर्ड</string>
     <string name="install_tier_full">पूर्ण (Full)</string>
     <string name="install_chk_companion">इस संस्करण के लिए सहयोगी डेटा डाउनलोड करें</string>
-    <string name="install_legend_iiab">IIAB</string>
+    <string name="install_legend_iiab">सर्वर</string>
     <string name="install_legend_maps">IIAB मानचित्र</string>
     <string name="install_legend_kiwix">विकिपीडिया</string>
     <string name="install_legend_free">मुक्त</string>
@@ -288,8 +288,8 @@
     <string name="install_status_preparing_kiwix">Kiwix तैयार किया जा रहा है...</string>
     <string name="install_status_zim_download">ZIM: %1$d%% | %2$s/s</string>
     <string name="install_status_indexing_zim">ZIM इंडेक्स किया जा रहा है...</string>
-    <string name="install_status_maps_provisioned">मानचित्र पहले से ही तैयार हैं...</string>
-    <string name="install_status_maps_configuring">मानचित्र कॉन्फ़िगर किए जा रहे हैं...</string>
+    <string name="install_status_maps_provisioned">IIAB मानचित्र पहले से ही तैयार हैं...</string>
+    <string name="install_status_maps_configuring">IIAB मानचित्र कॉन्फ़िगर किए जा रहे हैं...</string>
     <string name="install_success_deployment">सिस्टम परिनियोजन (Deployment) सफल!</string>
 
     <string name="install_status_wiping_old">पुराना सिस्टम मिटाया जा रहा है...</string>
@@ -297,7 +297,7 @@
     <string name="install_status_downloading_debian">Debian डाउनलोड हो रहा है...</string>
     <string name="install_status_debian_download">Debian: %1$d%% | %2$s/s</string>
     <string name="install_status_extracting_base">बेस निकाला जा रहा है...</string>
-    <string name="install_status_bootstrapping">IIAB बूटस्ट्रैप किया जा रहा है...</string>
+    <string name="install_status_bootstrapping">Debian बूटस्ट्रैप किया जा रहा है...</string>
     <string name="install_success_vanilla">Vanilla बेस सिस्टम सफलतापूर्वक बूटस्ट्रैप किया गया!</string>
     <string name="install_error_bootstrap">बूटस्ट्रैप त्रुटि: %1$s</string>
     <string name="install_error_extract_bootstrap">निष्कर्षण/बूटस्ट्रैप विफल: %1$s</string>
@@ -333,7 +333,7 @@
     <string name="kiwix_select_variant_error">कृपया सूची से ZIM संस्करण चुनें</string>
     <string name="kiwix_catalog_error">कैटलॉग लोड करने में त्रुटि: %1$s</string>
 
-    <string name="adb_notif_title">IIAB वायरलेस डिबगिंग</string>
+    <string name="adb_notif_title">K2Go वायरलेस डिबगिंग</string>
     <string name="adb_notif_desc">ADB पोर्ट मिल गए! नीचे \'पिन दर्ज करें\' पर टैप करें।</string>
     <string name="adb_notif_action_pin">पिन दर्ज करें</string>
     <string name="adb_notif_input_hint">6-अंकीय पिन दर्ज करें</string>
@@ -431,12 +431,12 @@
     <string name="sync_dialog_conn_failed_title">कनेक्शन विफल</string>
     <string name="sync_dialog_conn_failed_msg">होस्ट तक %1$s पर नहीं पहुंचा जा सका।\nक्या आप सुनिश्चित हैं कि आप उसी Wi-Fi नेटवर्क या हॉटस्पॉट से जुड़े हैं?</string>
 
-    <string name="sync_card_title_system">IIAB + सामग्री साझा करें</string>
-    <string name="sync_card_desc_system">जब दोनों डिवाइस में IIAB-oA Controller ऐप हो, तो आप IIAB प्लेटफ़ॉर्म और इसकी सभी सामग्री (कुछ सौ MB से लेकर कई GB तक) साझा कर सकते हैं।</string>
-    <string name="sync_card_title_apk">IIAB-oA Controller ऐप साझा करें</string>
-    <string name="sync_card_desc_apk">Android पर IIAB का उपयोग करने के लिए, दूसरे डिवाइस को पहले ऐप की आवश्यकता होती है। यह सुविधा आपको इसे स्थानीय रूप से साझा करने की अनुमति देती है। इंटरनेट की आवश्यकता नहीं है!</string>
-    <string name="sync_card_title_receive">IIAB + सामग्री प्राप्त करें</string>
-    <string name="sync_card_desc_receive">IIAB प्लेटफ़ॉर्म और चयनित सामग्री प्राप्त करना शुरू करने के लिए होस्ट डिवाइस पर प्रदर्शित QR कोड को स्कैन करें।</string>
+    <string name="sync_card_title_system">सिस्टम + सामग्री साझा करें</string>
+    <string name="sync_card_desc_system">जब दोनों डिवाइस में K2Go ऐप हो, तो आप सिस्टम और इसकी सभी सामग्री (कुछ सौ MB से लेकर कई GB तक) साझा कर सकते हैं।</string>
+    <string name="sync_card_title_apk">K2Go ऐप साझा करें</string>
+    <string name="sync_card_desc_apk">K2Go का उपयोग करने के लिए, दूसरे डिवाइस को पहले ऐप की आवश्यकता होती है। यह सुविधा आपको इसे स्थानीय रूप से साझा करने की अनुमति देती है। इंटरनेट की आवश्यकता नहीं है!</string>
+    <string name="sync_card_title_receive">सिस्टम + सामग्री प्राप्त करें</string>
+    <string name="sync_card_desc_receive">सिस्टम और चयनित सामग्री प्राप्त करना शुरू करने के लिए होस्ट डिवाइस पर प्रदर्शित QR कोड को स्कैन करें।</string>
 
     <string name="sync_share_status_wifi">"1. सुनिश्चित करें कि दूसरा डिवाइस उसी Wi-Fi पर है।\n2. दूसरे डिवाइस पर इस QR को स्कैन करें।"</string>
     <string name="sync_share_status_hotspot">"1. दूसरे डिवाइस को अपने हॉटस्पॉट से कनेक्ट करने के लिए कहें।\n2. दूसरे डिवाइस पर इस QR को स्कैन करें।"</string>
@@ -465,7 +465,7 @@
     <string name="log_critical_binary_missing">क्रिटिकल: नेटिव लाइब्रेरी से %1$s गायब है!</string>
 
     <string name="setup_back_blocked_msg">कृपया जारी रखने के लिए सेटअप पूरा करें।</string>
-    <string name="sync_scanner_prompt">IIAB होस्ट QR कोड स्कैन करें</string>
+    <string name="sync_scanner_prompt">K2Go होस्ट QR कोड स्कैन करें</string>
 
     <string name="kiwix_dialog_lang_label">Kiwix भाषा</string>
     <string name="kiwix_dialog_variants_label">उपलब्ध ZIM संस्करण</string>
@@ -478,8 +478,8 @@
     <string name="sync_share_status_init">सर्वर शुरू हो रहा है...</string>
 
     <string name="tutorial_share_title">ट्रांसफर बनाम एक्सेस</string>
-    <string name="tutorial_share_heavy">शेयर सेक्शन में आपका स्वागत है! यहां आप पूरे IIAB सिस्टम (कई GB तक) को दूसरे डिवाइस पर क्लोन कर सकते हैं। इस प्रोसेस में घंटों लग सकते हैं, जो तुरंत शेयर एक्सेस जैसा नहीं है।</string>
-    <string name="tutorial_share_light">तुरंत एक्सेस चाहिए? ☝️\nअगर आप चाहते हैं कि दूसरे लोग तुरंत विकिपीडिया पढ़ें या मैप्स इस्तेमाल करें, तो सर्वर शुरू करें और QR कोड यहां शेयर करें!</string>
+    <string name="tutorial_share_heavy">शेयर सेक्शन में आपका स्वागत है! यहां आप पूरे सिस्टम (कई GB तक) को दूसरे डिवाइस पर क्लोन कर सकते हैं। इस प्रोसेस में घंटों लग सकते हैं, जो तुरंत शेयर एक्सेस जैसा नहीं है।</string>
+    <string name="tutorial_share_light">तुरंत एक्सेस चाहिए? ☝️\nअगर आप चाहते हैं कि दूसरे लोग तुरंत विकिपीडिया पढ़ें या IIAB मानचित्र इस्तेमाल करें, तो सर्वर शुरू करें और QR कोड यहां शेयर करें!</string>
     <string name="tutorial_share_dont_show">फिर से न दिखाएं</string>
     <string name="tutorial_share_got_it">समझ गया!</string>
 
@@ -500,7 +500,7 @@
     <string name="install_btn_no_connection">कोई कनेक्शन नहीं</string>
     <string name="install_msg_no_connection">इंटरनेट कनेक्शन नहीं — डाउनलोड करने के लिए कनेक्ट करें।</string>
     <string name="install_offline_estimated">अनुमानित आकार (ऑफ़लाइन)</string>
-    <string name="rsync_error_invalid_credentials">अमान्य या असुरक्षित सिंक क्रेडेंशियल। कृपया एक मान्य IIAB सिंक QR कोड स्कैन करें।</string>
+    <string name="rsync_error_invalid_credentials">अमान्य या असुरक्षित सिंक क्रेडेंशियल। कृपया एक मान्य K2Go सिंक QR कोड स्कैन करें।</string>
     <!-- OTA in-app progress dialog (PR B) -->
     <string name="ota_progress_title">अपडेट हो रहा है</string>
     <string name="ota_status_downloading">अपडेट डाउनलोड हो रहा है…</string>
