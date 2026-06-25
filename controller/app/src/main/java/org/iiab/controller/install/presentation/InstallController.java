@@ -40,6 +40,7 @@ import org.iiab.controller.ProgressButton;
 import org.iiab.controller.R;
 import org.iiab.controller.TarExtractor;
 import org.iiab.controller.deploy.domain.ModuleName;
+import org.iiab.controller.install.domain.AnsibleRunOutcome;
 import org.iiab.controller.util.LocalVarsYamlParser;
 import org.iiab.controller.util.ProcessRunner;
 
@@ -309,6 +310,9 @@ public final class InstallController {
         }
     }
 
+    // ADFA-4435: modules whose runrole failed in the current batch (surfaced when the queue drains).
+    private final List<String> failedModules = new ArrayList<>();
+
     public void processNextInQueue() {
         if (host.installationQueue().isEmpty()) {
             host.setBatchInstalling(false);
@@ -316,8 +320,17 @@ public final class InstallController {
             btnLaunchInstall.setEnabled(false);
             btnLaunchInstall.setText(fragment.getString(R.string.install_btn_launch));
             fetchLocalVarsFromPRoot();
-            if (fragment.getView() != null)
-                Snackbar.make(fragment.getView(), R.string.install_msg_finished, Snackbar.LENGTH_LONG).show();
+            if (fragment.getView() != null) {
+                if (failedModules.isEmpty()) {
+                    Snackbar.make(fragment.getView(), R.string.install_msg_finished, Snackbar.LENGTH_LONG).show();
+                } else {
+                    // ADFA-4435: do not report a clean finish when one or more modules failed.
+                    Snackbar.make(fragment.getView(),
+                            fragment.getString(R.string.install_msg_failed, android.text.TextUtils.join(", ", failedModules)),
+                            Snackbar.LENGTH_LONG).show();
+                }
+            }
+            failedModules.clear();
             return;
         }
 
@@ -347,16 +360,37 @@ public final class InstallController {
                 "echo '" + nextModule + "_enabled: True' >> /etc/iiab/local_vars.yml && " +
                 "cd /opt/iiab/iiab && ./runrole " + nextModule;
 
+        // ADFA-4435: Ansible can print its failure to stdout yet still exit 0 (e.g. the
+        // /dev/shm multiprocessing crash), so watch the output as well as the exit code.
+        // The verdict lives in a pure, unit-tested domain object.
+        final AnsibleRunOutcome outcome = new AnsibleRunOutcome();
         host.prootEngine().executeInContainer(fragment.requireContext(), rootfsDir.getAbsolutePath(), installCmd, new PRootEngine.OutputListener() {
             @Override
             public void onOutputLine(String line) {
+                outcome.observe(line);
                 if (fragment.getActivity() instanceof MainActivity)
                     ((MainActivity) fragment.getActivity()).runOnUiThread(() -> ((MainActivity) fragment.getActivity()).addToLog("[Ansible] " + line));
             }
 
             @Override
             public void onProcessExit(int exitCode) {
-                if (fragment.getActivity() != null) fragment.getActivity().runOnUiThread(() -> processNextInQueue());
+                if (fragment.getActivity() == null) return;
+                // ADFA-4435: was 'continue regardless of outcome'. A non-zero exit OR an Ansible
+                // error in the output means FAILED: roll back the speculative local_vars edit so
+                // the module is not left looking installed/enabled, then surface it.
+                final boolean failed = outcome.failed(exitCode);
+                if (failed) {
+                    failedModules.add(nextModule);
+                    if (fragment.getActivity() instanceof MainActivity)
+                        ((MainActivity) fragment.getActivity()).runOnUiThread(() -> ((MainActivity) fragment.getActivity())
+                                .addToLog("[Install] FAILED: " + nextModule + " (exit=" + exitCode + ")"));
+                    revertModuleInLocalVars(nextModule, rootfsDir, () -> {
+                        if (fragment.getActivity() != null)
+                            fragment.getActivity().runOnUiThread(() -> processNextInQueue());
+                    });
+                } else {
+                    fragment.getActivity().runOnUiThread(() -> processNextInQueue());
+                }
             }
 
             @Override
@@ -370,6 +404,21 @@ public final class InstallController {
                     });
                 }
             }
+        });
+    }
+
+    /**
+     * ADFA-4435: Roll back the speculative local_vars edit made before runrole (the sed delete +
+     * echo _install/_enabled: True), so a failed install is not left looking installed/enabled.
+     * Always invokes {@code then} afterwards, whether or not the revert itself succeeds.
+     */
+    private void revertModuleInLocalVars(String module, File rootfsDir, Runnable then) {
+        if (host.prootEngine() == null) host.setPRootEngine(new PRootEngine());
+        String revertCmd = "sed -i -E '/^[[:space:]]*" + module + "_(install|enabled)[[:space:]]*:/d' /etc/iiab/local_vars.yml";
+        host.prootEngine().executeInContainer(fragment.requireContext(), rootfsDir.getAbsolutePath(), revertCmd, new PRootEngine.OutputListener() {
+            @Override public void onOutputLine(String line) { }
+            @Override public void onProcessExit(int exitCode) { then.run(); }
+            @Override public void onError(String error) { then.run(); }
         });
     }
 

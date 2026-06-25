@@ -238,6 +238,7 @@
     <string name="install_warning_discrepancy_msg">Пожалуйста, проверьте установку вручную, кажется, есть расхождение между зарегистрированным и обнаруженным состоянием.</string>
     <string name="install_msg_confirmed">Установка модуля успешно подтверждена, разрешена только одна переустановка.</string>
     <string name="install_msg_finished">Все установки завершены!</string>
+    <string name="install_msg_failed">Сбой установки: %1$s</string>
     <string name="install_modules_disclaimer">Установка модулей может занять несколько минут в зависимости от скорости вашего интернета и производительности устройства.</string>
 
     <string name="install_dialog_reset_title">Полный сброс (Scratch Reset)</string>
