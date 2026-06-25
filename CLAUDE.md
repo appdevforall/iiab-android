@@ -120,6 +120,13 @@ Put the key in all three:
 The key in the branch/commit/PR is what links the work back to the issue — keep it exact
 (uppercase project key, hyphen, number). One issue can own several branches/PRs.
 
+**Exception (keep Jira low-noise):** trivial, APK-neutral changes — typos, minor wording,
+routine lint-baseline refresh — may ship as `docs:`/`chore:` commits **without** a per-edit
+issue. Reference-worthy docs (plan refreshes, runbooks, ADRs) ride the PR of the work they
+describe, or a single standing "Docs maintenance" issue — never a new per-edit ticket.
+Rule of thumb: if a change does not add traceability, audit, coordination, or visibility,
+it does not get a ticket.
+
 ---
 
 ## Design map (keep this updated as we advance)
