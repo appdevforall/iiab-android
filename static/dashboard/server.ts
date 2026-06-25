@@ -51,7 +51,7 @@ io.on('connection', (socket: Socket) => {
 const PORT = 4000;
 server.listen(PORT, () => {
     console.log(`===========================================`);
-    console.log(`IIAB-oA Dashboard active on port ${PORT}`);
+    console.log(`K2Go Dashboard active on port ${PORT}`);
     console.log(`===========================================`);
 });
 

@@ -9,7 +9,7 @@ As of April 2026, these IIAB Apps are supported:
 * **Kolibri** (lessons & quizzes)
 * **IIAB Maps** (satellite photos, terrain, buildings)
 * **Matomo** (metrics)
-* **System Dashboard** (Android only) — web control panel written in TypeScript
+* **K2Go Dashboard** (Android only) — web control panel written in TypeScript
 
 The default port for the web server is **8085**, for example:
 
@@ -154,7 +154,7 @@ Allows you to share offline content with other users around you, using local Wi-
 A teacher in a rural area needs their students to research history. The teacher activates the "Hotspot" on their phone, starts the server from the **Use** tab of Knowledge To Go, and selects "Share Access". The students connect to the teacher's network, scan the QR code, and can browse the entire Wikipedia on their ouwn language (via Kiwix) from their own devices without consuming mobile data.
 
 ### **Downloading a specific map for fieldwork in an area with poor connectivity**
-A team of volunteers is traveling to a rural municipality where cellular coverage is known to be spotty. Before leaving (while they still have internet access), they go to the **Use** tab, open "Maps". They select the specific region they will be visiting (FQR - Full Quality Regions), and execute the download command via the **System Dashboard**. Upon arrival, they can comfortably view street layouts and local points of interest offline, avoiding roaming charges and not relying on an unstable mobile data plan.
+A team of volunteers is traveling to a rural municipality where cellular coverage is known to be spotty. Before leaving (while they still have internet access), they go to the **Use** tab, open "Maps". They select the specific region they will be visiting (FQR - Full Quality Regions), and execute the download command via the **K2Go Dashboard**. Upon arrival, they can comfortably view street layouts and local points of interest offline, avoiding roaming charges and not relying on an unstable mobile data plan.
 
 ### **Replicating the server on a colleague's phone**
 An educational promoter travels to an isolated community. They meet a community leader with a compatible phone and want to leave the system installed for them. The promoter goes to the **Send** tab, selects **Transfer**, and the leader scans the QR code from the **Receive** tab. An exact copy of the 38 GB of content begins transferring to the new phone wirelessly.
@@ -171,7 +171,7 @@ An educational promoter travels to an isolated community. They meet a community 
   <img src="docs/images/05-adb-setup-03.webp" alt="05-adb-setup-03" width="220">
 </p>
 
-* **System Dashboard (Web)**
+* **K2Go Dashboard (Web)**
 
     An exclusive control panel for K2Go that allows you to manage downloads and elements (such as extracting map regions) from the web browser without needing to use command lines for Kiwix, Maps, and Books from known repositories.
 

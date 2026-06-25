@@ -39,7 +39,7 @@ def ensure_tar_file(custom_path=None):
     print(f"- Downloading catalog from Gutenberg (approx 30MB) to {DEFAULT_TAR_FILE}...")
     req = urllib.request.Request(
         CATALOG_URL,
-        headers={'User-Agent': 'IIAB-oA Catalog-Builder/1.0 (https://github.com/iiab/iiab-android)'}
+        headers={'User-Agent': 'K2Go Catalog-Builder/1.0 (https://github.com/appdevforall/KnowledgeToGo)'}
     )
 
     try:

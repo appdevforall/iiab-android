@@ -21,7 +21,7 @@ const TMP_DIR = '/tmp/books_downloader/';
 
 // --- REMOTE CONFIGURATION (MASTER SERVER) ---
 const REMOTE_BASE_URL = 'https://iiab.switnet.org/android/pg';
-const SYSTEM_USER_AGENT = 'IIAB-oA Dashboard/1.0 (https://github.com/iiab/iiab-android)';
+const SYSTEM_USER_AGENT = 'K2Go Dashboard/1.0 (https://github.com/appdevforall/KnowledgeToGo)';
 
 // --- LOCAL CALIBRE-WEB CONFIGURATION ---
 const CALIBRE_WEB_LOCAL_URL = 'http://127.0.0.1:8083';

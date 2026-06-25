@@ -1,5 +1,5 @@
 // ==========================================
-// IIAB-oA Dashboard - Core Logic
+// K2Go Dashboard - Core Logic
 // ==========================================
 
 const socket = io();
