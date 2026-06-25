@@ -180,6 +180,7 @@
     <string name="settings_saved">Ajustes Guardados</string>
     <string name="version_footer_fallback">Knowledge To Go · 2026 · v0.3.xbeta</string>
     <string name="version_footer_format">Knowledge To Go · 2026 · %1$s</string>
+    <string name="splash_powered_by">powered by App Dev for All</string>
     <string name="update_dialog_title">Nueva versión disponible: %1$s</string>
     <string name="update_dialog_message">¿Desea actualizar la aplicación?\n\nNovedades:\n%1$s</string>
     <string name="update_dialog_positive">Actualizar</string>
