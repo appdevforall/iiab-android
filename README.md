@@ -9,6 +9,7 @@ As of April 2026, these IIAB Apps are supported:
 * **Kolibri** (lessons & quizzes)
 * **Maps** (satellite photos, terrain, buildings)
 * **Matomo** (metrics)
+* **System Dashboard** (Android only) — web control panel written in TypeScript
 
 The default port for the web server is **8085**, for example:
 
