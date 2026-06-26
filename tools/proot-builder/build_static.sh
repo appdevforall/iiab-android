@@ -143,6 +143,10 @@ STUB
 EOF
 
 # --- ARIA2 PATCH ---
+# NOTE: aria2c is intentionally NOT made fully static. A static aria2c cannot
+# resolve DNS off Android (bionic's resolver needs netd; --async-dns is absent
+# since it is built --without-libcares), and it works dynamic on-device where
+# bionic is always present. Only xz gets -all-static (see its block). See README.
 sed -i 's/TERMUX_PKG_DEPENDS="/TERMUX_PKG_DEPENDS="openssl-static, zlib-static, /' packages/aria2/build.sh
 cat << 'EOF' >> packages/aria2/build.sh
 termux_step_pre_configure() {
