@@ -51,16 +51,16 @@ jobs:
       run: |
         sudo apt-get update -qq
         sudo apt-get install -y binutils qemu-user-static binfmt-support
-        chmod +x tools/smoke-native-binaries.sh
+        chmod +x tools/proot-builder/smoke-native-binaries.sh
 
     - name: Register binfmt (QEMU) for foreign-arch binaries
       uses: docker/setup-qemu-action@v3
 
     - name: Contract test — arm64-v8a (native)
-      run: ./tools/smoke-native-binaries.sh --jnilibs "${{ github.workspace }}/artifacts" --arch arm64-v8a
+      run: ./tools/proot-builder/smoke-native-binaries.sh --jnilibs "${{ github.workspace }}/artifacts" --arch arm64-v8a
 
     - name: Contract test — armeabi-v7a (emulated)
-      run: ./tools/smoke-native-binaries.sh --jnilibs "${{ github.workspace }}/artifacts" --arch armeabi-v7a
+      run: ./tools/proot-builder/smoke-native-binaries.sh --jnilibs "${{ github.workspace }}/artifacts" --arch armeabi-v7a
 
   publish:
     name: Publish rolling release
