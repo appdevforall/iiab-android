@@ -235,6 +235,16 @@ termux_step_pre_configure() {
     LDFLAGS+=" -static -ffunction-sections -fdata-sections -Wl,--gc-sections"
     TERMUX_PKG_EXTRA_CONFIGURE_ARGS+=" --enable-static --disable-shared --disable-year2038"
 }
+termux_step_make() {
+    # -all-static is a libtool-ONLY link flag; it must NOT be in configure-time
+    # LDFLAGS (configure's raw-clang test rejects it -> "cannot create
+    # executables"). Inject it at link time only (compile steps ignore LDFLAGS).
+    # xz links liblzma via libtool, which swallows a plain -static; -all-static
+    # forces a FULLY static executable. (aria2c is intentionally left dynamic:
+    # its bionic DNS resolver needs Android netd, so a static aria2c cannot
+    # resolve off-device; dynamic works on-device where bionic is always present.)
+    make -j"$(nproc)" LDFLAGS="$LDFLAGS -all-static"
+}
 termux_step_post_massage() {
     echo ">> Bypassing SOVERSION guard..."
     TERMUX_PKG_SOVERSION=""
