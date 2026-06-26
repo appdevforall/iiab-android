@@ -10,9 +10,6 @@ jobs:
     name: Compile static termux packages
     runs-on: ubuntu-latest
 
-    permissions:
-      contents: write
-
     steps:
     - name: Checkout project code
       uses: actions/checkout@v4
@@ -21,7 +18,6 @@ jobs:
       run: chmod +x tools/proot-builder/build_static.sh
 
     - name: Run Compilation (this will take awhile)
-
       run: |
         ./tools/proot-builder/build_static.sh --rebuild-all \
           --build-dir ${{ github.workspace }}/termux-build \
@@ -32,6 +28,52 @@ jobs:
       with:
         name: termux-ninja-binaries
         path: ${{ github.workspace }}/termux-artifacts/
+
+  # Gate: run the binary contract/smoke tests on the freshly built bundle.
+  # arm64-v8a runs natively on the ARM runner (faithful proot launch); the
+  # 32-bit arch is emulated via QEMU (proot is version-only there). A failure
+  # here blocks the publish job below, so a broken rebuild is never released.
+  smoke-test:
+    name: Smoke/contract test (ADFA-4465)
+    needs: build-binaries
+    runs-on: ubuntu-24.04-arm
+    steps:
+    - name: Checkout project code
+      uses: actions/checkout@v4
+
+    - name: Download freshly built binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: termux-ninja-binaries
+        path: ${{ github.workspace }}/artifacts
+
+    - name: Tools for the proot launch + emulation fallback
+      run: |
+        sudo apt-get update -qq
+        sudo apt-get install -y binutils qemu-user-static binfmt-support
+        chmod +x tools/proot-builder/smoke-native-binaries.sh
+
+    - name: Register binfmt (QEMU) for foreign-arch binaries
+      uses: docker/setup-qemu-action@v3
+
+    - name: Contract test — arm64-v8a (native)
+      run: ./tools/proot-builder/smoke-native-binaries.sh --jnilibs "${{ github.workspace }}/artifacts" --arch arm64-v8a
+
+    - name: Contract test — armeabi-v7a (emulated)
+      run: ./tools/proot-builder/smoke-native-binaries.sh --jnilibs "${{ github.workspace }}/artifacts" --arch armeabi-v7a
+
+  publish:
+    name: Publish rolling release
+    needs: [build-binaries, smoke-test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - name: Download built binaries
+      uses: actions/download-artifact@v4
+      with:
+        name: termux-ninja-binaries
+        path: ${{ github.workspace }}/termux-artifacts
 
     - name: Zip binaries for release distribution
       run: |
@@ -46,7 +88,7 @@ jobs:
       with:
         tag_name: ${{ env.TAG_NAME }}
         name: "Static binaries [${{ env.TAG_NAME }}]"
-        body: "Automated rolling build of static PRoot and utilities."
+        body: "Automated rolling build of static PRoot and utilities. Passed the native-binary contract/smoke gate (ADFA-4465)."
         files: ${{ github.workspace }}/termux-binaries-latest.zip
         prerelease: true
 
@@ -55,6 +97,6 @@ jobs:
       with:
         keep_latest: 3
         delete_tags: true
-        delete_tag_pattern: "^binaries-" 
+        delete_tag_pattern: "^binaries-"
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
