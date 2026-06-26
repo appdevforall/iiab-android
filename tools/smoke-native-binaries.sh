@@ -52,34 +52,42 @@ BIN="$(cd "$BIN" && pwd)"
 log "Binaries dir: $BIN"
 log "Target arch : $ARCH"
 
-# --- Native vs QEMU detection -------------------------------------------------
-# Map android arch -> the qemu-user binary we would need for emulation.
+# --- Native vs emulated detection --------------------------------------------
+# NATIVE is decided by ARCH FAMILY (host uname -m vs target), NOT merely by
+# whether exec works: binfmt/QEMU can make a foreign binary exec transparently,
+# but proot under emulation is unreliable, so we must know the real situation.
+HOST_ARCH="$(uname -m)"
 case "$ARCH" in
-  arm64-v8a)   QEMU_WANT="qemu-aarch64-static" ;;
-  armeabi-v7a) QEMU_WANT="qemu-arm-static" ;;
-  x86_64)      QEMU_WANT="" ;;
-  *)           QEMU_WANT="qemu-${ARCH}-static" ;;
+  arm64-v8a)   FAMILY="aarch64 arm64";     QEMU_WANT="qemu-aarch64-static" ;;
+  armeabi-v7a) FAMILY="armv7l armv6l arm"; QEMU_WANT="qemu-arm-static" ;;
+  x86_64)      FAMILY="x86_64 amd64";      QEMU_WANT="" ;;
+  *)           FAMILY="$ARCH";             QEMU_WANT="qemu-${ARCH}-static" ;;
 esac
-QEMU=""
+NATIVE=0
+for f in $FAMILY; do [ "$HOST_ARCH" = "$f" ] && NATIVE=1; done
 chmod +x "$BIN"/*.so 2>/dev/null || true
-# Probe: can this host execute the target tar directly? (126 = exec format error)
-if [ -f "$BIN/libtar.so" ] && "$BIN/libtar.so" --version >/dev/null 2>&1; then
-  NATIVE=1; log "Native execution confirmed (host runs $ARCH directly)."
+
+QEMU=""   # set only when we must prepend an explicit qemu-user binary
+if [ "$NATIVE" -eq 1 ]; then
+  log "Native: host $HOST_ARCH runs $ARCH directly."
 else
-  NATIVE=0
-  if [ -n "$QEMU_WANT" ] && command -v "$QEMU_WANT" >/dev/null 2>&1; then
-    QEMU="$(command -v "$QEMU_WANT")"; log "Using QEMU emulation: $QEMU"
+  # Foreign arch: prefer transparent binfmt (exec just works); else explicit prefix.
+  if [ -f "$BIN/libtar.so" ] && "$BIN/libtar.so" --version >/dev/null 2>&1; then
+    log "Emulated: foreign $ARCH on $HOST_ARCH via registered binfmt/QEMU."
+  elif [ -n "$QEMU_WANT" ] && command -v "$QEMU_WANT" >/dev/null 2>&1; then
+    QEMU="$(command -v "$QEMU_WANT")"
+    log "Emulated: foreign $ARCH on $HOST_ARCH via explicit $QEMU."
   else
-    echo "ERROR: $ARCH is foreign to this host and $QEMU_WANT is not installed." >&2
-    echo "       Install qemu-user-static or run on a matching-arch runner." >&2
+    echo "ERROR: $ARCH is foreign to $HOST_ARCH and no QEMU is available." >&2
+    echo "       Install qemu-user-static (+binfmt-support) or run on a $ARCH host." >&2
     exit 2
   fi
 fi
 
-# run_bin <lib.so> [args...] — exec a bundle binary natively or via QEMU.
+# run_bin <lib.so> [args...] — exec a bundle binary (direct/binfmt, or via explicit QEMU).
 run_bin() {
   local b="$1"; shift
-  if [ "$NATIVE" -eq 1 ]; then "$b" "$@"; else "$QEMU" "$b" "$@"; fi
+  if [ -n "$QEMU" ]; then "$QEMU" "$b" "$@"; else "$b" "$@"; fi
 }
 
 PASS=0; FAIL=0
