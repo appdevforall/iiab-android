@@ -14,6 +14,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import org.iiab.controller.util.AppExecutors;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
@@ -26,8 +28,8 @@ import org.iiab.controller.network.domain.ApplyDnsUseCase;
 
 public class PRootEngine {
     private static final String TAG = "IIAB-PRootEngine";
-    private Process currentProcess;
-    private java.io.OutputStream processOutputStream;
+    private volatile Process currentProcess;
+    private volatile java.io.OutputStream processOutputStream;
 
     public interface OutputListener {
         void onOutputLine(String line);
@@ -369,8 +371,19 @@ public class PRootEngine {
     }
 
     public void killProcess() {
-        if (currentProcess != null) {
-            currentProcess.destroy();
-        }
+        final Process p = currentProcess;
+        if (p == null) return;
+        p.destroy();
+        // Reap the child off the caller's thread so it does not linger as a
+        // zombie / hold proot mounts. Process.waitFor(timeout) is API 26+ and
+        // minSdk is 24, so we drain on the shared io() executor instead of
+        // blocking the caller.
+        AppExecutors.get().io().execute(() -> {
+            try {
+                p.waitFor();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
+        });
     }
 }
