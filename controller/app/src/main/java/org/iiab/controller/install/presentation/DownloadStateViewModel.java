@@ -7,7 +7,9 @@
  *               in-flight flag) at Activity scope, so it survives DeployFragment
  *               recreation (e.g. a rotation mid-download) WITHOUT static mutable
  *               fields. Replaces DeployFragment's `static Aria2Manager` +
- *               `static isDownloadingRootfs` (ADFA-4459, D9).
+ *               `static isDownloadingRootfs` (ADFA-4459, D9). ADFA-4474 PR3 also
+ *               holds the planner SELECTION (tier, companion-data, kiwix overrides)
+ *               here so the projection gauge + selections survive recreation.
  *
  *               Pure state holder: no Android UI and no lifecycle teardown here
  *               -- the Fragment still decides when to stop the download
@@ -20,6 +22,7 @@ import androidx.lifecycle.LiveData;
 import androidx.lifecycle.ViewModel;
 
 import org.iiab.controller.Aria2Manager;
+import org.iiab.controller.InstallationPlanner;
 
 public class DownloadStateViewModel extends ViewModel {
 
@@ -41,6 +44,26 @@ public class DownloadStateViewModel extends ViewModel {
     public void setDownloadingRootfs(boolean downloadingRootfs) {
         this.downloadingRootfs = downloadingRootfs;
     }
+
+    // ADFA-4474 PR3: planner selection state, kept at Activity scope so the
+    // projection gauge + tier/companion/kiwix selections survive a recreation
+    // (theme toggle / rotation / background+return).
+    private InstallationPlanner.Tier selectedTier;
+    private boolean companionData;
+    private String overrideKiwixLang;
+    private String overrideKiwixVariant;
+
+    public InstallationPlanner.Tier getSelectedTier() { return selectedTier; }
+    public void setSelectedTier(InstallationPlanner.Tier tier) { this.selectedTier = tier; }
+
+    public boolean isCompanionData() { return companionData; }
+    public void setCompanionData(boolean companionData) { this.companionData = companionData; }
+
+    public String getOverrideKiwixLang() { return overrideKiwixLang; }
+    public void setOverrideKiwixLang(String lang) { this.overrideKiwixLang = lang; }
+
+    public String getOverrideKiwixVariant() { return overrideKiwixVariant; }
+    public void setOverrideKiwixVariant(String variant) { this.overrideKiwixVariant = variant; }
 
     /** Observable install-pipeline progress (app-scoped; survives recreation). */
     public LiveData<InstallState> installState() {
