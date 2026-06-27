@@ -151,8 +151,10 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
     private volatile boolean hasInternet = true;
 
     // Native Engine Variables
-    private static Aria2Manager aria2Manager;
-    private static boolean isDownloadingRootfs = false;
+    // Download state (Aria2Manager + in-flight flag) is owned by an Activity-scoped
+    // ViewModel so it survives Fragment recreation (e.g. rotation during a download)
+    // without static mutable state. (ADFA-4459, D9)
+    private org.iiab.controller.install.presentation.DownloadStateViewModel downloadState;
     // State Variables (New control variables)
     private boolean isRestoring = false;
     private boolean isDeleting = false;
@@ -181,6 +183,9 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
     @Override
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
+
+        downloadState = new ViewModelProvider(requireActivity())
+                .get(org.iiab.controller.install.presentation.DownloadStateViewModel.class);
 
         // UI Binding
         ledInternet = view.findViewById(R.id.led_install_internet);
@@ -300,9 +305,9 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
     public void onDestroyView() {
         super.onDestroyView();
         if (getActivity() != null && getActivity().isChangingConfigurations()) return;
-        if (aria2Manager != null && isDownloadingRootfs) {
-            aria2Manager.stopDownload();
-            isDownloadingRootfs = false;
+        if (downloadState.getAria2Manager() != null && downloadState.isDownloadingRootfs()) {
+            downloadState.getAria2Manager().stopDownload();
+            downloadState.setDownloadingRootfs(false);
         }
     }
 
@@ -455,11 +460,11 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
             float lockAlpha = 0.5f;
 
             // We keep the opacity at 80% only for the button that is currently working
-            btnFastInstall.setAlpha((isDownloadingRootfs && !isServerRunning) ? 0.8f : lockAlpha);
+            btnFastInstall.setAlpha((downloadState.isDownloadingRootfs() && !isServerRunning) ? 0.8f : lockAlpha);
             btnFastDelete.setAlpha(isDeleting ? 0.8f : lockAlpha);
             if (btnAdvancedBackup != null) btnAdvancedBackup.setAlpha(isBackupInProgress ? 0.8f : lockAlpha);
             if (btnAdvancedRestore != null) btnAdvancedRestore.setAlpha(isRestoring ? 0.8f : lockAlpha);
-            if (btnAdvancedReset != null) btnAdvancedReset.setAlpha((isDownloadingRootfs && !isServerRunning) ? 0.8f : lockAlpha);
+            if (btnAdvancedReset != null) btnAdvancedReset.setAlpha((downloadState.isDownloadingRootfs() && !isServerRunning) ? 0.8f : lockAlpha);
             if (txtSelectBackupTitle != null) txtSelectBackupTitle.setAlpha(lockAlpha);
             if (btnImportBackup != null) btnImportBackup.setAlpha(isImporting ? 0.8f : lockAlpha);
 
@@ -630,11 +635,11 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
     // =========================================================================================
 
     public boolean isSystemBusy() {
-        return isDownloadingRootfs || isBatchInstalling || isBackupInProgress || isRestoring || isDeleting || isImporting;
+        return downloadState.isDownloadingRootfs() || isBatchInstalling || isBackupInProgress || isRestoring || isDeleting || isImporting;
     }
 
     public String getSystemBusyMessage() {
-        if (isDownloadingRootfs) return getString(R.string.install_busy_provisioning);
+        if (downloadState.isDownloadingRootfs()) return getString(R.string.install_busy_provisioning);
         if (isBatchInstalling) return getString(R.string.install_busy_modules);
         if (isBackupInProgress) return getString(R.string.install_busy_backup);
         if (isRestoring) return getString(R.string.install_busy_restore);
@@ -837,15 +842,15 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
     @Override public boolean hasInternet() { return this.hasInternet; }
 
     // --- InstallHost seam (install pipeline lives in InstallController) ---
-    @Override public boolean isDownloadingRootfs() { return isDownloadingRootfs; }
-    @Override public void setDownloadingRootfs(boolean v) { isDownloadingRootfs = v; }
+    @Override public boolean isDownloadingRootfs() { return downloadState.isDownloadingRootfs(); }
+    @Override public void setDownloadingRootfs(boolean v) { downloadState.setDownloadingRootfs(v); }
     @Override public boolean isBatchInstalling() { return isBatchInstalling; }
     @Override public void setBatchInstalling(boolean v) { isBatchInstalling = v; }
     @Override public java.util.List<String> installationQueue() { return installationQueue; }
     @Override public org.json.JSONObject getLastKnownState() { return lastKnownState; }
     @Override public void setLastKnownState(org.json.JSONObject v) { lastKnownState = v; }
-    @Override public org.iiab.controller.Aria2Manager aria2Manager() { return aria2Manager; }
-    @Override public void setAria2Manager(org.iiab.controller.Aria2Manager v) { aria2Manager = v; }
+    @Override public org.iiab.controller.Aria2Manager aria2Manager() { return downloadState.getAria2Manager(); }
+    @Override public void setAria2Manager(org.iiab.controller.Aria2Manager v) { downloadState.setAria2Manager(v); }
     @Override public org.iiab.controller.PRootEngine prootEngine() { return prootEngine; }
     @Override public void setPRootEngine(org.iiab.controller.PRootEngine v) { prootEngine = v; }
 
