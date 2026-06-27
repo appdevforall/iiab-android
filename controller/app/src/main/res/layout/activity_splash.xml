@@ -8,7 +8,7 @@
         android:layout_width="160dp"
         android:layout_height="160dp"
         android:layout_gravity="center"
-        android:src="@mipmap/ic_launcher"
+        android:src="@drawable/splash_logo"
         android:contentDescription="@string/app_name" />
 
     <TextView
