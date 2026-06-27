@@ -236,13 +236,42 @@ public final class PlannerController {
         btnTierStandard.setOnClickListener(tierClickListener);
         btnTierFull.setOnClickListener(tierClickListener);
 
+        // ADFA-4474 PR3: restore the companion-data choice (set BEFORE attaching the
+        // listener so it does not trigger a redundant recalculation).
+        chkCompanionData.setChecked(host.isCompanionData());
+        btnKiwixSettings.setColorFilter(ContextCompat.getColor(fragment.requireContext(),
+                host.isCompanionData() ? R.color.colorAccent : R.color.dash_text_secondary));
+
         chkCompanionData.setOnCheckedChangeListener((buttonView, isChecked) -> {
+            host.setCompanionData(isChecked);
             btnKiwixSettings.setColorFilter(ContextCompat.getColor(fragment.requireContext(), isChecked ? R.color.colorAccent : R.color.dash_text_secondary));
             recalculateProjection();
         });
 
         btnKiwixSettings.setOnClickListener(v -> showKiwixSettingsDialog());
+
+        // ADFA-4474 PR3: restore the tier-button highlight from the persisted selection,
+        // so the projection gauge + selection survive a recreation. recalculateProjection()
+        // below then re-renders the gauge from the restored tier + companion choice.
+        restoreTierHighlight();
         recalculateProjection();
+    }
+
+    /** Re-applies the selected-tier button highlight after a recreation (ADFA-4474 PR3). */
+    private void restoreTierHighlight() {
+        InstallationPlanner.Tier sel = host.getSelectedTier();
+        if (sel == null) return;
+        btnTierBasic.setAlpha(1.0f);
+        btnTierStandard.setAlpha(1.0f);
+        btnTierFull.setAlpha(1.0f);
+        ColorStateList neutral = ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), R.color.btn_neutral));
+        ColorStateList success = ColorStateList.valueOf(ContextCompat.getColor(fragment.requireContext(), R.color.status_success));
+        btnTierBasic.setBackgroundTintList(neutral);
+        btnTierStandard.setBackgroundTintList(neutral);
+        btnTierFull.setBackgroundTintList(neutral);
+        Button selBtn = (sel == InstallationPlanner.Tier.STANDARD) ? btnTierStandard
+                : (sel == InstallationPlanner.Tier.FULL) ? btnTierFull : btnTierBasic;
+        selBtn.setBackgroundTintList(success);
     }
 
     private void recalculateProjection() {

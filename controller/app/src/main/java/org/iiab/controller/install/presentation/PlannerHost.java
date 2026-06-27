@@ -18,6 +18,8 @@ import java.util.List;
 public interface PlannerHost {
     org.iiab.controller.InstallationPlanner.Tier getSelectedTier();
     void setSelectedTier(org.iiab.controller.InstallationPlanner.Tier tier);
+    boolean isCompanionData();
+    void setCompanionData(boolean companionData);
     List<CheckBox> moduleCheckboxes();
     void setStorageSafe(boolean safe);
     boolean isStorageSafe();

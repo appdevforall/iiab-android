@@ -143,9 +143,6 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
     private List<String> installationQueue = new ArrayList<>();
     private boolean isBatchInstalling = false;
     private boolean isStorageSafe = false;
-    private String overrideKiwixLang = null;
-    private String overrideKiwixVariant = null;
-    private InstallationPlanner.Tier selectedTier = null;
     // Presentation-layer source of the OS rootfs size (live, with offline fallback).
     // Last known connectivity, refreshed by checkInternetAccess() (every 3s via liveStatusRunnable).
     private volatile boolean hasInternet = true;
@@ -551,7 +548,7 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
 
         } else {
             // FREE MODE: All off and ready to operate
-            if (!hasInternet || selectedTier == null || !isStorageSafe) btnFastInstall.setAlpha(0.4f);
+            if (!hasInternet || getSelectedTier() == null || !isStorageSafe) btnFastInstall.setAlpha(0.4f);
             else btnFastInstall.setAlpha(1.0f);
 
             btnFastDelete.setAlpha(1.0f);
@@ -900,15 +897,17 @@ public class DeployFragment extends Fragment implements org.iiab.controller.back
     @Override public boolean isBackupInProgress() { return this.isBackupInProgress; }
 
     // --- PlannerHost seam (planner logic lives in PlannerController) ---
-    @Override public InstallationPlanner.Tier getSelectedTier() { return selectedTier; }
-    @Override public void setSelectedTier(InstallationPlanner.Tier tier) { this.selectedTier = tier; }
+    @Override public InstallationPlanner.Tier getSelectedTier() { return downloadState.getSelectedTier(); }
+    @Override public void setSelectedTier(InstallationPlanner.Tier tier) { downloadState.setSelectedTier(tier); }
+    @Override public boolean isCompanionData() { return downloadState.isCompanionData(); }
+    @Override public void setCompanionData(boolean v) { downloadState.setCompanionData(v); }
     @Override public java.util.List<android.widget.CheckBox> moduleCheckboxes() { return newInstallCheckboxes; }
     @Override public void setStorageSafe(boolean safe) { this.isStorageSafe = safe; }
     @Override public boolean isStorageSafe() { return this.isStorageSafe; }
-    @Override public String getOverrideKiwixLang() { return overrideKiwixLang; }
-    @Override public void setOverrideKiwixLang(String lang) { this.overrideKiwixLang = lang; }
-    @Override public String getOverrideKiwixVariant() { return overrideKiwixVariant; }
-    @Override public void setOverrideKiwixVariant(String variant) { this.overrideKiwixVariant = variant; }
+    @Override public String getOverrideKiwixLang() { return downloadState.getOverrideKiwixLang(); }
+    @Override public void setOverrideKiwixLang(String lang) { downloadState.setOverrideKiwixLang(lang); }
+    @Override public String getOverrideKiwixVariant() { return downloadState.getOverrideKiwixVariant(); }
+    @Override public void setOverrideKiwixVariant(String variant) { downloadState.setOverrideKiwixVariant(variant); }
     @Override public boolean hasInternet() { return this.hasInternet; }
 
     // --- InstallHost seam (install pipeline lives in InstallController) ---
