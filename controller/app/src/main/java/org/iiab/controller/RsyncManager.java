@@ -14,6 +14,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import org.iiab.controller.sync.domain.RsyncConfig;
+import org.iiab.controller.sync.domain.RsyncOutcome;
+import org.iiab.controller.sync.domain.RsyncProgress;
 import org.iiab.controller.sync.domain.SyncCredentialValidator;
 
 import java.io.BufferedReader;
@@ -21,8 +24,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStreamReader;
 import java.io.PrintWriter;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class RsyncManager {
 
@@ -83,32 +84,16 @@ public class RsyncManager {
             secretsFile.setReadable(true, true);
             secretsFile.setWritable(true, true);
 
-            // PHASE 1 FIX: Added 'max connections = 3' to protect I/O bottleneck
-            String configContent =
-                    "pid file = " + pidFile.getAbsolutePath() + "\n" +
-                            "lock file = " + lockFile.getAbsolutePath() + "\n" +
-                            "port = " + port + "\n" +
-                            "use chroot = no\n" +
-                            "log file = /dev/null\n" +
-                            "reverse lookup = no\n" +
-                            "\n" +
-                            "[" + SYNC_MODULE_NAME + "]\n" +
-                            "path = " + dirToShare + "\n" +
-                            "comment = IIAB Peer-to-Peer Sync\n" +
-                            "read only = yes\n" +
-                            "timeout = 300\n" +
-                            "max connections = 3\n" +
-                            "auth users = " + user + "\n" +
-                            "secrets file = " + secretsFile.getAbsolutePath() + "\n";
+            // PHASE 1 FIX: 'max connections = 3' protects the I/O bottleneck.
+            // Config/argv assembly lives in the pure RsyncConfig domain (S14 step 1).
+            String configContent = RsyncConfig.buildDaemonConf(
+                    pidFile.getAbsolutePath(), lockFile.getAbsolutePath(), port,
+                    SYNC_MODULE_NAME, dirToShare, user, secretsFile.getAbsolutePath());
 
             writeTextToFile(configFile, configContent);
 
             ProcessBuilder pb = new ProcessBuilder(
-                    rsyncBin.getAbsolutePath(),
-                    "--daemon",
-                    "--no-detach",
-                    "--config=" + configFile.getAbsolutePath()
-            );
+                    RsyncConfig.serverArgs(rsyncBin.getAbsolutePath(), configFile.getAbsolutePath()));
 
             pb.redirectErrorStream(true);
             rsyncProcess = pb.start();
@@ -152,18 +137,10 @@ public class RsyncManager {
                 passFile.setReadable(true, true);
                 passFile.setWritable(true, true);
 
-                String remoteUrl = "rsync://" + user + "@" + hostIp + ":" + port + "/" + SYNC_MODULE_NAME + "/";
+                String remoteUrl = RsyncConfig.buildRemoteUrl(user, hostIp, port, SYNC_MODULE_NAME);
 
-                ProcessBuilder pb = new ProcessBuilder(
-                        rsyncBin.getAbsolutePath(),
-                        "-av",
-                        "--delete",
-                        "--info=progress2",
-                        "--partial",
-                        "--password-file=" + passFile.getAbsolutePath(),
-                        remoteUrl,
-                        destinationDir
-                );
+                ProcessBuilder pb = new ProcessBuilder(RsyncConfig.clientArgs(
+                        rsyncBin.getAbsolutePath(), passFile.getAbsolutePath(), remoteUrl, destinationDir));
 
                 pb.redirectErrorStream(true);
                 rsyncProcess = pb.start();
@@ -171,7 +148,6 @@ public class RsyncManager {
                 BufferedReader reader = new BufferedReader(new InputStreamReader(rsyncProcess.getInputStream()));
                 String line;
 
-                Pattern progressPattern = Pattern.compile("(\\d+)%\\s+([\\d\\.]+[a-zA-Z/s]+)\\s+([\\d:]+)");
                 String lastFile = "";
 
                 while ((line = reader.readLine()) != null) {
@@ -180,17 +156,10 @@ public class RsyncManager {
                         break;
                     }
 
-                    Matcher matcher = progressPattern.matcher(line);
-                    if (matcher.find()) {
-                        try {
-                            int percent = Integer.parseInt(matcher.group(1));
-                            String speed = matcher.group(2);
-                            String eta = matcher.group(3);
-                            String finalFile = lastFile;
-                            mainHandler.post(() -> listener.onProgress(percent, speed, eta, finalFile));
-                        } catch (Exception e) {
-                            Log.w(TAG, "Failed to parse rsync progress line", e);
-                        }
+                    RsyncProgress progress = RsyncProgress.parse(line);
+                    if (progress != null) {
+                        String finalFile = lastFile;
+                        mainHandler.post(() -> listener.onProgress(progress.percent, progress.speed, progress.eta, finalFile));
                     }
                     // PHASE 1 FIX: Strict match for actual rsync errors, ignoring files named "error"
                     else if (line.contains("@ERROR:") || line.contains("rsync error:")) {
@@ -206,14 +175,18 @@ public class RsyncManager {
 
                 if (isCancelled) {
                     mainHandler.post(() -> listener.onError(context.getString(R.string.rsync_error_cancelled)));
-                } else if (exitCode == 0 || exitCode == 23 || exitCode == 24) {
-                    mainHandler.post(() -> listener.onComplete(context.getString(R.string.rsync_success_complete)));
-                }
-                // PHASE 1 FIX: Clean handling of unexpected server drops (Codes 10, 12, 20 are socket/stream errors)
-                else if (exitCode == 10 || exitCode == 12 || exitCode == 20) {
-                    mainHandler.post(() -> listener.onError(context.getString(R.string.rsync_error_host_dropped)));
                 } else {
-                    mainHandler.post(() -> listener.onError(context.getString(R.string.rsync_error_exit_code, exitCode)));
+                    switch (RsyncOutcome.classifyTransfer(exitCode)) {
+                        case COMPLETE:
+                            mainHandler.post(() -> listener.onComplete(context.getString(R.string.rsync_success_complete)));
+                            break;
+                        case HOST_DROPPED: // socket/stream drop (10/12/20)
+                            mainHandler.post(() -> listener.onError(context.getString(R.string.rsync_error_host_dropped)));
+                            break;
+                        default:
+                            mainHandler.post(() -> listener.onError(context.getString(R.string.rsync_error_exit_code, exitCode)));
+                            break;
+                    }
                 }
 
             } catch (Exception e) {
@@ -257,18 +230,10 @@ public class RsyncManager {
                 passFile.setReadable(true, true);
                 passFile.setWritable(true, true);
 
-                String remoteUrl = "rsync://" + user + "@" + hostIp + ":" + port + "/" + SYNC_MODULE_NAME + "/";
+                String remoteUrl = RsyncConfig.buildRemoteUrl(user, hostIp, port, SYNC_MODULE_NAME);
 
-                ProcessBuilder pb = new ProcessBuilder(
-                        rsyncBin.getAbsolutePath(),
-                        "-av",
-                        "--delete",
-                        "--dry-run",
-                        "--stats",
-                        "--password-file=" + passFile.getAbsolutePath(),
-                        remoteUrl,
-                        destinationDir
-                );
+                ProcessBuilder pb = new ProcessBuilder(RsyncConfig.dryRunArgs(
+                        rsyncBin.getAbsolutePath(), passFile.getAbsolutePath(), remoteUrl, destinationDir));
 
                 pb.redirectErrorStream(true);
                 rsyncProcess = pb.start();
@@ -277,19 +242,12 @@ public class RsyncManager {
                 String line;
                 long totalTransferredBytes = 0;
 
-                Pattern statsPattern = Pattern.compile("Total transferred file size:\\s+([\\d,\\.]+)\\s+bytes");
-
                 while ((line = reader.readLine()) != null) {
                     if (isCancelled) {
                         rsyncProcess.destroy();
                         break;
                     }
-
-                    Matcher matcher = statsPattern.matcher(line);
-                    if (matcher.find()) {
-                        String cleanNumber = matcher.group(1).replaceAll("[,\\.]", "");
-                        totalTransferredBytes = Long.parseLong(cleanNumber);
-                    }
+                    totalTransferredBytes = RsyncProgress.parseTransferredBytes(line, totalTransferredBytes);
                 }
 
                 int exitCode = rsyncProcess.waitFor();
@@ -297,7 +255,7 @@ public class RsyncManager {
 
                 if (isCancelled) {
                     mainHandler.post(() -> listener.onError(context.getString(R.string.rsync_error_dry_run_cancelled)));
-                } else if (exitCode == 0 || exitCode == 23 || exitCode == 24) {
+                } else if (RsyncOutcome.isSuccess(exitCode)) {
                     final long finalBytes = totalTransferredBytes;
                     mainHandler.post(() -> listener.onCalculated(finalBytes));
                 } else {

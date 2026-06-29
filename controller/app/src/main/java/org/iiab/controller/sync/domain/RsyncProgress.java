@@ -1,0 +1,67 @@
+/*
+ * ============================================================================
+ * Name        : RsyncProgress.java
+ * Author      : AppDevForAll
+ * Copyright   : Copyright (c) 2026 AppDevForAll
+ * Description : Domain parser for rsync stdout: a single --info=progress2 line
+ *               (percent / speed / eta) and the --stats "Total transferred file
+ *               size" line. Pure (no android.*, no I/O), so it is unit-testable
+ *               on a plain JVM and clonable by an external host (Share-export,
+ *               S14 step 1). Regexes are unchanged from the previous inline
+ *               parsing in RsyncManager.
+ * ============================================================================
+ */
+package org.iiab.controller.sync.domain;
+
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public final class RsyncProgress {
+
+    public final int percent;
+    public final String speed;
+    public final String eta;
+
+    private RsyncProgress(int percent, String speed, String eta) {
+        this.percent = percent;
+        this.speed = speed;
+        this.eta = eta;
+    }
+
+    private static final Pattern PROGRESS =
+            Pattern.compile("(\\d+)%\\s+([\\d\\.]+[a-zA-Z/s]+)\\s+([\\d:]+)");
+
+    private static final Pattern STATS =
+            Pattern.compile("Total transferred file size:\\s+([\\d,\\.]+)\\s+bytes");
+
+    /**
+     * Parses one rsync {@code --info=progress2} line. Returns {@code null} if the
+     * line carries no progress token or the percentage is not a number.
+     */
+    public static RsyncProgress parse(String line) {
+        if (line == null) return null;
+        Matcher m = PROGRESS.matcher(line);
+        if (!m.find()) return null;
+        try {
+            return new RsyncProgress(Integer.parseInt(m.group(1)), m.group(2), m.group(3));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+    }
+
+    /**
+     * Parses the {@code --stats} "Total transferred file size: N bytes" line
+     * (grouping separators stripped). Returns {@code fallback} when the line does
+     * not match or the number cannot be parsed.
+     */
+    public static long parseTransferredBytes(String line, long fallback) {
+        if (line == null) return fallback;
+        Matcher m = STATS.matcher(line);
+        if (!m.find()) return fallback;
+        try {
+            return Long.parseLong(m.group(1).replaceAll("[,\\.]", ""));
+        } catch (NumberFormatException e) {
+            return fallback;
+        }
+    }
+}
