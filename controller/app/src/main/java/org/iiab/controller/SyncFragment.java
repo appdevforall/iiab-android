@@ -50,6 +50,8 @@ import androidx.core.content.ContextCompat;
 
 public class SyncFragment extends Fragment {
 
+    private static final String TAG = "IIAB-SyncFragment";
+
     private RadioGroup rgSyncMode;
     private LinearLayout containerShare, containerReceive, containerProgress;
 
@@ -504,19 +506,22 @@ public class SyncFragment extends Fragment {
         txtTransferFilename.setText(getString(R.string.sync_msg_connecting));
         progressBarTransfer.setIndeterminate(true);
 
-        new Thread(() -> {
+        // S8: reachability probe on the shared IO executor (was a raw Thread).
+        AppExecutors.get().io().execute(() -> {
             boolean isReachable = false;
             try {
                 Socket socket = new Socket();
                 socket.connect(new InetSocketAddress(creds.ip, creds.port), 2000);
                 socket.close();
                 isReachable = true;
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                Log.w(TAG, "Reachability probe to " + creds.ip + ":" + creds.port + " failed", e);
             }
 
             final boolean finalReachable = isReachable;
-            if (getActivity() != null) {
+            if (isAdded() && getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
+                    if (!isAdded()) return; // S8: view gone (e.g. config change) -> no dialogs
                     if (finalReachable) {
                         File destDir = new File(requireContext().getFilesDir(), "rootfs/installed-rootfs/iiab");
 
@@ -584,7 +589,7 @@ public class SyncFragment extends Fragment {
                     }
                 });
             }
-        }).start();
+        });
     }
 
     private void startTransfer(SyncHandshakeHelper.SyncCredentials creds, File destDir) {
@@ -690,7 +695,8 @@ public class SyncFragment extends Fragment {
                 return true;
             try {
                 if (ppkValue != null && Integer.parseInt(ppkValue) >= 256) return true;
-            } catch (Exception ignored) {
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "Unparseable ppk_value: " + ppkValue, e);
             }
             return false;
         }
@@ -746,7 +752,8 @@ public class SyncFragment extends Fragment {
                     return "x86_64";
                 if (nativeLibDir.endsWith("x86") || nativeLibDir.contains("x86")) return "x86";
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to read native library dir for arch detection", e);
         }
         if (android.os.Build.SUPPORTED_ABIS.length > 0) return android.os.Build.SUPPORTED_ABIS[0];
         return "unknown";
