@@ -834,7 +834,14 @@ public class SyncFragment extends Fragment {
     }
 
     private void showArchCompatibilitySuccess(Runnable onComplete) {
-        android.os.Vibrator v = (android.os.Vibrator) requireContext().getSystemService(Context.VIBRATOR_SERVICE);
+        // S8: this runs in the pre-transfer probing phase. A theme toggle / config
+        // change here detaches the fragment, so guard every context/view access and
+        // re-check inside the delayed runnable before touching the UI (was an
+        // IllegalStateException "not attached to a context" crash).
+        Context ctx = getContext();
+        if (!isAdded() || ctx == null || getView() == null) return;
+
+        android.os.Vibrator v = (android.os.Vibrator) ctx.getSystemService(Context.VIBRATOR_SERVICE);
         if (v != null) {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 long[] pattern = {0, 100, 100, 150};
@@ -846,16 +853,18 @@ public class SyncFragment extends Fragment {
         }
 
         if (txtGuestArchLabel != null) {
-            txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_success)));
-            txtGuestArchLabel.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_on_warning));
+            txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.status_success)));
+            txtGuestArchLabel.setTextColor(ContextCompat.getColor(ctx, R.color.text_on_warning));
         }
 
-        Snackbar.make(requireView(), getString(R.string.sync_msg_arch_compatible), Snackbar.LENGTH_SHORT).show();
+        Snackbar.make(getView(), getString(R.string.sync_msg_arch_compatible), Snackbar.LENGTH_SHORT).show();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            Context laterCtx = getContext();
+            if (!isAdded() || laterCtx == null) return; // S8: fragment gone during the 1.5s delay
             if (txtGuestArchLabel != null) {
-                txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.surface_section)));
-                txtGuestArchLabel.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_success));
+                txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(laterCtx, R.color.surface_section)));
+                txtGuestArchLabel.setTextColor(ContextCompat.getColor(laterCtx, R.color.status_success));
             }
             onComplete.run();
         }, 1500);
