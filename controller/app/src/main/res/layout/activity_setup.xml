@@ -10,7 +10,7 @@
         android:id="@+id/settings_topbar"
         android:layout_width="match_parent"
         android:layout_height="?android:attr/actionBarSize"
-        android:background="#1A1A1A"
+        android:background="@color/chrome_surface"
         android:orientation="horizontal"
         android:gravity="center_vertical"
         android:visibility="gone">
@@ -21,24 +21,27 @@
             android:layout_weight="1"
             android:layout_marginStart="16dp"
             android:text="@string/settings_title"
-            android:textColor="#FFFFFF"
+            android:textColor="@color/chrome_on_surface"
             android:textSize="18sp"
             android:textStyle="bold" />
 
         <TextView
             android:id="@+id/btn_settings_done"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="12dp"
             android:gravity="center"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="6dp"
+            android:paddingStart="18dp"
+            android:paddingEnd="18dp"
             android:text="@string/action_done"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp"
+            android:textColor="@color/chrome_on_surface"
+            android:textSize="14sp"
             android:textStyle="bold"
+            android:background="@drawable/btn_chrome_outline"
             android:clickable="true"
-            android:focusable="true"
-            android:background="?android:attr/selectableItemBackgroundBorderless" />
+            android:focusable="true" />
     </LinearLayout>
 
     <LinearLayout
@@ -52,7 +55,7 @@
             android:layout_width="76dp"
             android:layout_height="match_parent"
             android:orientation="vertical"
-            android:background="#1A1A1A"
+            android:background="@color/chrome_surface"
             android:paddingTop="10dp"
             android:visibility="gone">
 
@@ -63,11 +66,11 @@
                 android:clickable="true" android:focusable="true"
                 android:background="?android:attr/selectableItemBackground">
                 <ImageView android:layout_width="26dp" android:layout_height="26dp"
-                    android:src="@drawable/ic_menu_preferences" app:tint="#FFFFFF"
+                    android:src="@drawable/ic_menu_preferences" app:tint="@color/chrome_on_surface"
                     android:contentDescription="@string/settings_nav_setup"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:layout_marginTop="4dp" android:text="@string/settings_nav_setup"
-                    android:textColor="#FFFFFF" android:textSize="12sp"/>
+                    android:textColor="@color/chrome_on_surface" android:textSize="12sp"/>
             </LinearLayout>
 
             <LinearLayout android:id="@+id/nav_feedback"
@@ -81,7 +84,7 @@
                     android:contentDescription="@string/settings_nav_feedback"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:layout_marginTop="4dp" android:text="@string/settings_nav_feedback"
-                    android:textColor="#FFFFFF" android:textSize="12sp"/>
+                    android:textColor="@color/chrome_on_surface" android:textSize="12sp"/>
             </LinearLayout>
 
             <LinearLayout android:id="@+id/nav_about"
@@ -95,7 +98,7 @@
                     android:contentDescription="@string/settings_nav_about"/>
                 <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
                     android:layout_marginTop="4dp" android:text="@string/settings_nav_about"
-                    android:textColor="#FFFFFF" android:textSize="12sp"/>
+                    android:textColor="@color/chrome_on_surface" android:textSize="12sp"/>
             </LinearLayout>
         </LinearLayout>
 
