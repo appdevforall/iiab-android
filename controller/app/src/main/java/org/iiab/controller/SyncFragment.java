@@ -1,8 +1,8 @@
 /*
  * ============================================================================
  * Name        : SyncFragment.java
- * Author      : IIAB Project
- * Copyright   : Copyright (c) 2026 IIAB Project
+ * Author      : AppDevForAll
+ * Copyright   : Copyright (c) 2026 AppDevForAll
  * Description : Fragment to handle P2P/P2M syncing and App sharing
  * ============================================================================
  */
@@ -42,8 +42,6 @@ import com.journeyapps.barcodescanner.ScanContract;
 import com.journeyapps.barcodescanner.ScanOptions;
 
 import java.io.File;
-import java.net.InetSocketAddress;
-import java.net.Socket;
 import java.util.List;
 
 import android.widget.RadioButton;
@@ -52,6 +50,12 @@ import androidx.core.content.ContextCompat;
 public class SyncFragment extends Fragment {
 
     private static final String TAG = "IIAB-SyncFragment";
+    // S16: name the ADB-optimization prefs/keys (shared with the ADB-share tab).
+    private static final String ADB_PREFS = "iiab_adb_prefs";
+    private static final String PREF_CHILD_PROCESS = "child_process_value";
+    private static final String PREF_PPK = "ppk_value";
+    private static final String PREF_FOCUS_ADB = "focus_adb";
+    private static final int MIN_PPK_LIMIT = 256; // min phantom-process limit that is "optimized"
 
     private RadioGroup rgSyncMode;
     private LinearLayout containerShare, containerReceive, containerProgress;
@@ -435,7 +439,9 @@ public class SyncFragment extends Fragment {
                 return;
             }
 
-            if (mainActivity != null && mainActivity.isServerAlive) {
+            // EX6: the "safe to receive now?" rule lives in the pure TransferGuard domain.
+            boolean serverRunning = mainActivity != null && mainActivity.isServerAlive;
+            if (!org.iiab.controller.sync.domain.TransferGuard.canReceive(serverRunning).allowed) {
                 new AlertDialog.Builder(requireContext())
                         .setTitle(getString(R.string.sync_dialog_server_running_title))
                         .setMessage(getString(R.string.sync_error_stop_server_first))
@@ -502,108 +508,28 @@ public class SyncFragment extends Fragment {
                 new AlertDialog.Builder(requireContext())
                         .setTitle(getString(R.string.sync_dialog_empty_host_title))
                         .setMessage(getString(R.string.sync_dialog_empty_host_msg))
-                        .setPositiveButton(getString(R.string.sync_dialog_btn_try_anyway), (dialog, which) -> checkNetworkAndStart(creds))
+                        .setPositiveButton(getString(R.string.sync_dialog_btn_try_anyway), (dialog, which) -> startProbe(creds))
                         .setNegativeButton(getString(R.string.cancel), null)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .show();
             } else {
-                checkNetworkAndStart(creds);
+                startProbe(creds);
             }
         });
     }
 
-    private void checkNetworkAndStart(SyncHandshakeHelper.SyncCredentials creds) {
+    /**
+     * ADFA-4492 step 4: kick the pre-transfer probe + dry-run, which now run in the
+     * Activity-scoped ViewModel and publish their phases to SyncProgressRepository. The fragment
+     * only shows the connecting UI; renderTransfer() reacts to CONNECTING/CALCULATING/CONFIRM/
+     * ABORTED, so the sondeo survives a recreation (theme toggle) instead of being dropped.
+     */
+    private void startProbe(SyncHandshakeHelper.SyncCredentials creds) {
         btnScanQr.setVisibility(View.GONE);
         containerProgress.setVisibility(View.VISIBLE);
-        txtTransferFilename.setText(getString(R.string.sync_msg_connecting));
         progressBarTransfer.setIndeterminate(true);
-
-        // S8: reachability probe on the shared IO executor (was a raw Thread).
-        AppExecutors.get().io().execute(() -> {
-            boolean isReachable = false;
-            try {
-                Socket socket = new Socket();
-                socket.connect(new InetSocketAddress(creds.ip, creds.port), 2000);
-                socket.close();
-                isReachable = true;
-            } catch (Exception e) {
-                Log.w(TAG, "Reachability probe to " + creds.ip + ":" + creds.port + " failed", e);
-            }
-
-            final boolean finalReachable = isReachable;
-            if (isAdded() && getActivity() != null) {
-                getActivity().runOnUiThread(() -> {
-                    if (!isAdded()) return; // S8: view gone (e.g. config change) -> no dialogs
-                    if (finalReachable) {
-                        File destDir = new File(requireContext().getFilesDir(), "rootfs/installed-rootfs/iiab");
-
-                        if (!destDir.exists()) {
-                            destDir.mkdirs();
-                        }
-
-                        txtTransferFilename.setText(getString(R.string.sync_msg_calculating));
-
-                        transport.calculateTransferPlan(requireContext(), shareConfig, creds.ip, creds.port, creds.user, creds.pass, destDir.getAbsolutePath(), new org.iiab.controller.sync.transport.TransportEngine.DryRunListener() {
-                            @Override
-                            public void onCalculated(long bytesToTransfer) {
-                                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
-                                double gigabytes = bytesToTransfer / (1024.0 * 1024.0 * 1024.0);
-                                File dataDir = android.os.Environment.getDataDirectory();
-                                double freeSpaceGb = dataDir.getFreeSpace() / (1024.0 * 1024.0 * 1024.0);
-
-                                if (gigabytes > (freeSpaceGb - 5.0)) {
-                                    new AlertDialog.Builder(requireContext())
-                                            .setTitle(getString(R.string.sync_error_storage_title))
-                                            .setMessage(getString(R.string.sync_error_storage_msg, gigabytes, freeSpaceGb))
-                                            .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
-                                            .show();
-                                    containerProgress.setVisibility(View.GONE);
-                                    btnScanQr.setVisibility(View.VISIBLE);
-                                    return;
-                                }
-
-                                String title = (destDir.exists() && destDir.list() != null && destDir.list().length > 0) ? getString(R.string.sync_title_update) : getString(R.string.sync_title_install);
-                                String msg = getString(R.string.sync_msg_confirm_transfer, gigabytes);
-
-                                new AlertDialog.Builder(requireContext())
-                                        .setTitle(title)
-                                        .setMessage(msg)
-                                        .setPositiveButton(getString(R.string.sync_btn_start_transfer), (dialog, which) -> {
-                                            startTransfer(creds, destDir);
-                                        })
-                                        .setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
-                                            containerProgress.setVisibility(View.GONE);
-                                            btnScanQr.setVisibility(View.VISIBLE);
-                                        })
-                                        .setCancelable(false)
-                                        .show();
-                            }
-
-                            @Override
-                            public void onError(String error) {
-                                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
-                                new AlertDialog.Builder(requireContext())
-                                        .setTitle(getString(R.string.sync_error_calc_title))
-                                        .setMessage(getString(R.string.sync_error_calc_msg, error))
-                                        .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
-                                        .show();
-                                containerProgress.setVisibility(View.GONE);
-                                btnScanQr.setVisibility(View.VISIBLE);
-                            }
-                        });
-                    } else {
-                        new AlertDialog.Builder(requireContext())
-                                .setTitle(getString(R.string.sync_dialog_conn_failed_title))
-                                .setMessage(getString(R.string.sync_dialog_conn_failed_msg, creds.ip))
-                                .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
-                                .setIcon(android.R.drawable.ic_dialog_alert)
-                                .show();
-                        containerProgress.setVisibility(View.GONE);
-                        btnScanQr.setVisibility(View.VISIBLE);
-                    }
-                });
-            }
-        });
+        txtTransferFilename.setText(getString(R.string.sync_msg_connecting));
+        syncVm.startProbe(requireContext().getApplicationContext(), shareConfig, creds);
     }
 
     private void startTransfer(SyncHandshakeHelper.SyncCredentials creds, File destDir) {
@@ -637,6 +563,63 @@ public class SyncFragment extends Fragment {
     private void renderTransfer(org.iiab.controller.sync.presentation.SyncTransferState st) {
         if (st == null) return;
         switch (st.phase) {
+            case CONNECTING:
+                ensureReceiveModeForTransfer();
+                progressBarTransfer.setIndeterminate(true);
+                txtTransferFilename.setText(getString(R.string.sync_msg_connecting));
+                break;
+            case CALCULATING:
+                ensureReceiveModeForTransfer();
+                progressBarTransfer.setIndeterminate(true);
+                txtTransferFilename.setText(getString(R.string.sync_msg_calculating));
+                break;
+            case CONFIRM:
+                // Dry-run is done; the plan (creds/destDir) lives in the ViewModel and survives
+                // recreation, so re-show the confirm dialog once per fragment instance.
+                ensureReceiveModeForTransfer();
+                progressBarTransfer.setIndeterminate(true);
+                if (st.seq > lastTransferSeq) {
+                    lastTransferSeq = st.seq;
+                    if (getContext() != null) {
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle(st.title)
+                                .setMessage(st.message)
+                                .setCancelable(false)
+                                .setPositiveButton(getString(R.string.sync_btn_start_transfer), (dialog, which) -> {
+                                    SyncHandshakeHelper.SyncCredentials creds = syncVm.getPendingCreds();
+                                    File destDir = syncVm.getPendingDestDir();
+                                    if (creds != null && destDir != null) {
+                                        startTransfer(creds, destDir);
+                                    } else {
+                                        org.iiab.controller.sync.presentation.SyncProgressRepository.get().postIdle();
+                                        containerProgress.setVisibility(View.GONE);
+                                        btnScanQr.setVisibility(View.VISIBLE);
+                                    }
+                                })
+                                .setNegativeButton(getString(R.string.cancel), (dialog, which) -> {
+                                    syncVm.cancelProbe();
+                                    containerProgress.setVisibility(View.GONE);
+                                    btnScanQr.setVisibility(View.VISIBLE);
+                                })
+                                .show();
+                    }
+                }
+                break;
+            case ABORTED:
+                if (st.seq > lastTransferSeq) {
+                    lastTransferSeq = st.seq;
+                    if (getContext() != null)
+                        new AlertDialog.Builder(requireContext())
+                                .setTitle(st.title)
+                                .setMessage(st.message)
+                                .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
+                                .setIcon(android.R.drawable.ic_dialog_alert)
+                                .show();
+                    org.iiab.controller.sync.presentation.SyncProgressRepository.get().postIdle();
+                }
+                containerProgress.setVisibility(View.GONE);
+                btnScanQr.setVisibility(View.VISIBLE);
+                break;
             case TRANSFERRING:
                 ensureReceiveModeForTransfer();
                 progressBarTransfer.setIndeterminate(false);
@@ -750,17 +733,17 @@ public class SyncFragment extends Fragment {
     private boolean isSystemOptimizedForSync() {
         if (android.os.Build.VERSION.SDK_INT < 31) return true;
 
-        android.content.SharedPreferences prefs = requireContext().getSharedPreferences("iiab_adb_prefs", Context.MODE_PRIVATE);
-        String cpValue = prefs.getString("child_process_value", null);
-        String ppkValue = prefs.getString("ppk_value", null);
+        android.content.SharedPreferences prefs = requireContext().getSharedPreferences(ADB_PREFS, Context.MODE_PRIVATE);
+        String cpValue = prefs.getString(PREF_CHILD_PROCESS, null);
+        String ppkValue = prefs.getString(PREF_PPK, null);
 
         if (android.os.Build.VERSION.SDK_INT >= 34) {
             return "0".equals(cpValue) || "false".equals(cpValue);
         } else {
-            if ("256".equals(ppkValue) || "512".equals(ppkValue) || "1024".equals(ppkValue))
+            if ("256".equals(ppkValue) || "512".equals(ppkValue) || "1024".equals(ppkValue)) // fast-path known-good values
                 return true;
             try {
-                if (ppkValue != null && Integer.parseInt(ppkValue) >= 256) return true;
+                if (ppkValue != null && Integer.parseInt(ppkValue) >= MIN_PPK_LIMIT) return true;
             } catch (NumberFormatException e) {
                 Log.w(TAG, "Unparseable ppk_value: " + ppkValue, e);
             }
@@ -773,8 +756,8 @@ public class SyncFragment extends Fragment {
                 .setTitle(getString(R.string.adb_enforcer_title))
                 .setMessage(getString(R.string.adb_enforcer_body))
                 .setPositiveButton(getString(R.string.adb_enforcer_btn_setup), (dialog, which) -> {
-                    requireContext().getSharedPreferences("iiab_adb_prefs", Context.MODE_PRIVATE)
-                            .edit().putBoolean("focus_adb", true).apply();
+                    requireContext().getSharedPreferences(ADB_PREFS, Context.MODE_PRIVATE)
+                            .edit().putBoolean(PREF_FOCUS_ADB, true).apply();
 
                     MainActivity mainAct = (MainActivity) getActivity();
                     if (mainAct != null) {
@@ -826,7 +809,14 @@ public class SyncFragment extends Fragment {
     }
 
     private void showArchCompatibilitySuccess(Runnable onComplete) {
-        android.os.Vibrator v = (android.os.Vibrator) requireContext().getSystemService(Context.VIBRATOR_SERVICE);
+        // S8: this runs in the pre-transfer probing phase. A theme toggle / config
+        // change here detaches the fragment, so guard every context/view access and
+        // re-check inside the delayed runnable before touching the UI (was an
+        // IllegalStateException "not attached to a context" crash).
+        Context ctx = getContext();
+        if (!isAdded() || ctx == null || getView() == null) return;
+
+        android.os.Vibrator v = (android.os.Vibrator) ctx.getSystemService(Context.VIBRATOR_SERVICE);
         if (v != null) {
             if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
                 long[] pattern = {0, 100, 100, 150};
@@ -838,16 +828,18 @@ public class SyncFragment extends Fragment {
         }
 
         if (txtGuestArchLabel != null) {
-            txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.status_success)));
-            txtGuestArchLabel.setTextColor(ContextCompat.getColor(requireContext(), R.color.text_on_warning));
+            txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(ctx, R.color.status_success)));
+            txtGuestArchLabel.setTextColor(ContextCompat.getColor(ctx, R.color.text_on_warning));
         }
 
-        Snackbar.make(requireView(), getString(R.string.sync_msg_arch_compatible), Snackbar.LENGTH_SHORT).show();
+        Snackbar.make(getView(), getString(R.string.sync_msg_arch_compatible), Snackbar.LENGTH_SHORT).show();
 
         new Handler(Looper.getMainLooper()).postDelayed(() -> {
+            Context laterCtx = getContext();
+            if (!isAdded() || laterCtx == null) return; // S8: fragment gone during the 1.5s delay
             if (txtGuestArchLabel != null) {
-                txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(requireContext(), R.color.surface_section)));
-                txtGuestArchLabel.setTextColor(ContextCompat.getColor(requireContext(), R.color.status_success));
+                txtGuestArchLabel.setBackgroundTintList(android.content.res.ColorStateList.valueOf(ContextCompat.getColor(laterCtx, R.color.surface_section)));
+                txtGuestArchLabel.setTextColor(ContextCompat.getColor(laterCtx, R.color.status_success));
             }
             onComplete.run();
         }, 1500);
