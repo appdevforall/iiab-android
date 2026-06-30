@@ -534,6 +534,7 @@ public class SyncFragment extends Fragment {
                         transport.calculateTransferPlan(requireContext(), shareConfig, creds.ip, creds.port, creds.user, creds.pass, destDir.getAbsolutePath(), new org.iiab.controller.sync.transport.TransportEngine.DryRunListener() {
                             @Override
                             public void onCalculated(long bytesToTransfer) {
+                                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                                 double gigabytes = bytesToTransfer / (1024.0 * 1024.0 * 1024.0);
                                 File dataDir = android.os.Environment.getDataDirectory();
                                 double freeSpaceGb = dataDir.getFreeSpace() / (1024.0 * 1024.0 * 1024.0);
@@ -568,6 +569,7 @@ public class SyncFragment extends Fragment {
 
                             @Override
                             public void onError(String error) {
+                                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                                 new AlertDialog.Builder(requireContext())
                                         .setTitle(getString(R.string.sync_error_calc_title))
                                         .setMessage(getString(R.string.sync_error_calc_msg, error))
@@ -603,6 +605,7 @@ public class SyncFragment extends Fragment {
         transport.startClient(requireContext(), shareConfig, creds.ip, creds.port, creds.user, creds.pass, destDir.getAbsolutePath(), new org.iiab.controller.sync.transport.TransportEngine.SyncListener() {
             @Override
             public void onProgress(int percentage, String speed, String eta, String currentFile) {
+                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                 progressBarTransfer.setProgress(percentage);
                 txtTransferSpeed.setText(speed);
                 txtTransferEta.setText("ETA: " + eta);
@@ -615,6 +618,7 @@ public class SyncFragment extends Fragment {
 
             @Override
             public void onComplete(String message) {
+                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                 disableSystemProtection();
                 new AlertDialog.Builder(requireContext())
                         .setTitle(getString(R.string.sync_success_title))
@@ -627,6 +631,7 @@ public class SyncFragment extends Fragment {
 
             @Override
             public void onError(String error) {
+                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                 disableSystemProtection();
                 new AlertDialog.Builder(requireContext())
                         .setTitle(getString(R.string.sync_error_title))
@@ -645,6 +650,7 @@ public class SyncFragment extends Fragment {
         super.onDestroyView();
         if (transport != null) transport.stop();
         if (apkServer != null) apkServer.stop();
+        disableSystemProtection(); // S8: ensure the watchdog stops if a transfer was cut short
     }
 
     private void updateCardOrder(boolean isApkActive) {
@@ -665,19 +671,23 @@ public class SyncFragment extends Fragment {
 
     // WATCHDOG PROTECTION UTILS
     private void enableSystemProtection() {
-        Intent intent = new Intent(requireContext(), WatchdogService.class);
+        Context ctx = getContext();
+        if (ctx == null) return; // S8: detached -> nothing to protect
+        Intent intent = new Intent(ctx, WatchdogService.class);
         intent.setAction(WatchdogService.ACTION_START);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            requireContext().startForegroundService(intent);
+            ctx.startForegroundService(intent);
         } else {
-            requireContext().startService(intent);
+            ctx.startService(intent);
         }
     }
 
     private void disableSystemProtection() {
-        Intent intent = new Intent(requireContext(), WatchdogService.class);
+        Context ctx = getContext();
+        if (ctx == null) return; // S8: detached; onDestroyView already handled teardown
+        Intent intent = new Intent(ctx, WatchdogService.class);
         intent.setAction(WatchdogService.ACTION_STOP);
-        requireContext().startService(intent);
+        ctx.startService(intent);
     }
 
     // SYSTEM RESTRICTION ENFORCER (PPK & CHILD PROCESSES)
