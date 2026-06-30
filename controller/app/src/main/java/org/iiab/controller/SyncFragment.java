@@ -50,6 +50,8 @@ import androidx.core.content.ContextCompat;
 
 public class SyncFragment extends Fragment {
 
+    private static final String TAG = "IIAB-SyncFragment";
+
     private RadioGroup rgSyncMode;
     private LinearLayout containerShare, containerReceive, containerProgress;
 
@@ -504,19 +506,22 @@ public class SyncFragment extends Fragment {
         txtTransferFilename.setText(getString(R.string.sync_msg_connecting));
         progressBarTransfer.setIndeterminate(true);
 
-        new Thread(() -> {
+        // S8: reachability probe on the shared IO executor (was a raw Thread).
+        AppExecutors.get().io().execute(() -> {
             boolean isReachable = false;
             try {
                 Socket socket = new Socket();
                 socket.connect(new InetSocketAddress(creds.ip, creds.port), 2000);
                 socket.close();
                 isReachable = true;
-            } catch (Exception ignored) {
+            } catch (Exception e) {
+                Log.w(TAG, "Reachability probe to " + creds.ip + ":" + creds.port + " failed", e);
             }
 
             final boolean finalReachable = isReachable;
-            if (getActivity() != null) {
+            if (isAdded() && getActivity() != null) {
                 getActivity().runOnUiThread(() -> {
+                    if (!isAdded()) return; // S8: view gone (e.g. config change) -> no dialogs
                     if (finalReachable) {
                         File destDir = new File(requireContext().getFilesDir(), "rootfs/installed-rootfs/iiab");
 
@@ -529,6 +534,7 @@ public class SyncFragment extends Fragment {
                         transport.calculateTransferPlan(requireContext(), shareConfig, creds.ip, creds.port, creds.user, creds.pass, destDir.getAbsolutePath(), new org.iiab.controller.sync.transport.TransportEngine.DryRunListener() {
                             @Override
                             public void onCalculated(long bytesToTransfer) {
+                                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                                 double gigabytes = bytesToTransfer / (1024.0 * 1024.0 * 1024.0);
                                 File dataDir = android.os.Environment.getDataDirectory();
                                 double freeSpaceGb = dataDir.getFreeSpace() / (1024.0 * 1024.0 * 1024.0);
@@ -563,6 +569,7 @@ public class SyncFragment extends Fragment {
 
                             @Override
                             public void onError(String error) {
+                                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                                 new AlertDialog.Builder(requireContext())
                                         .setTitle(getString(R.string.sync_error_calc_title))
                                         .setMessage(getString(R.string.sync_error_calc_msg, error))
@@ -584,7 +591,7 @@ public class SyncFragment extends Fragment {
                     }
                 });
             }
-        }).start();
+        });
     }
 
     private void startTransfer(SyncHandshakeHelper.SyncCredentials creds, File destDir) {
@@ -598,6 +605,7 @@ public class SyncFragment extends Fragment {
         transport.startClient(requireContext(), shareConfig, creds.ip, creds.port, creds.user, creds.pass, destDir.getAbsolutePath(), new org.iiab.controller.sync.transport.TransportEngine.SyncListener() {
             @Override
             public void onProgress(int percentage, String speed, String eta, String currentFile) {
+                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                 progressBarTransfer.setProgress(percentage);
                 txtTransferSpeed.setText(speed);
                 txtTransferEta.setText("ETA: " + eta);
@@ -610,6 +618,7 @@ public class SyncFragment extends Fragment {
 
             @Override
             public void onComplete(String message) {
+                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                 disableSystemProtection();
                 new AlertDialog.Builder(requireContext())
                         .setTitle(getString(R.string.sync_success_title))
@@ -622,6 +631,7 @@ public class SyncFragment extends Fragment {
 
             @Override
             public void onError(String error) {
+                if (!isAdded() || getContext() == null) return; // S8: detached -> no UI
                 disableSystemProtection();
                 new AlertDialog.Builder(requireContext())
                         .setTitle(getString(R.string.sync_error_title))
@@ -640,6 +650,7 @@ public class SyncFragment extends Fragment {
         super.onDestroyView();
         if (transport != null) transport.stop();
         if (apkServer != null) apkServer.stop();
+        disableSystemProtection(); // S8: ensure the watchdog stops if a transfer was cut short
     }
 
     private void updateCardOrder(boolean isApkActive) {
@@ -660,19 +671,23 @@ public class SyncFragment extends Fragment {
 
     // WATCHDOG PROTECTION UTILS
     private void enableSystemProtection() {
-        Intent intent = new Intent(requireContext(), WatchdogService.class);
+        Context ctx = getContext();
+        if (ctx == null) return; // S8: detached -> nothing to protect
+        Intent intent = new Intent(ctx, WatchdogService.class);
         intent.setAction(WatchdogService.ACTION_START);
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-            requireContext().startForegroundService(intent);
+            ctx.startForegroundService(intent);
         } else {
-            requireContext().startService(intent);
+            ctx.startService(intent);
         }
     }
 
     private void disableSystemProtection() {
-        Intent intent = new Intent(requireContext(), WatchdogService.class);
+        Context ctx = getContext();
+        if (ctx == null) return; // S8: detached; onDestroyView already handled teardown
+        Intent intent = new Intent(ctx, WatchdogService.class);
         intent.setAction(WatchdogService.ACTION_STOP);
-        requireContext().startService(intent);
+        ctx.startService(intent);
     }
 
     // SYSTEM RESTRICTION ENFORCER (PPK & CHILD PROCESSES)
@@ -690,7 +705,8 @@ public class SyncFragment extends Fragment {
                 return true;
             try {
                 if (ppkValue != null && Integer.parseInt(ppkValue) >= 256) return true;
-            } catch (Exception ignored) {
+            } catch (NumberFormatException e) {
+                Log.w(TAG, "Unparseable ppk_value: " + ppkValue, e);
             }
             return false;
         }
@@ -746,7 +762,8 @@ public class SyncFragment extends Fragment {
                     return "x86_64";
                 if (nativeLibDir.endsWith("x86") || nativeLibDir.contains("x86")) return "x86";
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            Log.w(TAG, "Failed to read native library dir for arch detection", e);
         }
         if (android.os.Build.SUPPORTED_ABIS.length > 0) return android.os.Build.SUPPORTED_ABIS[0];
         return "unknown";

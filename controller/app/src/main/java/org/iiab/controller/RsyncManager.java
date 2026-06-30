@@ -32,7 +32,7 @@ public class RsyncManager implements TransportEngine {
 
     private static final String TAG = "IIAB-RsyncManager";
     private volatile Process rsyncProcess;
-    private boolean isCancelled = false;
+    private volatile boolean isCancelled = false; // S10: read/written across threads
     private SecretStore secretStore;
 
     @Override
