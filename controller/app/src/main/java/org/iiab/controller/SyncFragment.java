@@ -717,56 +717,56 @@ public class SyncFragment extends Fragment {
         MainActivity mainActivity = (MainActivity) getActivity();
         if (mainActivity == null) return;
 
-            if (isApkServerRunning) {
-                new AlertDialog.Builder(requireContext())
-                        .setTitle(getString(R.string.sync_dialog_server_running_title))
-                        .setMessage(getString(R.string.sync_error_stop_apk_first))
-                        .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
+        if (isApkServerRunning) {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(getString(R.string.sync_dialog_server_running_title))
+                    .setMessage(getString(R.string.sync_error_stop_apk_first))
+                    .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+            return;
+        }
+
+        if (mainActivity.isServerAlive) {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(getString(R.string.sync_dialog_server_running_title))
+                    .setMessage(getString(R.string.sync_error_stop_server_first))
+                    .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+            return;
+        }
+
+        if (!isDaemonRunning) {
+            fetchNetworkInterfaces();
+            if (wifiIp == null && hotspotIp == null) {
+                Toast.makeText(getContext(), getString(R.string.sync_error_no_network), Toast.LENGTH_SHORT).show();
                 return;
             }
 
-            if (mainActivity.isServerAlive) {
+            File rootfsDir = new File(requireContext().getFilesDir(), "rootfs/installed-rootfs/iiab");
+            hostHasRootfs = rootfsDir.exists() && rootfsDir.isDirectory();
+
+            if (!hostHasRootfs) {
                 new AlertDialog.Builder(requireContext())
-                        .setTitle(getString(R.string.sync_dialog_server_running_title))
-                        .setMessage(getString(R.string.sync_error_stop_server_first))
-                        .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
-                return;
-            }
-
-            if (!isDaemonRunning) {
-                fetchNetworkInterfaces();
-                if (wifiIp == null && hotspotIp == null) {
-                    Toast.makeText(getContext(), getString(R.string.sync_error_no_network), Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                File rootfsDir = new File(requireContext().getFilesDir(), "rootfs/installed-rootfs/iiab");
-                hostHasRootfs = rootfsDir.exists() && rootfsDir.isDirectory();
-
-                if (!hostHasRootfs) {
-                    new AlertDialog.Builder(requireContext())
-                            .setTitle(getString(R.string.sync_dialog_missing_env_title))
-                            .setMessage(getString(R.string.sync_dialog_missing_env_msg))
-                            .setPositiveButton(getString(R.string.sync_dialog_btn_continue), (dialog, which) -> startShareDaemon(rootfsDir))
-                            .setNegativeButton(getString(R.string.cancel), null)
-                            .setIcon(android.R.drawable.ic_dialog_alert)
-                            .show();
-                } else {
-                    startShareDaemon(rootfsDir);
-                }
-            } else {
-                new AlertDialog.Builder(requireContext())
-                        .setTitle(getString(R.string.sync_dialog_stop_title))
-                        .setMessage(getString(R.string.sync_dialog_stop_msg))
-                        .setPositiveButton(getString(R.string.sync_btn_stop_server), (dialog, which) -> stopShareDaemon())
+                        .setTitle(getString(R.string.sync_dialog_missing_env_title))
+                        .setMessage(getString(R.string.sync_dialog_missing_env_msg))
+                        .setPositiveButton(getString(R.string.sync_dialog_btn_continue), (dialog, which) -> startShareDaemon(rootfsDir))
                         .setNegativeButton(getString(R.string.cancel), null)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .show();
+            } else {
+                startShareDaemon(rootfsDir);
             }
+        } else {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(getString(R.string.sync_dialog_stop_title))
+                    .setMessage(getString(R.string.sync_dialog_stop_msg))
+                    .setPositiveButton(getString(R.string.sync_btn_stop_server), (dialog, which) -> stopShareDaemon())
+                    .setNegativeButton(getString(R.string.cancel), null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+        }
 
     }
 
@@ -774,25 +774,25 @@ public class SyncFragment extends Fragment {
     private void startReceiveFlow() {
         MainActivity mainActivity = (MainActivity) getActivity();
 
-            // EX6: the "safe to receive now?" rule lives in the pure TransferGuard domain.
-            boolean serverRunning = mainActivity != null && mainActivity.isServerAlive;
-            if (!org.iiab.controller.sync.domain.TransferGuard.canReceive(serverRunning).allowed) {
-                new AlertDialog.Builder(requireContext())
-                        .setTitle(getString(R.string.sync_dialog_server_running_title))
-                        .setMessage(getString(R.string.sync_error_stop_server_first))
-                        .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
-                        .setIcon(android.R.drawable.ic_dialog_alert)
-                        .show();
-                return;
-            }
+        // EX6: the "safe to receive now?" rule lives in the pure TransferGuard domain.
+        boolean serverRunning = mainActivity != null && mainActivity.isServerAlive;
+        if (!org.iiab.controller.sync.domain.TransferGuard.canReceive(serverRunning).allowed) {
+            new AlertDialog.Builder(requireContext())
+                    .setTitle(getString(R.string.sync_dialog_server_running_title))
+                    .setMessage(getString(R.string.sync_error_stop_server_first))
+                    .setPositiveButton(getString(R.string.adb_enforcer_btn_ok), null)
+                    .setIcon(android.R.drawable.ic_dialog_alert)
+                    .show();
+            return;
+        }
 
-            ScanOptions options = new ScanOptions();
-            options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
-            options.setPrompt(getString(R.string.sync_scanner_prompt));
-            options.setCameraId(0);
-            options.setBeepEnabled(false);
-            options.setBarcodeImageEnabled(false);
-            barcodeLauncher.launch(options);
+        ScanOptions options = new ScanOptions();
+        options.setDesiredBarcodeFormats(ScanOptions.QR_CODE);
+        options.setPrompt(getString(R.string.sync_scanner_prompt));
+        options.setCameraId(0);
+        options.setBeepEnabled(false);
+        options.setBarcodeImageEnabled(false);
+        barcodeLauncher.launch(options);
 
     }
 
