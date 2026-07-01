@@ -136,6 +136,12 @@ public class SetupSectionFragment extends Fragment {
         btnManageAll = v.findViewById(R.id.btn_manage_all);
         spinnerLanguage = v.findViewById(R.id.spinner_language);
         spinnerAppLanguage = v.findViewById(R.id.spinner_app_language);
+        // Don't let the spinners restore a stale numeric position across activity
+        // recreation: the option lists are re-sorted per UI locale, so a restored index
+        // would point at a different language. Our setSelection(...) is the source of
+        // truth on every (re)creation. See ADFA-4304.
+        spinnerLanguage.setSaveEnabled(false);
+        spinnerAppLanguage.setSaveEnabled(false);
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             switchNotif.setVisibility(View.GONE);
