@@ -571,4 +571,5 @@
     <string name="setup_app_lang_title">Idioma do app</string>
     <string name="setup_app_lang_desc">Escolha o idioma das telas do app. “Padrão do sistema” segue o seu telefone.</string>
     <string name="setup_app_lang_system">Padrão do sistema (seguir o telefone)</string>
+    <string name="setup_language_section">Idioma</string>
 </resources>

@@ -568,4 +568,5 @@
     <string name="setup_app_lang_title">Язык приложения</string>
     <string name="setup_app_lang_desc">Выберите язык экранов самого приложения. “Системный по умолчанию” следует настройкам телефона.</string>
     <string name="setup_app_lang_system">Системный по умолчанию (как на телефоне)</string>
+    <string name="setup_language_section">Язык</string>
 </resources>
