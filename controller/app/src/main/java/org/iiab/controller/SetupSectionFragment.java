@@ -34,6 +34,7 @@ import androidx.fragment.app.Fragment;
 
 import org.iiab.controller.applang.data.AppLocaleController;
 import org.iiab.controller.applang.domain.AppLanguage;
+import org.iiab.controller.applang.domain.LocaleMatcher;
 import org.iiab.controller.applang.domain.SupportedAppLanguages;
 import org.iiab.controller.delivery.data.AnalyticsConsent;
 
@@ -73,6 +74,7 @@ public class SetupSectionFragment extends Fragment {
     private Button btnManageAll;
     private Spinner spinnerLanguage;
     private Spinner spinnerAppLanguage;
+    private boolean contentSelectionInitialized = false;
 
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private ActivityResultLauncher<Intent> storageLauncher;
@@ -154,6 +156,13 @@ public class SetupSectionFragment extends Fragment {
             spinnerLanguage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    if (!contentSelectionInitialized) {
+                        // Skip the initial programmatic selection so recreating the
+                        // activity (e.g. after an App Language change) never rewrites
+                        // the stored content language. Only real user picks persist.
+                        contentSelectionInitialized = true;
+                        return;
+                    }
                     persistSelectedLanguage();
                 }
 
@@ -260,8 +269,6 @@ public class SetupSectionFragment extends Fragment {
     private void setupLanguageSpinner() {
         List<LocaleItem> localeItems = new ArrayList<>();
         Set<String> addedNames = new HashSet<>();
-        Locale currentSystemLocale = Locale.getDefault();
-        int defaultSelectionIndex = 0;
 
         for (Locale locale : Locale.getAvailableLocales()) {
             if (!locale.getLanguage().isEmpty() && !locale.getCountry().isEmpty()) {
@@ -275,19 +282,39 @@ public class SetupSectionFragment extends Fragment {
 
         Collections.sort(localeItems, (a, b) -> a.displayName.compareToIgnoreCase(b.displayName));
 
-        for (int i = 0; i < localeItems.size(); i++) {
-            if (localeItems.get(i).locale.getLanguage().equals(currentSystemLocale.getLanguage())
-                    && localeItems.get(i).locale.getCountry().equals(currentSystemLocale.getCountry())) {
-                defaultSelectionIndex = i;
-                break;
-            }
-        }
-
         ArrayAdapter<LocaleItem> adapter = new ArrayAdapter<>(
                 requireContext(), android.R.layout.simple_spinner_item, localeItems);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLanguage.setAdapter(adapter);
-        spinnerLanguage.setSelection(defaultSelectionIndex);
+        spinnerLanguage.setSelection(contentSelectionIndex(localeItems), false);
+    }
+
+    /**
+     * Content-language selection follows the STORED preference, so it stays put when the
+     * app UI language changes (that override alters {@code Locale.getDefault()} on
+     * recreation). Only on first run (nothing stored yet) does it fall back to the phone
+     * locale. See ADFA-4304.
+     */
+    private int contentSelectionIndex(List<LocaleItem> items) {
+        SharedPreferences prefs = requireContext().getSharedPreferences(
+                getString(R.string.pref_file_internal), Context.MODE_PRIVATE);
+        String storedSimple = prefs.getString("selected_lang_simple", null); // e.g. "es-ES"
+        String lang;
+        String country;
+        if (storedSimple != null && !storedSimple.isEmpty()) {
+            String[] parts = storedSimple.split("-", 2);
+            lang = parts[0];
+            country = parts.length > 1 ? parts[1] : "";
+        } else {
+            Locale system = Locale.getDefault();
+            lang = system.getLanguage();
+            country = system.getCountry();
+        }
+        List<Locale> locales = new ArrayList<>(items.size());
+        for (LocaleItem item : items) {
+            locales.add(item.locale);
+        }
+        return LocaleMatcher.pickIndex(locales, lang, country);
     }
 
     private void setupListeners() {
