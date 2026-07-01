@@ -165,6 +165,14 @@ dependencies {
     // Java artifacts — no Kotlin required.
     implementation 'androidx.lifecycle:lifecycle-viewmodel:2.8.7'
     implementation 'androidx.lifecycle:lifecycle-livedata:2.8.7'
+    implementation 'androidx.work:work-runtime:2.9.1'
+    // WorkManager's Worker API returns guava ListenableFuture. Full guava (pulled by
+    // :termux-core) forces the empty com.google.guava:listenablefuture stub to win
+    // version resolution, leaving no ListenableFuture.class on this module's compile
+    // classpath -> subclassing Worker fails to compile. Depend on full guava directly
+    // (same version as :termux-core, deduped at runtime) so the real class is present.
+    // See ADFA-4504.
+    implementation 'com.google.guava:guava:31.1-jre'
 
     // IIAB Tools
     implementation 'com.google.zxing:core:3.5.2'
@@ -181,8 +189,15 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     // Real org.json so SyncHandshakeHelper JSON logic can run in JVM unit tests
     testImplementation 'org.json:json:20231013'
+    // MockWebServer: JVM-level proof of the delivery HTTP contract (ADFA-4504).
+    testImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test:core:1.5.0'
+    androidTestImplementation 'androidx.test:runner:1.5.2'
+    // Drives the real OutboundSyncWorker on-device (ADFA-4504).
+    androidTestImplementation 'androidx.work:work-testing:2.9.1'
+    androidTestImplementation 'com.squareup.okhttp3:mockwebserver:4.12.0'
 }
 
 import groovy.json.JsonSlurper
