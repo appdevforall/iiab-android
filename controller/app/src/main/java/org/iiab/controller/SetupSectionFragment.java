@@ -32,6 +32,10 @@ import androidx.core.app.NotificationManagerCompat;
 import androidx.core.content.ContextCompat;
 import androidx.fragment.app.Fragment;
 
+import org.iiab.controller.applang.data.AppLocaleController;
+import org.iiab.controller.applang.domain.AppLanguage;
+import org.iiab.controller.applang.domain.LocaleMatcher;
+import org.iiab.controller.applang.domain.SupportedAppLanguages;
 import org.iiab.controller.delivery.data.AnalyticsConsent;
 
 import com.google.android.material.snackbar.Snackbar;
@@ -69,6 +73,8 @@ public class SetupSectionFragment extends Fragment {
     private Button btnContinue;
     private Button btnManageAll;
     private Spinner spinnerLanguage;
+    private Spinner spinnerAppLanguage;
+    private boolean contentSelectionInitialized = false;
 
     private ActivityResultLauncher<String> requestPermissionLauncher;
     private ActivityResultLauncher<Intent> storageLauncher;
@@ -129,13 +135,22 @@ public class SetupSectionFragment extends Fragment {
         btnContinue = v.findViewById(R.id.btn_setup_continue);
         btnManageAll = v.findViewById(R.id.btn_manage_all);
         spinnerLanguage = v.findViewById(R.id.spinner_language);
+        spinnerAppLanguage = v.findViewById(R.id.spinner_app_language);
+        // Don't let the spinners restore a stale numeric position across activity
+        // recreation: the option lists are re-sorted per UI locale, so a restored index
+        // would point at a different language. Our setSelection(...) is the source of
+        // truth on every (re)creation. See ADFA-4304.
+        spinnerLanguage.setSaveEnabled(false);
+        spinnerAppLanguage.setSaveEnabled(false);
 
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
             switchNotif.setVisibility(View.GONE);
         }
 
         setupListeners();
+        setupAppLanguageSpinner();
         setupLanguageSpinner();
+        setupLanguageSectionToggle(v);
         checkAllPermissions();
 
         if (wizard) {
@@ -148,6 +163,13 @@ public class SetupSectionFragment extends Fragment {
             spinnerLanguage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
                 @Override
                 public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                    if (!contentSelectionInitialized) {
+                        // Skip the initial programmatic selection so recreating the
+                        // activity (e.g. after an App Language change) never rewrites
+                        // the stored content language. Only real user picks persist.
+                        contentSelectionInitialized = true;
+                        return;
+                    }
                     persistSelectedLanguage();
                 }
 
@@ -219,11 +241,58 @@ public class SetupSectionFragment extends Fragment {
         requireActivity().finish();
     }
 
+    /**
+     * Collapsible "Language" section (ADFA-4304): collapsed by default so first-run setup
+     * stays short. Opening it reveals the App Language + Content Language selectors; the
+     * defaults already apply if the operator never opens it.
+     */
+    private void setupLanguageSectionToggle(View root) {
+        View header = root.findViewById(R.id.language_header);
+        View options = root.findViewById(R.id.language_options);
+        TextView chevron = root.findViewById(R.id.language_chevron);
+        chevron.setText("\u25B8"); // collapsed indicator
+        header.setOnClickListener(x -> {
+            boolean expand = options.getVisibility() != View.VISIBLE;
+            options.setVisibility(expand ? View.VISIBLE : View.GONE);
+            chevron.setText(expand ? "\u25BE" : "\u25B8");
+        });
+    }
+
+    /**
+     * App UI language selector (ADFA-4304): lets the operator show the app in any shipped
+     * language regardless of the phone's locale. "System default" clears the override.
+     * Thin — the actual locale switch lives in {@link AppLocaleController}.
+     */
+    private void setupAppLanguageSpinner() {
+        List<AppLanguage> languages =
+                SupportedAppLanguages.all(getString(R.string.setup_app_lang_system));
+        ArrayAdapter<AppLanguage> adapter = new ArrayAdapter<>(
+                requireContext(), android.R.layout.simple_spinner_item, languages);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinnerAppLanguage.setAdapter(adapter);
+        spinnerAppLanguage.setSelection(
+                SupportedAppLanguages.indexOfTag(languages, AppLocaleController.currentTag()), false);
+
+        spinnerAppLanguage.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                String tag = ((AppLanguage) parent.getItemAtPosition(position)).tag();
+                // No-op on the initial/programmatic selection; only apply a real change
+                // (applying recreates the activity in the chosen language).
+                if (!tag.equals(AppLocaleController.currentTag())) {
+                    AppLocaleController.apply(tag);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+            }
+        });
+    }
+
     private void setupLanguageSpinner() {
         List<LocaleItem> localeItems = new ArrayList<>();
         Set<String> addedNames = new HashSet<>();
-        Locale currentSystemLocale = Locale.getDefault();
-        int defaultSelectionIndex = 0;
 
         for (Locale locale : Locale.getAvailableLocales()) {
             if (!locale.getLanguage().isEmpty() && !locale.getCountry().isEmpty()) {
@@ -237,19 +306,51 @@ public class SetupSectionFragment extends Fragment {
 
         Collections.sort(localeItems, (a, b) -> a.displayName.compareToIgnoreCase(b.displayName));
 
-        for (int i = 0; i < localeItems.size(); i++) {
-            if (localeItems.get(i).locale.getLanguage().equals(currentSystemLocale.getLanguage())
-                    && localeItems.get(i).locale.getCountry().equals(currentSystemLocale.getCountry())) {
-                defaultSelectionIndex = i;
-                break;
-            }
-        }
-
         ArrayAdapter<LocaleItem> adapter = new ArrayAdapter<>(
                 requireContext(), android.R.layout.simple_spinner_item, localeItems);
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
         spinnerLanguage.setAdapter(adapter);
-        spinnerLanguage.setSelection(defaultSelectionIndex);
+        spinnerLanguage.setSelection(contentSelectionIndex(localeItems), false);
+    }
+
+    /**
+     * Content-language selection follows the STORED preference, so it stays put when the
+     * app UI language changes (that override alters {@code Locale.getDefault()} on
+     * recreation). Only on first run (nothing stored yet) does it fall back to the phone
+     * locale. See ADFA-4304.
+     */
+    private int contentSelectionIndex(List<LocaleItem> items) {
+        SharedPreferences prefs = requireContext().getSharedPreferences(
+                getString(R.string.pref_file_internal), Context.MODE_PRIVATE);
+        String storedSimple = prefs.getString("selected_lang_simple", null); // e.g. "es-ES"
+        String lang;
+        String country;
+        if (storedSimple != null && !storedSimple.isEmpty()) {
+            String[] parts = storedSimple.split("-", 2);
+            lang = parts[0];
+            country = parts.length > 1 ? parts[1] : "";
+        } else {
+            // First run: fall back to the DEVICE locale, read from the system resources
+            // so it is immune to the app UI language override (AppCompat changes
+            // Locale.getDefault(), which would otherwise drift the content selection).
+            Locale device = deviceLocale();
+            lang = device.getLanguage();
+            country = device.getCountry();
+        }
+        List<Locale> locales = new ArrayList<>(items.size());
+        for (LocaleItem item : items) {
+            locales.add(item.locale);
+        }
+        return LocaleMatcher.pickIndex(locales, lang, country);
+    }
+
+    /** The physical device locale, unaffected by the per-app UI language override. */
+    private Locale deviceLocale() {
+        android.content.res.Configuration sys = android.content.res.Resources.getSystem().getConfiguration();
+        if (sys.getLocales().isEmpty()) {
+            return Locale.getDefault();
+        }
+        return sys.getLocales().get(0);
     }
 
     private void setupListeners() {
