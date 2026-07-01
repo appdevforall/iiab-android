@@ -554,4 +554,8 @@
     <string name="crash_report_send">Enviar relatório</string>
     <string name="crash_report_dismiss">Dispensar</string>
     <string name="rsync_error_process_killed">O Android interrompeu o processo de transferência (limite de processos em segundo plano). Para evitar isso, ative “Desativar restrições de processos filhos” nas Opções do desenvolvedor, ou configure o ADB.</string>
+    <string name="phantom_warn_title">A transferência pode ser interrompida</string>
+    <string name="phantom_warn_body">No Android 12+ o sistema pode encerrar a transferência em segundo plano (limite de processos). Para evitar, desative “restrições de processos filhos”, ou continue mesmo assim — transferências grandes podem ser interrompidas.</string>
+    <string name="phantom_warn_open_dev">Abrir Opções do desenvolvedor</string>
+    <string name="phantom_warn_continue">Continuar mesmo assim</string>
 </resources>

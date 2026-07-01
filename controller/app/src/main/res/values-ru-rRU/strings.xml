@@ -551,4 +551,8 @@
     <string name="crash_report_send">Отправить отчёт</string>
     <string name="crash_report_dismiss">Отклонить</string>
     <string name="rsync_error_process_killed">Android остановил процесс передачи (ограничение фоновых процессов). Чтобы избежать этого, включите «Отключить ограничения дочерних процессов» в параметрах разработчика или настройте ADB.</string>
+    <string name="phantom_warn_title">Передача может прерваться</string>
+    <string name="phantom_warn_body">На Android 12+ система может остановить передачу в фоне (лимит процессов). Чтобы избежать этого, отключите «ограничения дочерних процессов» или продолжите всё равно — большие передачи могут прерваться.</string>
+    <string name="phantom_warn_open_dev">Открыть параметры разработчика</string>
+    <string name="phantom_warn_continue">Всё равно продолжить</string>
 </resources>

@@ -566,4 +566,8 @@
     <string name="crash_report_dismiss">Dismiss</string>
     <string name="feedback_force_crash" translatable="false">Force test crash (debug)</string>
     <string name="rsync_error_process_killed">Android stopped the transfer process (system background-process limit). To prevent this, enable “Disable child process restrictions” in Developer options, or set up the ADB optimization.</string>
+    <string name="phantom_warn_title">Transfer may be interrupted</string>
+    <string name="phantom_warn_body">On Android 12+ the system can stop the transfer while it runs in the background (phantom-process limit). To prevent it, disable “child process restrictions”, or continue anyway — large transfers may be interrupted.</string>
+    <string name="phantom_warn_open_dev">Open Developer options</string>
+    <string name="phantom_warn_continue">Continue anyway</string>
 </resources>

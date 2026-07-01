@@ -552,4 +552,8 @@
     <string name="crash_report_send">रिपोर्ट भेजें</string>
     <string name="crash_report_dismiss">खारिज करें</string>
     <string name="rsync_error_process_killed">Android ने ट्रांसफ़र प्रोसेस रोक दी (बैकग्राउंड प्रोसेस सीमा)। इसे रोकने के लिए, डेवलपर विकल्प में “चाइल्ड प्रोसेस प्रतिबंध अक्षम करें” चालू करें, या ADB सेट करें।</string>
+    <string name="phantom_warn_title">ट्रांसफ़र बाधित हो सकता है</string>
+    <string name="phantom_warn_body">Android 12+ पर सिस्टम बैकग्राउंड में चल रहे ट्रांसफ़र को रोक सकता है (प्रोसेस सीमा)। इससे बचने के लिए, “चाइल्ड प्रोसेस प्रतिबंध” अक्षम करें, या फिर भी जारी रखें — बड़े ट्रांसफ़र बाधित हो सकते हैं।</string>
+    <string name="phantom_warn_open_dev">डेवलपर विकल्प खोलें</string>
+    <string name="phantom_warn_continue">फिर भी जारी रखें</string>
 </resources>
