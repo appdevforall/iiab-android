@@ -306,15 +306,27 @@ public class SetupSectionFragment extends Fragment {
             lang = parts[0];
             country = parts.length > 1 ? parts[1] : "";
         } else {
-            Locale system = Locale.getDefault();
-            lang = system.getLanguage();
-            country = system.getCountry();
+            // First run: fall back to the DEVICE locale, read from the system resources
+            // so it is immune to the app UI language override (AppCompat changes
+            // Locale.getDefault(), which would otherwise drift the content selection).
+            Locale device = deviceLocale();
+            lang = device.getLanguage();
+            country = device.getCountry();
         }
         List<Locale> locales = new ArrayList<>(items.size());
         for (LocaleItem item : items) {
             locales.add(item.locale);
         }
         return LocaleMatcher.pickIndex(locales, lang, country);
+    }
+
+    /** The physical device locale, unaffected by the per-app UI language override. */
+    private Locale deviceLocale() {
+        android.content.res.Configuration sys = android.content.res.Resources.getSystem().getConfiguration();
+        if (sys.getLocales().isEmpty()) {
+            return Locale.getDefault();
+        }
+        return sys.getLocales().get(0);
     }
 
     private void setupListeners() {
