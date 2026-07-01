@@ -569,6 +569,6 @@
 
     <!-- App UI language selector (ADFA-4304) -->
     <string name="setup_app_lang_title">Idioma do app</string>
-    <string name="setup_app_lang_desc">Escolha o idioma das telas do app. \'Padrão do sistema\' segue o seu telefone.</string>
+    <string name="setup_app_lang_desc">Escolha o idioma das telas do app. “Padrão do sistema” segue o seu telefone.</string>
     <string name="setup_app_lang_system">Padrão do sistema (seguir o telefone)</string>
 </resources>
