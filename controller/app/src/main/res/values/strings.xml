@@ -588,5 +588,5 @@
 
     <!-- Portal WebView APK download (ADFA-4512) -->
     <string name="portal_download_started">Downloading %1$s…</string>
-    <string name="portal_download_failed">Couldn't start the download.</string>
+    <string name="portal_download_failed">Couldn\'t start the download.</string>
 </resources>
